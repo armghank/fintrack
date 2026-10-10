@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Install FinTrack</title>
+<meta name="theme-color" content="#2f4fd8">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{--bg:#f3f5f8;--surface:#fff;--line:#d9dee7;--fg:#141a26;--muted:#5b6578;--accent:#2f4fd8;--accent-fg:#fff;--soft:#e3e8fc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1016;--surface:#151922;--line:#2a303d;--fg:#e8ebf1;--muted:#97a0b1;--accent:#8196ff;--accent-fg:#0d1016;--soft:#232b4d;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(32px + env(safe-area-inset-bottom,0px))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:56px;height:56px;border-radius:14px}
+h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.sub{margin:0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+.tag{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:var(--accent-fg);text-decoration:none;font-weight:600;border-radius:11px;padding:11px 16px;margin-top:10px}
+.btn.alt{background:var(--soft);color:var(--fg)}
+.note{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+.hl{outline:2px solid var(--accent)}
+b.k{font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><img src="icons/icon-192.png" alt=""><div><h1>FinTrack</h1><p class="sub">Your money, in double entry. Private to each phone.</p></div></div>
+
+  <section class="card" id="ios"><span class="tag">iPhone / iPad</span><h2>Add to Home Screen</h2>
+    <ol>
+      <li>Open this page in <b class="k">Safari</b> (not Chrome or the Instagram/WhatsApp browser).</li>
+      <li>Tap the <b class="k">Share</b> button (square with an arrow).</li>
+      <li>Scroll and tap <b class="k">Add to Home Screen</b>, then <b class="k">Add</b>.</li>
+      <li>Open FinTrack from the new FT icon. It runs full screen and works offline.</li>
+    </ol>
+    <a class="btn alt" href="index.html">Open FinTrack</a>
+  </section>
+
+  <section class="card" id="android"><span class="tag">Android</span><h2>Install the app</h2>
+    <ol>
+      <li>Tap <b class="k">Download for Android</b> below.</li>
+      <li>Open the downloaded <b class="k">fintrack.apk</b>. If asked, allow your browser to <b class="k">install unknown apps</b>.</li>
+      <li>Tap <b class="k">Install</b>. Updates install the same way, and your data stays.</li>
+    </ol>
+    <a class="btn" href="fintrack.apk" download>Download for Android</a>
+    <p class="note">The Android app also saves automatic Excel backups to <b class="k">Documents/FinTrack/Backups</b>. Prefer not to install an APK? Open FinTrack in Chrome and choose <b class="k">Add to Home screen</b>.</p>
+  </section>
+
+  <section class="card"><span class="tag">Good to know</span>
+    <p style="margin:0">Each person's data stays on their own phone and is never uploaded. Keep Excel backups (Manage → Data). If you delete the app, its data is deleted with it.</p>
+  </section>
+</main>
+<script>
+var ua=navigator.userAgent;
+if(/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)){document.getElementById("ios").classList.add("hl");}
+else if(/Android/.test(ua)){var a=document.getElementById("android");a.classList.add("hl");a.parentNode.insertBefore(a,document.getElementById("ios"));}
+</script>
+</body>
+</html>

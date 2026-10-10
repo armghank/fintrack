@@ -1,0 +1,9 @@
+{
+  "appId": "app.fintrack.personal",
+  "appName": "FinTrack",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#f3f5f8"
+  }
+}
