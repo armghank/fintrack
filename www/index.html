@@ -181,6 +181,18 @@ textarea.inp{min-height:110px;font-family:var(--f-num);font-size:12px}
 .rec input{width:118px;text-align:right;font-family:var(--f-num)}
 .ph{flex-wrap:wrap}
 .ttwrap{position:relative}
+.card h3 .eyebtn{border:0;background:transparent;color:var(--muted);width:28px;height:24px;border-radius:7px;display:inline-grid;place-items:center;padding:0;margin-left:2px}
+.card h3 .eyebtn:hover{background:var(--surface2);color:var(--fg)}
+.card h3 .eyebtn[aria-pressed="true"]{color:var(--accent)}
+.masked{letter-spacing:.12em;color:var(--muted)}
+.card h3 .cbtn{margin-left:auto;flex:none;width:30px;height:26px;border:0;border-radius:7px;background:transparent;color:var(--muted);display:inline-grid;place-items:center;padding:0;margin-right:-6px}
+.card h3 .sp + .cbtn{margin-left:4px}
+.card h3 .cbtn:hover{background:var(--surface2);color:var(--fg)}
+.card.collapsed{padding-block:10px}
+.card.collapsed > :not(h3){display:none!important}
+.card.collapsed > h3{margin-bottom:0}
+.card.collapsed > h3 .sp{display:none}
+.card.collapsed > h3 .cbtn{margin-left:auto;color:var(--accent)}
 .mseg{display:inline-flex;background:var(--surface2);border-radius:8px;padding:2px;gap:2px}
 .mseg button{border:0;background:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--muted)}
 .mseg button.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
@@ -274,7 +286,7 @@ const GROUPS=[
   {k:"expense",kind:"expense",label:"Expense categories"},
   {k:"equity",kind:"equity",label:"Equity"}];
 const GL=Object.fromEntries(GROUPS.map(g=>[g.k,g]));
-const WIDGETS={hold:"Balance check & cash in hand",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",trend:"Income vs expense (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries"};
+const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",trend:"Income vs expense (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries"};
 
 /* ---------- state ---------- */
 let S=null;            // the book
@@ -294,7 +306,7 @@ function blankBook(){
   add("Opening balance","equity");add("Cash in hand","cash");
   ["Salary","Other income"].forEach(n=>add(n,"income"));
   ["Rent","Groceries","Dining out","Fuel & transport","Electricity & water","Mobile & internet","Health","Shopping","Family support","Entertainment","Loan interest","Bank charges"].forEach(n=>add(n,"expense"));
-  return {v:1,currency:"AED",demo:false,accounts:A,entries:[],schedules:[],pdcs:[],checks:{},holdCheck:null,dash:Object.keys(WIDGETS).map(id=>({id,on:true}))};
+  return {v:1,currency:"AED",demo:false,accounts:A,entries:[],schedules:[],pdcs:[],reserve:{},checks:{},holdCheck:null,dash:Object.keys(WIDGETS).map(id=>({id,on:true}))};
 }
 function equityId(){let e=S.accounts.find(a=>a.grp==="equity");if(!e){e={id:uid(),name:"Opening balance",kind:"equity",grp:"equity",color:PAL[13],budget:0,archived:false};S.accounts.push(e)}return e.id}
 
@@ -308,6 +320,7 @@ function exampleBook(){
   const sal=add("Salary","income",{color:PAL[1]}),fre=add("Freelance","income",{color:PAL[5]});add("Other income","income",{color:PAL[7]});
   const E={};[["Rent",6000],["Groceries",1500],["Dining out",600],["Fuel & transport",700],["Electricity & water",450],["Mobile & internet",350],["Health",300],["Shopping",800],["Family support",2000],["Entertainment",300],["Loan interest",0],["Insurance",0],["Bank charges",50]]
     .forEach(([n,b],i)=>E[n]=add(n,"expense",{budget:b,color:PAL[[0,1,2,3,5,8,6,9,4,7,13,10,11][i]]}));
+  E["School fees"]=add("School fees","expense",{budget:0,color:PAL[12]});
   const ent=[];const je=(date,memo,lines,t)=>ent.push({id:uid(),date,memo,lines:lines.map(([a,dr,cr])=>({a,dr:r2(dr),cr:r2(cr)})),t:t||null});
   const ex=(d,cat,from,amt,memo)=>je(d,memo,[[E[cat],amt,0],[from,0,amt]],{type:"expense",cat:E[cat],from});
   je("2026-08-01","Opening balances",[[nbd,18500,0],[sav,42000,0],[cash,1250,0],[bilal,1500,0],[eq,0,63250]]);
@@ -347,6 +360,7 @@ function exampleBook(){
       {id:uid(),kind:"bill",name:"Car insurance",amount:2400,interest:0,dr:E["Insurance"],cr:nbd,freq:"yearly",next:"2027-03-15",left:null,chq:"",active:true}],
     pdcs:[
       {id:uid(),dir:"out",name:"Rent · Al Nahda flat",bank:nbd,other:E["Rent"],chqs:Array.from({length:12},(_,i)=>({id:uid(),no:String(120+i).padStart(6,"0"),date:iso(new Date(2026,7+i,1)),amount:6000,status:i<3?"cleared":"pending",eid:i<3?rentE[["2026-08","2026-09","2026-10"][i]]:null}))},
+      {id:uid(),dir:"out",name:"School fees · term cheques",bank:nbd,other:E["School fees"],chqs:[["004511","2027-01-05"],["004512","2027-04-05"],["004513","2027-07-05"]].map(([no,date])=>({id:uid(),no,date,amount:4500,status:"pending",eid:null}))},
       {id:uid(),dir:"in",name:"Bilal · loan repayment",bank:nbd,other:bilal,chqs:[{id:uid(),no:"551204",date:"2026-10-20",amount:1500,status:"pending",eid:null}]}],
     checks:{},holdCheck:null,dash:Object.keys(WIDGETS).map(id=>({id,on:true}))};
   S=B;const cb=bal(cash);B.checks[cash]={actual:r2(cb-70),date:"2026-10-10"};
@@ -437,24 +451,36 @@ function render(){
 }
 
 /* Home */
+const ICON_EYE='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
+const ICON_EYE_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+let COL=new Set();try{COL=new Set(JSON.parse(ls.get("tapledger.collapsed")||"[]"))}catch(e){}
+function saveCol(){ls.set("tapledger.collapsed",JSON.stringify([...COL]))}
+const ICON_EYE_OPEN='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EYE_SHUT='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.9 3.9M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>';
+const hideBal=()=>ls.get("tapledger.hidebal")==="1";
 function pHome(){
-  const ws=S.dash.filter(d=>d.on).map(d=>W[d.id]()).join("");
+  const shown=S.dash.filter(d=>d.on);
+  const ws=shown.map(d=>{const c=COL.has(d.id);
+    const btn=`<button class="cbtn" data-act="collapse" data-w="${d.id}" aria-expanded="${!c}" aria-label="${c?"Show":"Hide"} ${esc(WIDGETS[d.id])}" title="${c?"Show card":"Hide card"}">${c?ICON_EYE_OFF:ICON_EYE}</button>`;
+    return W[d.id]().replace('<section class="card','<section data-w="'+d.id+'" class="card'+(c?" collapsed":"")).replace("</h3>",btn+"</h3>")}).join("");
+  const anyCol=shown.some(d=>COL.has(d.id));
   return `<div class="ph"><h1>Overview</h1>${monthNav()}</div><div class="stack">${ws||'<div class="card empty">All dashboard cards are hidden. Turn them on in Manage → Dashboard.</div>'}
-  <div style="text-align:center"><button class="link" data-act="go" data-p="settings" data-t="dash">Arrange dashboard</button></div></div>`;
+  <div style="text-align:center"><button class="link" data-act="go" data-p="settings" data-t="dash">Arrange dashboard</button>${shown.length?` · <button class="link" data-act="collapseAll" data-v="${anyCol?"show":"hide"}">${anyCol?"Show all cards":"Hide all cards"}</button>`:""}</div></div>`;
 }
 const W={
   hold(){
+    const HB=hideBal(),hm=(n,cls)=>HB?`<span class="num masked" aria-label="hidden"><span class="cur">${esc(S.currency)}</span>••••••</span>`:money(n,cls);
     const liq=r2(liquidAccs().reduce((s,a)=>s+bal(a.id),0));
     const cashA=byGrp("cash");const cashBal=r2(cashA.reduce((s,a)=>s+bal(a.id),0));
     let actual=null,checked=0;
     for(const a of liquidAccs()){const c=S.checks[a.id];if(c&&c.actual!==""&&c.actual!=null){actual=(actual||0)+ +c.actual;checked++}else{actual=(actual||0)+bal(a.id)}}
     if(S.holdCheck&&S.holdCheck.actual!=null&&S.holdCheck.actual!==""){actual=+S.holdCheck.actual;checked=1}
     const diff=checked?r2(actual-liq):null;
-    const chip=diff==null?`<span class="chip n">Not checked yet</span>`:Math.abs(diff)<0.005?`<span class="chip ok">Matches</span>`:`<span class="chip ${diff<0?"bad":"w"}">${diff<0?"Missing ":"Extra "}${f2(Math.abs(diff))}</span>`;
-    return `<section class="card"><h3>What I hold <span class="sp"><button class="link" data-act="recon">Check balances</button></span></h3>
-    <div class="hero"><div><div class="lbl">App balance · bank + cash</div><div class="big">${money(liq)}</div></div>
-    <div><div class="lbl">Cash in hand</div><div class="big">${money(cashBal)}</div></div></div>
-    <div class="kv" style="margin-top:10px"><span class="muted">My figure</span><b>${checked?money(actual):'<span class="muted">—</span>'}</b></div>
+    const chip=diff==null?`<span class="chip n">Not checked yet</span>`:Math.abs(diff)<0.005?`<span class="chip ok">Matches</span>`:`<span class="chip ${diff<0?"bad":"w"}">${diff<0?"Missing ":"Extra "}${HB?"••••":f2(Math.abs(diff))}</span>`;
+    return `<section class="card"><h3>What I hold <button class="eyebtn" data-act="hideBal" aria-pressed="${HB}" aria-label="${HB?"Show":"Hide"} balances" title="${HB?"Show":"Hide"} balances">${HB?ICON_EYE_SHUT:ICON_EYE_OPEN}</button><span class="sp"><button class="link" data-act="recon">Check balances</button></span></h3>
+    <div class="hero"><div><div class="lbl">App balance · bank + cash</div><div class="big">${hm(liq)}</div></div>
+    <div><div class="lbl">Cash in hand</div><div class="big">${hm(cashBal)}</div></div></div>
+    <div class="kv" style="margin-top:10px"><span class="muted">My figure</span><b>${checked?hm(actual):'<span class="muted">—</span>'}</b></div>
     <div class="kv"><span class="muted">Difference</span>${chip}</div>
     ${diff&&Math.abs(diff)>=0.005?`<p class="lbl" style="margin:6px 0 0">${diff<0?"You hold less than the app shows. A spend may be unrecorded.":"You hold more than the app shows. An income or refund may be unrecorded."}</p>`:""}</section>`;
   },
@@ -511,6 +537,7 @@ const W={
     const rows=ps.map(x=>`<button class="row" data-act="openLed" data-id="${x.a.id}">${dot(x.a.color)}<span class="t"><b>${esc(x.a.name)}</b><small>${x.b>0?"Owes you":"You owe"}</small></span><span class="r">${money(Math.abs(x.b),x.b>0?"pos":"neg")}</span></button>`).join("");
     return `<section class="card"><h3>Receivables & payables</h3><div class="hero"><div><div class="lbl">To receive</div><div class="big pos">${money(rec)}</div></div><div><div class="lbl">To pay</div><div class="big neg">${money(pay)}</div></div></div><div class="rows" style="margin-top:6px">${rows||'<p class="empty">Nobody owes anything right now.</p>'}</div></section>`;
   },
+  chqsave(){return chequePlanCard(false)},
   upcoming(){
     const lim=addDays(today(),45);
     const list=S.schedules.filter(s=>s.active&&s.next<=lim).map(s=>({d:s.next,h:schedRow(s)})).concat(S.pdcs.flatMap(p=>p.chqs.filter(c=>c.status==="pending"&&c.date<=lim).map(c=>({d:c.date,h:chqRow(p,c)})))).sort((a,b)=>a.d<b.d?-1:1).slice(0,7).map(x=>x.h);
@@ -640,6 +667,7 @@ function pSettings(){
   }else{
     body=`<div class="stack"><div class="card"><h3>Where your data lives</h3><p style="margin:0">Saved privately on this phone only. Nobody else can see it, and it is not uploaded anywhere. If the app is deleted, its data goes with it, so keep Excel backups.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
+    ${gsCard()}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     <div class="field" style="max-width:260px"><label for="bkFreq">${NATIVE?"Back up automatically":"Remind me to back up"}</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Daily"],["weekly","Weekly"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>
     <p class="lbl">Last Excel backup on this device: ${BK.get().last?dLong(BK.get().last):"never"}. ${NATIVE?"Backups go to Documents/FinTrack/Backups on this phone. The last 10 are kept.":"On iPhone, tap Download and choose Save to Files, then pick a FinTrack folder."}</p>
@@ -809,6 +837,33 @@ function chqAct(pid,cid,what){const p=S.pdcs.find(x=>x.id===pid);const c=p&&p.ch
   else if(what==="bounce"){dropEntry(c.eid);c.eid=null;c.status="bounced";toast("Marked as bounced.")}
   else{dropEntry(c.eid);c.eid=null;c.status="pending";toast("Back to pending.")}
   markDirty();render()}
+/* ---------- cheque savings plan ---------- */
+function monthDiff(a,b){const [ay,am]=a.split("-").map(Number),[by,bm]=b.split("-").map(Number);return (by*12+bm)-(ay*12+am)}
+function chequePlan(){
+  const cm=today().slice(0,7),series=[];
+  for(const p of S.pdcs){if(p.dir!=="out")continue;const next=p.chqs.filter(c=>c.status==="pending").sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0)[0];
+    if(next)series.push({name:p.name,no:next.no,date:next.date,amount:r2(next.amount),bank:p.bank})}
+  for(const sc of S.schedules)if(sc.active&&sc.kind==="chqout"&&sc.next)series.push({name:sc.name,no:sc.chq||"",date:sc.next,amount:r2(sc.amount),bank:sc.cr});
+  for(const it of series){it.shares=Math.max(1,monthDiff(cm,it.date.slice(0,7)));it.monthly=r2(it.amount/it.shares);it.days=daysBetween(today(),it.date)}
+  series.sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0);
+  const banks={};for(const it of series)if(acc(it.bank))(banks[it.bank]||(banks[it.bank]=[])).push(it);
+  return Object.entries(banks).map(([bank,list])=>{const balance=bal(bank),excl=r2((S.reserve||{})[bank]||0),avail=r2(balance-excl),target=r2(list.reduce((t,x)=>t+x.monthly,0));
+    return {bank,list,balance,excl,avail,target,gap:r2(avail-target)}})
+}
+function chequePlanCard(editable){
+  const plan=chequePlan(),cm=today().slice(0,7);
+  const head=`<h3>Cheque savings · ${ymLabel(cm)}</h3>`;
+  if(!plan.length)return `<section class="card">${head}<p class="empty">No upcoming cheques you have given.</p></section>`;
+  const when=x=>x.days<0?`<span class="neg">${-x.days} days overdue</span>`:x.days===0?`<span class="warn">due today</span>`:`in ${x.days} day${x.days>1?"s":""}`;
+  const blocks=plan.map(b=>`<div class="row" style="padding-top:2px;border-bottom:0"><span class="t"><b>${esc(accName(b.bank))}</b><small>Target this month ${f2(b.target)}</small></span>${b.gap<0?`<span class="chip bad">Short ${f2(-b.gap)}</span>`:`<span class="chip ok">Target met</span>`}</div>
+    <div class="rows">${b.list.map(x=>`<div class="row"><span class="t"><b>${esc(x.name)}${x.no?` <span class="muted num" style="font-weight:400">#${esc(x.no)}</span>`:""}</b><small>Due ${dLong(x.date)} · ${when(x)}</small></span><span class="r">${money(x.amount)}<br><small class="muted">${x.shares>1?`1/${x.shares} this month · `:"full amount · "}<span class="num">${f2(x.monthly)}</span></small></span></div>`).join("")}</div>
+    <div class="kv"><span class="muted">Bank balance</span>${money(b.balance,b.balance<0?"neg":"")}</div>
+    <div class="kv"><span class="muted">Excluded savings</span><input class="inp num" style="width:120px;text-align:right" inputmode="decimal" id="rsv_${editable?"p":"h"}_${b.bank}" data-reserve="${b.bank}" value="${b.excl||""}" placeholder="0.00" aria-label="Savings to exclude from ${esc(accName(b.bank))}"></div>
+    <div class="kv"><span class="muted">Available</span>${money(b.avail,b.avail<0?"neg":"")}</div>
+    <div class="kv"><span><b>This month's target</b></span><b>${money(b.target)}</b></div>
+    <div class="kv"><span><b>${b.gap<0?"Short":"Extra after target"}</b></span><b>${money(Math.abs(b.gap),b.gap<0?"neg":"pos")}</b></div>`).join('<div style="border-top:2px solid var(--line);margin:12px 0 8px"></div>');
+  return `<section class="card">${head}<p class="lbl" style="margin:-4px 0 4px">The next cheque of each set, split equally over the months left before its month.</p>${blocks}</section>`;
+}
 function pdcTab(){
   const lim=addDays(today(),30);const pend=S.pdcs.flatMap(p=>p.chqs.filter(c=>c.status==="pending").map(c=>({p,c})));
   const sum=l=>r2(l.reduce((s,x)=>s+(+x.c.amount||0),0));
@@ -817,7 +872,7 @@ function pdcTab(){
     return `<div class="kv"><span>${esc(accName(id))}<div class="lbl">Now ${f2(b)} · out ${f2(o)} · in ${f2(i)}</div></span>${after<0?`<span class="chip bad">Short by ${f2(-after)}</span>`:money(after)}</div>`}).join("");
   const sets=S.pdcs.map(p=>{const n=p.chqs.length,cl=p.chqs.filter(c=>c.status==="cleared").length,open=U.pdcOpen===p.id;const sorted=p.chqs.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);const shown=open?sorted:sorted.filter(c=>c.status==="pending").slice(0,3);
     return `<div class="card"><div class="row" style="padding-top:0"><span class="t"><b>${esc(p.name)}</b><small>${p.dir==="out"?"Given":"Received"} · ${esc(accName(p.bank))} · ${cl} of ${n} cleared · ${money(sum(p.chqs.filter(c=>c.status==="pending").map(c=>({c}))))} pending</small></span><button class="btn sm" data-act="editPdc" data-id="${p.id}">Edit</button></div><div class="rows">${shown.map(c=>chqRow(p,c,true)).join("")||'<p class="empty">No pending cheques in this set.</p>'}</div>${n>shown.length||open?`<button class="link" data-act="pdcOpen" data-id="${p.id}">${open?"Show pending only":"Show all "+n+" cheques"}</button>`:""}</div>`}).join("");
-  return `<div class="card"><div class="hero"><div><div class="lbl">PDCs given · pending</div><div class="big neg">${money(tOut)}</div></div><div><div class="lbl">PDCs received · pending</div><div class="big pos">${money(tIn)}</div></div></div>${bk?`<div class="fl" style="margin-top:14px">Bank after cheques due in 30 days</div>${bk}`:""}</div>
+  return chequePlanCard(true)+`<div class="card" style="margin-top:12px"><div class="hero"><div><div class="lbl">PDCs given · pending</div><div class="big neg">${money(tOut)}</div></div><div><div class="lbl">PDCs received · pending</div><div class="big pos">${money(tIn)}</div></div></div>${bk?`<div class="fl" style="margin-top:14px">Bank after cheques due in 30 days</div>${bk}`:""}</div>
   <div class="grp"><span>Cheque sets</span><button class="link" data-act="editPdc">+ Add PDCs</button></div><div class="stack">${sets||'<div class="card empty">No post-dated cheques yet. Add the cheques you have given or received.</div>'}</div>
   <p class="lbl" style="margin:10px 2px">A PDC stays out of your balances until you mark it Cleared; then it posts to the ledger on the cheque date. Bounced or Undo removes that posting.</p>`;
 }
@@ -977,8 +1032,59 @@ async function autoBackupNative(){
     const names=(r.files||[]).map(f=>typeof f==="string"?f:f.name).filter(n=>/^FinTrack-backup-\d{4}-\d\d-\d\d\.xlsx$/.test(n)).sort().reverse();
     for(const n of names.slice(10))await CP.Filesystem.deleteFile({path:"FinTrack/Backups/"+n,directory:"DOCUMENTS"})}catch(e){}
   if(U.page==="home"||U.page==="settings")render()}
+/* ---------- Google Sheets live copy (one-way: app → your sheet) ---------- */
+const GS={get(){try{return JSON.parse(ls.get("tapledger.gsync")||"null")}catch(e){return null}},set(v){ls.set("tapledger.gsync",JSON.stringify(v))}};
+const GS_URL_RE=/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+let gsBusy=false,gsAgain=false;
+async function gsCall(cfg,body){
+  const ctl=window.AbortController?new AbortController():null;const tm=ctl?setTimeout(()=>ctl.abort(),45000):null;
+  let r,t;try{r=await fetch(cfg.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({key:cfg.key},body)),redirect:"follow",signal:ctl?ctl.signal:undefined});t=await r.text()}
+  catch(e){throw new Error(e&&e.name==="AbortError"?"Google took too long to answer. Try again.":"Could not reach Google. Check your internet connection.")}
+  finally{if(tm)clearTimeout(tm)}
+  let o;try{o=JSON.parse(t)}catch(e){throw new Error(/accounts\.google|ServiceLogin|<html/i.test(t)?"Google asked for sign-in. In the script's deployment, set Who has access to Anyone.":"That link did not answer like the FinTrack sync script.")}
+  if(!o.ok)throw new Error(o.error||"Sync failed.");return o}
+function sheetTables(){
+  const t=totals(),nw=r2(sumKind(t,"asset")-sumKind(t,"liability"));
+  const liq=r2(liquidAccs().reduce((s,a)=>s+bal(a.id),0)),cash=r2(byGrp("cash").reduce((s,a)=>s+bal(a.id),0));
+  const ps=S.accounts.filter(a=>a.grp==="party").map(a=>bal(a.id)),rec=r2(ps.filter(v=>v>0).reduce((a,b)=>a+b,0)),pay=r2(-ps.filter(v=>v<0).reduce((a,b)=>a+b,0));
+  const k=today().slice(0,7),tm=totals(inMonth(k)),inc=sumKind(tm,"income"),exp=sumKind(tm,"expense");
+  const stamp=new Date().toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  const dash=[["FinTrack · live copy",""],["Last updated",stamp],["Currency",S.currency],["",""],["Net worth",nw],["Bank + cash",liq],["Cash in hand",cash],["To receive",rec],["To pay",pay],["",""],["This month",ymLabel(k)],["Income",inc],["Expenses",exp],["Net",r2(inc-exp)]];
+  const A=[["Account","Type","Group","Balance","Hidden"]].concat(GROUPS.flatMap(g=>S.accounts.filter(a=>a.grp===g.k).map(a=>[a.name,a.kind,g.label,bal(a.id),a.archived?"Yes":""])));
+  const J=[["Date","Entry no","Account","Debit","Credit","Note"]];let n=0;
+  S.entries.slice().sort(asc).forEach(e=>{n++;e.lines.forEach(l=>J.push([e.date,n,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",e.memo||""]))});
+  const ms=[...new Set(S.entries.map(e=>e.date.slice(0,7)))].sort();
+  const M=[["Month","Income","Expenses","Net","Saved"]].concat(ms.map(m=>{const x=totals(inMonth(m)),i=sumKind(x,"income"),ex=sumKind(x,"expense");return [ymLabel(m),i,ex,r2(i-ex),i>0?Math.round((i-ex)/i*100)+"%":""]}));
+  const B=[["Category","Monthly budget","Spent "+ymLabel(k),"Left"]].concat(S.accounts.filter(a=>a.kind==="expense"&&a.budget>0).map(a=>{const sp=tm[a.id]?r2(tm[a.id].dr-tm[a.id].cr):0;return [a.name,a.budget,sp,r2(a.budget-sp)]}));
+  const P=[["Name","Type","Amount","Repeats","Next due","Payments left","Cheque no","Status"]].concat(S.schedules.map(x=>[x.name,KIND[x.kind],r2(x.amount),freqLabel(x),x.next,x.left==null?"":x.left,x.chq||"",x.active?"Active":"Finished"]));
+  const PD=[["Cheque set","Given / received","Bank","For","Cheque no","Date","Amount","Status"]].concat(S.pdcs.flatMap(p=>p.chqs.slice().sort(asc).map(c=>[p.name,p.dir==="out"?"Given":"Received",accName(p.bank),accName(p.other),c.no,c.date,r2(c.amount),c.status])));
+  return [{name:"Dashboard",rows:dash,numCols:[1],header:false},{name:"Accounts",rows:A,numCols:[3]},{name:"Journal",rows:J,numCols:[3,4],dateCols:[0]},{name:"Monthly",rows:M,numCols:[1,2,3]},{name:"Budgets",rows:B,numCols:[1,2,3]},{name:"Plans",rows:P,numCols:[2],dateCols:[4]},{name:"PDCs",rows:PD,numCols:[6],dateCols:[5]}];
+}
+async function gsPush(manual){
+  const cfg=GS.get();if(!cfg||!cfg.url)return;
+  if(S.demo){if(manual)toast("Start with your own data first. Example data is not synced.");return}
+  if(gsBusy){gsAgain=true;return}
+  if(navigator.onLine===false){cfg.dirty=true;cfg.err="Offline. Syncs automatically when you are back online.";GS.set(cfg);if(manual)toast(cfg.err);return}
+  gsBusy=true;if(manual)toast("Updating Google Sheet…");
+  try{await gsCall(cfg,{action:"push",tables:sheetTables(),book:JSON.stringify(S)});const c=GS.get()||cfg;c.last=new Date().toISOString();c.err="";c.dirty=false;GS.set(c);if(manual)toast("Google Sheet updated")}
+  catch(e){const c=GS.get()||cfg;c.err=e.message;c.dirty=true;GS.set(c);if(manual)toast("Sync failed: "+e.message)}
+  gsBusy=false;if(U.page==="settings"&&U.setTab==="data")render();
+  if(gsAgain){gsAgain=false;gsPush()}}
+function gsMarkDirty(){const c=GS.get();if(c&&c.url){c.dirty=true;GS.set(c)}}
+function gsCard(){const c=GS.get();
+  if(!c||!c.url)return `<div class="card"><h3>Google Sheets · live copy</h3><p class="lbl" style="margin-top:-4px">Keep an always up-to-date copy of your book in your own Google Sheet. FinTrack updates it every time you press Save. One-time setup, about 5 minutes: README, Part E.</p>
+    <div class="field"><label for="gsUrl">Sync link (Web app URL)</label><input class="inp" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="field" style="margin-top:8px"><label for="gsKey">Sync code</label><input class="inp" id="gsKey" placeholder="The SYNC_CODE you set in the script" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="acts" style="justify-content:flex-start;margin-top:10px"><button class="btn pri" data-act="gsConnect" id="gsConnectBtn">Connect</button></div></div>`;
+  const st=gsBusy?'<span class="chip n">Syncing…</span>':c.err?'<span class="chip bad">Not synced</span>':c.last&&!c.dirty?'<span class="chip ok">Up to date</span>':'<span class="chip w">Waiting</span>';
+  const when=c.last?new Date(c.last).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
+  return `<div class="card"><h3>Google Sheets · live copy<span class="sp">${st}</span></h3>
+    <div class="kv"><span class="muted">Sheet</span><b>${esc(c.name||"Connected")}</b></div><div class="kv"><span class="muted">Last update</span><b>${esc(when)}</b></div>
+    ${c.err?`<p class="err">${esc(c.err)}</p>`:""}
+    <p class="lbl">Updates after every Save. The app is the master copy: edits typed into the Google Sheet are replaced on the next sync.</p>
+    <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="gsSync">Sync now</button><button class="btn" data-act="gsPull" id="gsPullBtn">Restore from sheet</button><button class="btn ghost danger" data-act="gsOff" id="gsOffBtn">Disconnect</button></div></div>`}
 function installUrl(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"install.html"}
-function afterSave(){if(NATIVE)autoBackupNative()}
+function afterSave(){if(NATIVE)autoBackupNative();gsMarkDirty();gsPush()}
 function accountStatementSheet(a,from,to){
   const sg=SIGN[a.kind];const open=bal(a.id,before(from));let run=open,td=0,tc=0;
   const list=S.entries.filter(e=>e.date>=from&&e.date<=to&&e.lines.some(l=>l.a===a.id)).sort(asc);
@@ -1049,7 +1155,7 @@ function backupWorkbook(){
   const PD=[["Set ID","Name","Direction","Bank","For","Cheque no","Date","Amount","Status","Data"]];
   S.pdcs.forEach(p=>p.chqs.forEach((c,i)=>PD.push([p.id,p.name,p.dir==="out"?"Given":"Received",accName(p.bank),accName(p.other),c.no,c.date,r2(c.amount),c.status,i===0?JSON.stringify(p):""])));
   XLSX.utils.book_append_sheet(wb,sheet(PD,{from:1,dates:[6],nums:[7],widths:[12,26,10,22,22,11,13,14,10,20]}),"PDCs");
-  const St=[["Key","Value"],["currency",JSON.stringify(S.currency)],["dash",JSON.stringify(S.dash)],["checks",JSON.stringify(S.checks)],["holdCheck",JSON.stringify(S.holdCheck)]];
+  const St=[["Key","Value"],["currency",JSON.stringify(S.currency)],["dash",JSON.stringify(S.dash)],["checks",JSON.stringify(S.checks)],["holdCheck",JSON.stringify(S.holdCheck)],["reserve",JSON.stringify(S.reserve||{})]];
   XLSX.utils.book_append_sheet(wb,sheet(St,{widths:[14,60]}),"Settings");
   return wb;
 }
@@ -1069,12 +1175,12 @@ function bookFromWorkbook(wb){
   B.entries=[...map.values()].filter(e=>ISO_RE.test(e.date)&&e.lines.length>=2);
   B.schedules=P.map(r=>{try{return JSON.parse(r.Data)}catch(x){return null}}).filter(Boolean);
   B.pdcs=(rows("PDCs")||[]).map(r=>{if(!r.Data)return null;try{return JSON.parse(r.Data)}catch(x){return null}}).filter(Boolean);
-  for(const r of St){try{if(["currency","dash","checks","holdCheck"].includes(r.Key))B[r.Key]=JSON.parse(r.Value)}catch(x){}}
+  for(const r of St){try{if(["currency","dash","checks","holdCheck","reserve"].includes(r.Key))B[r.Key]=JSON.parse(r.Value)}catch(x){}}
   return B;
 }
 async function restoreExcel(file){
   if(!file||!needXLSX())return;
-  try{const buf=await file.arrayBuffer();const B=bookFromWorkbook(XLSX.read(buf,{type:"array"}));S=B;S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entries. Press Save to keep them.`)}
+  try{const buf=await file.arrayBuffer();const B=bookFromWorkbook(XLSX.read(buf,{type:"array"}));S=B;S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"}. Press Save to keep them.`)}
   catch(e){toast("That file is not a FinTrack Excel backup.")}
 }
 
@@ -1122,15 +1228,35 @@ const ACT={
   pcAdd(){const last=PF.chqs[PF.chqs.length-1];PF.chqs.push({id:uid(),no:last?nextNo(last.no,1):"",date:last?stepDate(last.date,PF.gen.every,PF.gen.unit):today(),amount:last?last.amount:"",status:"pending",eid:null});renderPdc()},
   pcDel(el){const c=PF.chqs.splice(+el.dataset.i,1)[0];if(c&&c.eid)PF.removed.push(c.eid);renderPdc()},
   delPdc(){if(!armed("delPdcBtn"))return;S.pdcs=S.pdcs.filter(x=>x.id!==PF.id);closeSheet();PF=null;markDirty();render();toast("Cheque set deleted.")},
+  cpOpen(el){U.cpOpen=U.cpOpen===el.dataset.id?null:el.dataset.id;render()},
+  goPdc(){U.page="plans";U.plansTab="pdc";render();scrollTo(0,0)},
   pdcOpen(el){U.pdcOpen=U.pdcOpen===el.dataset.id?null:el.dataset.id;render()},
   chq(el){chqAct(el.dataset.pd,el.dataset.c,el.dataset.w)},
   calDay(el){U.calDay=el.dataset.day;render()},
+  collapse(el){const id=el.dataset.w;if(COL.has(id))COL.delete(id);else COL.add(id);saveCol();const sec=el.closest("section");
+    if(sec){const c=COL.has(id);sec.classList.toggle("collapsed",c);el.innerHTML=c?ICON_EYE_OFF:ICON_EYE;el.setAttribute("aria-expanded",String(!c));el.title=c?"Show card":"Hide card";el.setAttribute("aria-label",(c?"Show ":"Hide ")+WIDGETS[id]);
+      const all=document.querySelector('[data-act="collapseAll"]');if(all){const any=S.dash.some(d=>d.on&&COL.has(d.id));all.dataset.v=any?"show":"hide";all.textContent=any?"Show all cards":"Hide all cards"}}else render()},
+  hideBal(){ls.set("tapledger.hidebal",hideBal()?"0":"1");render()},
+  collapseAll(el){if(el.dataset.v==="hide")S.dash.forEach(d=>{if(d.on)COL.add(d.id)});else COL.clear();saveCol();render()},
   calMode(el){U.calMode=el.dataset.t;render()},
   trendMode(el){U.trend=el.dataset.t;ls.set("tapledger.trend",U.trend);render()},
   newOn(el){F=newForm();F.date=el.dataset.day;renderForm()},
   dlStmt(el){openDl(el.dataset.id)},
   dlPreset(el){DF.preset=el.dataset.k;if(el.dataset.k!=="custom"){const [f,t]=presetRange(el.dataset.k);DF.from=f;DF.to=t}DF.err="";renderDl()},
   xlBackup(){doBackup()},
+  async gsConnect(){const url=($("#gsUrl").value||"").trim(),key=($("#gsKey").value||"").trim();
+    if(!GS_URL_RE.test(url)){toast("Paste the Web app URL. It starts with https://script.google.com/macros/s/ and ends with /exec");return}
+    if(key.length<6){toast("Type the sync code you set in the script.");return}
+    const b=$("#gsConnectBtn");b.disabled=true;b.textContent="Connecting…";
+    try{const o=await gsCall({url,key},{action:"ping"});GS.set({url,key,name:o.name||"Google Sheet",last:null,err:"",dirty:true});render();
+      if(S.demo)toast("Connected. Your own data will sync after you start your book and press Save.");else{toast("Connected to "+(o.name||"your sheet"));gsPush(true)}}
+    catch(e){toast("Could not connect: "+e.message);b.disabled=false;b.textContent="Connect"}},
+  gsSync(){gsPush(true)},
+  async gsPull(){if(!armed("gsPullBtn"))return;const c=GS.get();if(!c)return;toast("Fetching your book from Google…");
+    try{const o=await gsCall(c,{action:"pull"});const B=JSON.parse(o.book);if(!B||!Array.isArray(B.accounts)||!Array.isArray(B.entries))throw new Error("The sheet's FinTrack copy is damaged.");
+      S=Object.assign(blankBook(),B);S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"} from Google Sheets. Press Save to keep them.`)}
+    catch(e){toast("Restore failed: "+e.message);render()}},
+  gsOff(){if(!armed("gsOffBtn"))return;ls.set("tapledger.gsync","null");render();toast("Disconnected. Your Google Sheet keeps its last copy.")},
   copyInstall(){const u=installUrl();try{navigator.clipboard.writeText(u).then(()=>toast("Link copied"),()=>toast(u))}catch(e){toast(u)}},
   wipe(){if(!armed("wipeBtn"))return;S=blankBook();markDirty();render();toast("Cleared. Press Save to make it permanent.")}
 };
@@ -1154,6 +1280,7 @@ document.addEventListener("input",ev=>{const t=ev.target;
 });
 document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="xlRestore"){restoreExcel(t.files&&t.files[0]);t.value=""}
+  else if(t.dataset.reserve){S.reserve=S.reserve||{};const v=r2(t.value);if(v>0)S.reserve[t.dataset.reserve]=v;else delete S.reserve[t.dataset.reserve];markDirty();render()}
   else if(t.dataset.bk!=null){const b=BK.get();b.freq=t.value;BK.set(b);render()}
   else if(t.dataset.rep!=null&&SF){applyRep(SF,t.value);renderSched()}
   else if(t.dataset.pgrep!=null&&PF){applyRep(PF.gen,t.value);renderPdc()}
@@ -1190,7 +1317,10 @@ addEventListener("beforeunload",ev=>{if(dirty){ev.preventDefault();ev.returnValu
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
 
 /* ---------- phone lifecycle ---------- */
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"&&dirty&&!saving&&!S.demo){ls.set("tapledger.v1",JSON.stringify(S));dirty=false;paintTop()}});
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&dirty&&!saving&&!S.demo){ls.set("tapledger.v1",JSON.stringify(S));dirty=false;paintTop();gsMarkDirty()}
+  if(document.visibilityState==="visible"){const c=GS.get();if(c&&c.url&&c.dirty&&!dirty)gsPush()}});
+addEventListener("online",()=>{const c=GS.get();if(c&&c.url&&c.dirty&&!dirty)gsPush()});
 if(!NATIVE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
