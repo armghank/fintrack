@@ -5,5 +5,15 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#f3f5f8"
+  },
+  "plugins": {
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": false,
+        "twitter": false
+      }
+    }
   }
 }

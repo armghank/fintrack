@@ -181,6 +181,29 @@ textarea.inp{min-height:110px;font-family:var(--f-num);font-size:12px}
 .rec input{width:118px;text-align:right;font-family:var(--f-num)}
 .ph{flex-wrap:wrap}
 .ttwrap{position:relative}
+button.store{border:0;background:none;margin:0;padding:4px 6px;border-radius:7px;font-family:inherit;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw}
+button.store:hover{background:var(--surface2)}
+.store.warn{color:var(--warn)}.store.ok{color:var(--pos)}
+.login{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.lg-in{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.lg-mark{width:76px;height:76px;border-radius:22px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-family:var(--f-num);font-weight:500;font-size:30px;box-shadow:var(--shadow)}
+.lg-in h1{margin:6px 0 0;font-size:30px;letter-spacing:-.02em}
+.lg-sub{margin:0;color:var(--muted)}
+.gbtn{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:12px;padding:14px 16px;font-weight:600;font-size:16px;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.gbtn:hover{border-color:var(--accent)}
+.gbtn:disabled{opacity:.6;cursor:default}
+.lg-msg{min-height:20px;margin:0;font-size:14px;color:var(--muted)}
+.lg-msg.err{color:var(--neg)}
+.lg-points{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:13.5px;color:var(--muted);width:100%}
+.lg-points li{display:flex;gap:9px}
+.lg-points li::before{content:"✓";color:var(--pos);font-weight:700;flex:none}
+a.btn{text-decoration:none;color:inherit}a.btn.pri{color:var(--accent-fg)}
+.acct{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.acct .t{min-width:0}.acct .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.acct .t small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
+.av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:18px;position:relative;overflow:hidden;flex:none}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scrim{z-index:85!important}
+.toast{z-index:95!important}
 .card h3 .eyebtn{border:0;background:transparent;color:var(--muted);width:28px;height:24px;border-radius:7px;display:inline-grid;place-items:center;padding:0;margin-left:2px}
 .card h3 .eyebtn:hover{background:var(--surface2);color:var(--fg)}
 .card h3 .eyebtn[aria-pressed="true"]{color:var(--accent)}
@@ -232,7 +255,7 @@ svg circle.tt:focus-visible{stroke-width:22}
 <div class="shell" id="app">
   <header class="top" id="top">
     <div class="brand"><i>FT</i>FinTrack</div>
-    <span class="store" id="store"></span>
+    <button class="store" id="store" data-act="gStatus" aria-label="Backup status"></button>
     <button class="btn pri savebtn" id="saveBtn" data-act="save"><span class="dot"></span>Save</button>
     <button class="btn icon" id="themeBtn" data-act="theme" aria-label="Switch light or dark mode"></button>
   </header>
@@ -248,6 +271,20 @@ svg circle.tt:focus-visible{stroke-width:22}
     <button data-act="go" data-p="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Manage</button>
   </div>
 </nav>
+<div class="login" id="login" hidden>
+  <div class="lg-in">
+    <div class="lg-mark" aria-hidden="true">FT</div>
+    <h1>FinTrack</h1>
+    <p class="lg-sub">Your money, in double entry. Private to you.</p>
+    <button class="gbtn" id="gLoginBtn" data-act="gLogin">Continue with Google</button>
+    <p class="lg-msg" id="loginMsg" role="status" aria-live="polite"></p>
+    <ul class="lg-points">
+      <li>Backs up to a FinTrack folder in your own Google Drive every time you save.</li>
+      <li>FinTrack can only see the files it creates. Nobody else sees your data.</li>
+      <li>Works offline after you sign in.</li>
+    </ul>
+  </div>
+</div>
 <div id="sheetRoot"></div>
 <div id="toastRoot"></div>
 
@@ -379,8 +416,8 @@ function sumKind(t,kind){let s=0;for(const a of S.accounts)if(a.kind===kind&&t[a
 
 /* ---------- persistence ---------- */
 function markDirty(){dirty=true;paintTop()}
-function storeLabel(){return mode==="loading"?"Opening…":"On this phone"}
-function paintTop(){const b=$("#saveBtn");b.classList.toggle("dirty",dirty);b.lastChild.textContent=saving?"Saving…":"Save";b.disabled=saving;$("#store").textContent=storeLabel();
+function storeLabel(){return gStatus()[0]}
+function paintTop(){const b=$("#saveBtn");b.classList.toggle("dirty",dirty);b.lastChild.textContent=saving?"Saving…":"Save";b.disabled=saving;{const st=gStatus(),el=$("#store");el.textContent=st[0];el.className="store "+st[1]}
   $("#themeBtn").innerHTML=isDark()?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'}
 function settingsPayload(){const {entries,...rest}=S;return rest}
 function monthsMap(){const m={};for(const e of S.entries){(m[e.date.slice(0,7)]||(m[e.date.slice(0,7)]=[])).push(e)}return m}
@@ -446,7 +483,7 @@ function daysLeftInMonth(k){const t=today();if(t.slice(0,7)!==k)return 0;return 
 function render(){
   document.querySelectorAll(".nav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
   const m=$("#main");
-  m.innerHTML=(U.page==="home"&&backupDue()?`<div class="banner"><p><b>Excel backup due.</b> Keep a copy of your book on this device.</p><button class="btn sm pri" data-act="xlBackup">Download backup</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing is kept until you press Save.</p><button class="btn sm" data-act="fresh">Start with my own data</button></div>`:"")+
+  m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing is kept until you press Save.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
     ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings}[U.page])();
 }
 
@@ -665,13 +702,12 @@ function pSettings(){
     body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off and move them up or down.</p>${S.dash.map((d,i)=>`<div class="wl"><input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Move up">↑</button><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="1" ${i===S.dash.length-1?"disabled":""} aria-label="Move down">↓</button></div>`).join("")}</div>
     <div class="card" style="margin-top:12px"><div class="field"><label for="cur">Currency label</label><input class="inp" id="cur" data-cur value="${esc(S.currency)}" maxlength="5" style="max-width:120px"></div></div>`;
   }else{
-    body=`<div class="stack"><div class="card"><h3>Where your data lives</h3><p style="margin:0">Saved privately on this phone only. Nobody else can see it, and it is not uploaded anywhere. If the app is deleted, its data goes with it, so keep Excel backups.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p></div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
-    ${gsCard()}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
-    <div class="field" style="max-width:260px"><label for="bkFreq">${NATIVE?"Back up automatically":"Remind me to back up"}</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Daily"],["weekly","Weekly"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>
-    <p class="lbl">Last Excel backup on this device: ${BK.get().last?dLong(BK.get().last):"never"}. ${NATIVE?"Backups go to Documents/FinTrack/Backups on this phone. The last 10 are kept.":"On iPhone, tap Download and choose Save to Files, then pick a FinTrack folder."}</p>
-    <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="xlBackup">${NATIVE?"Back up now":"Download Excel backup"}</button><label class="btn" for="xlRestore" tabindex="0">Restore from Excel backup</label><input type="file" id="xlRestore" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div></div>
+    ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
+    <p class="lbl">Last Excel backup on this device: ${BK.get().last?dLong(BK.get().last):"never"}. ${NATIVE?"Saved automatically every time you press Save, into Documents/FinTrack/Backups. These files stay on the phone even if FinTrack is uninstalled. The last 30 days are kept.":(IOS?"Tap Save copy to Files and pick a folder, ideally iCloud Drive. That copy survives even if the app is deleted.":"Downloaded copies stay in your Downloads folder even if the app is removed.")}</p>
+    <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="xlBackup">${NATIVE?"Back up now":IOS?"Save copy to Files":"Download Excel backup"}</button><label class="btn" for="xlRestore" tabindex="0">Restore from Excel backup</label><input type="file" id="xlRestore" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div></div>
     <div class="card"><h3>Quick text backup</h3><p class="lbl" style="margin-top:-4px">Copies the whole book as text. Paste it into a note or email to keep a copy.</p><button class="btn" data-act="copyBackup">Copy backup</button></div>
     <div class="card"><h3>Restore from text</h3><textarea class="inp" id="restoreTxt" placeholder="Paste a backup here"></textarea><div class="acts"><button class="btn" data-act="restore">Restore from backup</button></div></div>
     <div class="card"><h3>Start over</h3><p class="lbl" style="margin-top:-4px">Clears every entry and plan and keeps the default categories. Press Save afterwards to make it permanent.</p><button class="btn danger" data-act="wipe" id="wipeBtn">Clear everything</button></div></div>`;
@@ -1024,67 +1060,15 @@ async function offerWorkbook(wb,filename,opt){opt=opt||{};const folder=opt.folde
   toast("Downloaded "+filename);return true}
 /* Android app: silent automatic Excel backups into Documents/FinTrack/Backups, keep the last 10 */
 async function autoBackupNative(){
-  if(!NATIVE||!window.XLSX||S.demo||!S.entries.length)return;const b=BK.get();if(b.freq==="off")return;
-  if(b.freq!=="save"&&b.last&&daysBetween(b.last,today())<(b.freq==="daily"?1:7))return;
+  if(!NATIVE||!window.XLSX||S.demo||!S.entries.length)return;const b=BK.get();
   const ok=await offerWorkbook(backupWorkbook(),"FinTrack-backup-"+today()+".xlsx",{folder:"Backups",silent:true});
   if(!ok)return;b.last=today();BK.set(b);backupPending=false;
   try{const r=await CP.Filesystem.readdir({path:"FinTrack/Backups",directory:"DOCUMENTS"});
     const names=(r.files||[]).map(f=>typeof f==="string"?f:f.name).filter(n=>/^FinTrack-backup-\d{4}-\d\d-\d\d\.xlsx$/.test(n)).sort().reverse();
-    for(const n of names.slice(10))await CP.Filesystem.deleteFile({path:"FinTrack/Backups/"+n,directory:"DOCUMENTS"})}catch(e){}
+    for(const n of names.slice(30))await CP.Filesystem.deleteFile({path:"FinTrack/Backups/"+n,directory:"DOCUMENTS"})}catch(e){}
   if(U.page==="home"||U.page==="settings")render()}
-/* ---------- Google Sheets live copy (one-way: app → your sheet) ---------- */
-const GS={get(){try{return JSON.parse(ls.get("tapledger.gsync")||"null")}catch(e){return null}},set(v){ls.set("tapledger.gsync",JSON.stringify(v))}};
-const GS_URL_RE=/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
-let gsBusy=false,gsAgain=false;
-async function gsCall(cfg,body){
-  const ctl=window.AbortController?new AbortController():null;const tm=ctl?setTimeout(()=>ctl.abort(),45000):null;
-  let r,t;try{r=await fetch(cfg.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({key:cfg.key},body)),redirect:"follow",signal:ctl?ctl.signal:undefined});t=await r.text()}
-  catch(e){throw new Error(e&&e.name==="AbortError"?"Google took too long to answer. Try again.":"Could not reach Google. Check your internet connection.")}
-  finally{if(tm)clearTimeout(tm)}
-  let o;try{o=JSON.parse(t)}catch(e){throw new Error(/accounts\.google|ServiceLogin|<html/i.test(t)?"Google asked for sign-in. In the script's deployment, set Who has access to Anyone.":"That link did not answer like the FinTrack sync script.")}
-  if(!o.ok)throw new Error(o.error||"Sync failed.");return o}
-function sheetTables(){
-  const t=totals(),nw=r2(sumKind(t,"asset")-sumKind(t,"liability"));
-  const liq=r2(liquidAccs().reduce((s,a)=>s+bal(a.id),0)),cash=r2(byGrp("cash").reduce((s,a)=>s+bal(a.id),0));
-  const ps=S.accounts.filter(a=>a.grp==="party").map(a=>bal(a.id)),rec=r2(ps.filter(v=>v>0).reduce((a,b)=>a+b,0)),pay=r2(-ps.filter(v=>v<0).reduce((a,b)=>a+b,0));
-  const k=today().slice(0,7),tm=totals(inMonth(k)),inc=sumKind(tm,"income"),exp=sumKind(tm,"expense");
-  const stamp=new Date().toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
-  const dash=[["FinTrack · live copy",""],["Last updated",stamp],["Currency",S.currency],["",""],["Net worth",nw],["Bank + cash",liq],["Cash in hand",cash],["To receive",rec],["To pay",pay],["",""],["This month",ymLabel(k)],["Income",inc],["Expenses",exp],["Net",r2(inc-exp)]];
-  const A=[["Account","Type","Group","Balance","Hidden"]].concat(GROUPS.flatMap(g=>S.accounts.filter(a=>a.grp===g.k).map(a=>[a.name,a.kind,g.label,bal(a.id),a.archived?"Yes":""])));
-  const J=[["Date","Entry no","Account","Debit","Credit","Note"]];let n=0;
-  S.entries.slice().sort(asc).forEach(e=>{n++;e.lines.forEach(l=>J.push([e.date,n,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",e.memo||""]))});
-  const ms=[...new Set(S.entries.map(e=>e.date.slice(0,7)))].sort();
-  const M=[["Month","Income","Expenses","Net","Saved"]].concat(ms.map(m=>{const x=totals(inMonth(m)),i=sumKind(x,"income"),ex=sumKind(x,"expense");return [ymLabel(m),i,ex,r2(i-ex),i>0?Math.round((i-ex)/i*100)+"%":""]}));
-  const B=[["Category","Monthly budget","Spent "+ymLabel(k),"Left"]].concat(S.accounts.filter(a=>a.kind==="expense"&&a.budget>0).map(a=>{const sp=tm[a.id]?r2(tm[a.id].dr-tm[a.id].cr):0;return [a.name,a.budget,sp,r2(a.budget-sp)]}));
-  const P=[["Name","Type","Amount","Repeats","Next due","Payments left","Cheque no","Status"]].concat(S.schedules.map(x=>[x.name,KIND[x.kind],r2(x.amount),freqLabel(x),x.next,x.left==null?"":x.left,x.chq||"",x.active?"Active":"Finished"]));
-  const PD=[["Cheque set","Given / received","Bank","For","Cheque no","Date","Amount","Status"]].concat(S.pdcs.flatMap(p=>p.chqs.slice().sort(asc).map(c=>[p.name,p.dir==="out"?"Given":"Received",accName(p.bank),accName(p.other),c.no,c.date,r2(c.amount),c.status])));
-  return [{name:"Dashboard",rows:dash,numCols:[1],header:false},{name:"Accounts",rows:A,numCols:[3]},{name:"Journal",rows:J,numCols:[3,4],dateCols:[0]},{name:"Monthly",rows:M,numCols:[1,2,3]},{name:"Budgets",rows:B,numCols:[1,2,3]},{name:"Plans",rows:P,numCols:[2],dateCols:[4]},{name:"PDCs",rows:PD,numCols:[6],dateCols:[5]}];
-}
-async function gsPush(manual){
-  const cfg=GS.get();if(!cfg||!cfg.url)return;
-  if(S.demo){if(manual)toast("Start with your own data first. Example data is not synced.");return}
-  if(gsBusy){gsAgain=true;return}
-  if(navigator.onLine===false){cfg.dirty=true;cfg.err="Offline. Syncs automatically when you are back online.";GS.set(cfg);if(manual)toast(cfg.err);return}
-  gsBusy=true;if(manual)toast("Updating Google Sheet…");
-  try{await gsCall(cfg,{action:"push",tables:sheetTables(),book:JSON.stringify(S)});const c=GS.get()||cfg;c.last=new Date().toISOString();c.err="";c.dirty=false;GS.set(c);if(manual)toast("Google Sheet updated")}
-  catch(e){const c=GS.get()||cfg;c.err=e.message;c.dirty=true;GS.set(c);if(manual)toast("Sync failed: "+e.message)}
-  gsBusy=false;if(U.page==="settings"&&U.setTab==="data")render();
-  if(gsAgain){gsAgain=false;gsPush()}}
-function gsMarkDirty(){const c=GS.get();if(c&&c.url){c.dirty=true;GS.set(c)}}
-function gsCard(){const c=GS.get();
-  if(!c||!c.url)return `<div class="card"><h3>Google Sheets · live copy</h3><p class="lbl" style="margin-top:-4px">Keep an always up-to-date copy of your book in your own Google Sheet. FinTrack updates it every time you press Save. One-time setup, about 5 minutes: README, Part E.</p>
-    <div class="field"><label for="gsUrl">Sync link (Web app URL)</label><input class="inp" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-    <div class="field" style="margin-top:8px"><label for="gsKey">Sync code</label><input class="inp" id="gsKey" placeholder="The SYNC_CODE you set in the script" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-    <div class="acts" style="justify-content:flex-start;margin-top:10px"><button class="btn pri" data-act="gsConnect" id="gsConnectBtn">Connect</button></div></div>`;
-  const st=gsBusy?'<span class="chip n">Syncing…</span>':c.err?'<span class="chip bad">Not synced</span>':c.last&&!c.dirty?'<span class="chip ok">Up to date</span>':'<span class="chip w">Waiting</span>';
-  const when=c.last?new Date(c.last).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
-  return `<div class="card"><h3>Google Sheets · live copy<span class="sp">${st}</span></h3>
-    <div class="kv"><span class="muted">Sheet</span><b>${esc(c.name||"Connected")}</b></div><div class="kv"><span class="muted">Last update</span><b>${esc(when)}</b></div>
-    ${c.err?`<p class="err">${esc(c.err)}</p>`:""}
-    <p class="lbl">Updates after every Save. The app is the master copy: edits typed into the Google Sheet are replaced on the next sync.</p>
-    <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="gsSync">Sync now</button><button class="btn" data-act="gsPull" id="gsPullBtn">Restore from sheet</button><button class="btn ghost danger" data-act="gsOff" id="gsOffBtn">Disconnect</button></div></div>`}
 function installUrl(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"install.html"}
-function afterSave(){if(NATIVE)autoBackupNative();gsMarkDirty();gsPush()}
+function afterSave(){bkSnooze=false;if(NATIVE)autoBackupNative();if(signedIn()&&!S.demo){GA.patch({pending:true,err:""});setTimeout(gSync,60)}}
 function accountStatementSheet(a,from,to){
   const sg=SIGN[a.kind];const open=bal(a.id,before(from));let run=open,td=0,tc=0;
   const list=S.entries.filter(e=>e.date>=from&&e.date<=to&&e.lines.some(l=>l.a===a.id)).sort(asc);
@@ -1138,9 +1122,10 @@ async function submitDl(){
   if(ok){closeSheet();DF=null;toast("Statement saved")}else if(btn){btn.disabled=false;btn.textContent="Download Excel"}
 }
 /* full Excel backup (round-trips through Restore) */
-const BK={get(){try{return Object.assign({freq:NATIVE?"save":"weekly",last:null},JSON.parse(ls.get("tapledger.backup")||"{}"))}catch(e){return{freq:NATIVE?"save":"weekly",last:null}}},set(v){ls.set("tapledger.backup",JSON.stringify(v))}};
+const BK={get(){try{return Object.assign({freq:"save",last:null},JSON.parse(ls.get("tapledger.bk")||"{}"))}catch(e){return{freq:"save",last:null}}},set(v){ls.set("tapledger.bk",JSON.stringify(v))}};
+let bkSnooze=false;
 let backupPending=false;
-function backupDue(){if(NATIVE||S.demo||!S.entries.length)return false;const b=BK.get();if(b.freq==="off")return false;if(b.freq==="save")return backupPending;if(!b.last)return true;const d=daysBetween(b.last,today());return b.freq==="daily"?d>=1:d>=7}
+function backupDue(){if(NATIVE||bkSnooze||S.demo||!S.entries.length)return false;if(signedIn()){const g=GA.get();return !!g.pending&&!!g.lastSync&&Date.now()-g.lastSync>864e5}const b=BK.get();if(b.freq==="off")return false;if(b.freq==="save")return backupPending;if(!b.last)return true;const d=daysBetween(b.last,today());return b.freq==="daily"?d>=1:d>=7}
 function backupWorkbook(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,sheet([["FinTrack backup"],["Created",dLong(today())],["Entries",S.entries.length],["Accounts",S.accounts.length],["Plans",S.schedules.length],[],
@@ -1157,11 +1142,17 @@ function backupWorkbook(){
   XLSX.utils.book_append_sheet(wb,sheet(PD,{from:1,dates:[6],nums:[7],widths:[12,26,10,22,22,11,13,14,10,20]}),"PDCs");
   const St=[["Key","Value"],["currency",JSON.stringify(S.currency)],["dash",JSON.stringify(S.dash)],["checks",JSON.stringify(S.checks)],["holdCheck",JSON.stringify(S.holdCheck)],["reserve",JSON.stringify(S.reserve||{})]];
   XLSX.utils.book_append_sheet(wb,sheet(St,{widths:[14,60]}),"Settings");
+  const js=JSON.stringify(Object.assign({},S,{demo:false})),DR=[["FinTrack data, used to restore your book exactly. Do not edit."]];
+  for(let i=0;i<js.length;i+=30000)DR.push([js.slice(i,i+30000)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(DR),"_data");
+  wb.Workbook={Sheets:wb.SheetNames.map(n=>({Hidden:n==="_data"?1:0}))};
   return wb;
 }
 async function doBackup(){if(!needXLSX())return;const ok=await offerWorkbook(backupWorkbook(),"FinTrack-backup-"+today()+".xlsx",{folder:"Backups"});
   if(ok){const b=BK.get();b.last=today();BK.set(b);backupPending=false;toast("Excel backup saved");render()}}
 function bookFromWorkbook(wb){
+  if(wb.Sheets._data){try{const R=XLSX.utils.sheet_to_json(wb.Sheets._data,{header:1,defval:""});const o=JSON.parse(R.slice(1).map(r=>String(r[0]||"")).join(""));
+    if(o&&Array.isArray(o.accounts)&&Array.isArray(o.entries)){const B=Object.assign(blankBook(),o);B.demo=false;return B}}catch(e){}}
   const rows=n=>wb.Sheets[n]?XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:""}):null;
   const A=rows("Accounts"),J=rows("Journal"),P=rows("Plans")||[],St=rows("Settings")||[];
   if(!A||!J)throw new Error("not a backup");
@@ -1183,6 +1174,209 @@ async function restoreExcel(file){
   try{const buf=await file.arrayBuffer();const B=bookFromWorkbook(XLSX.read(buf,{type:"array"}));S=B;S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"}. Press Save to keep them.`)}
   catch(e){toast("That file is not a FinTrack Excel backup.")}
 }
+
+/* ---------- Google account & Drive backup ----------
+   Sign-in is required. Data stays on the phone (works offline); every Save is uploaded to a
+   visible "FinTrack" folder in the user's own Google Drive: one "latest" file plus one per day (30 kept).
+   Web/iPhone: Google OAuth redirect (works in Home Screen apps). Android app: native Google sign-in. */
+const GOOGLE_WEB_ID="81483299774-or3u05dvqpkf89l6ir9ita0fadnn6d94.apps.googleusercontent.com";
+const DRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
+const G_SCOPES=["openid","email","profile",DRIVE_SCOPE];
+const DRV="https://www.googleapis.com/drive/v3",UPL="https://www.googleapis.com/upload/drive/v3";
+const XMIME="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const LATEST="FinTrack backup (latest).xlsx";
+const GA={get(){try{return JSON.parse(ls.get("tapledger.google")||"{}")||{}}catch(e){return{}}},set(v){ls.set("tapledger.google",JSON.stringify(v))},patch(p){const v=Object.assign(GA.get(),p);GA.set(v);return v}};
+function deviceId(){let d=ls.get("tapledger.device");if(!d){d=uid()+uid();ls.set("tapledger.device",d)}return d}
+const signedIn=()=>!!GA.get().user;
+const tokenOk=()=>{const g=GA.get();return !!g.token&&g.exp>Date.now()+60000};
+let gBusy=false,gAgain=false,gRedirect=null,gLastCheck=0;
+function gErr(msg,extra){return Object.assign(new Error(msg),extra||{})}
+function gErrText(code){return ({access_denied:"Sign-in was cancelled.",drive_denied:"FinTrack needs permission to save backups in your Google Drive. Tap Continue with Google again and tick the Google Drive box.",
+  interaction_required:"Please sign in to Google again.",login_required:"Please sign in to Google again.",consent_required:"Please sign in to Google again.",state:"Sign-in did not finish. Please try again."})[code]||("Google sign-in failed ("+code+"). Please try again.")}
+function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return"just now";if(m<60)return m+"m ago";const h=Math.round(m/60);if(h<24)return h+"h ago";return Math.round(h/24)+"d ago"}
+function whenText(t){const d=new Date(t);return dLong(iso(d))+", "+p2(d.getHours())+":"+p2(d.getMinutes())}
+
+/* web: redirect sign-in */
+function redirectUri(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"index.html"}
+function gWebAuth(silent,purpose){
+  const st=uid()+uid()+uid(),g=GA.get();
+  ls.set("tapledger.gstate",JSON.stringify({st,purpose,silent:!!silent,page:U.page,setTab:U.setTab,plansTab:U.plansTab,ledTab:U.ledTab}));
+  const p=new URLSearchParams({client_id:GOOGLE_WEB_ID,redirect_uri:redirectUri(),response_type:"token",scope:G_SCOPES.join(" "),include_granted_scopes:"true",state:st});
+  if(g.user&&g.user.email)p.set("login_hint",g.user.email);
+  if(silent)p.set("prompt","none");else if(!g.user)p.set("prompt","select_account");
+  location.href="https://accounts.google.com/o/oauth2/v2/auth?"+p.toString();
+}
+function gReadRedirect(){
+  const h=location.hash||"";if(!/(^|[#&])(access_token|error)=/.test(h))return null;
+  const q=new URLSearchParams(h.slice(1));let saved=null;try{saved=JSON.parse(ls.get("tapledger.gstate")||"null")}catch(e){}
+  try{localStorage.removeItem("tapledger.gstate")}catch(e){}
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  if(!saved||q.get("state")!==saved.st)return{error:"state"};
+  ["page","setTab","plansTab","ledTab"].forEach(k=>{if(saved[k])U[k]=saved[k]});
+  if(q.get("error"))return{error:q.get("error"),silent:saved.silent,purpose:saved.purpose};
+  const scope=q.get("scope")||"";if(scope&&scope.indexOf(DRIVE_SCOPE)<0)return{error:"drive_denied",purpose:saved.purpose};
+  GA.patch({token:q.get("access_token"),exp:Date.now()+((+q.get("expires_in"))||3600)*1000,backoff:0,reconnect:false});
+  return{ok:true,purpose:saved.purpose};
+}
+function gBounce(purpose){if(dirty||saving||$("#sheetRoot").innerHTML)return false;toast("Connecting to Google…");setTimeout(()=>gWebAuth(true,purpose),350);return true}
+
+/* Android app: native sign-in */
+let slReady=null;
+function slInit(){if(!slReady){const SL=CP.SocialLogin;slReady=SL?SL.initialize({google:{webClientId:GOOGLE_WEB_ID,mode:"online"}}).then(()=>SL).catch(e=>{slReady=null;throw e}):Promise.reject(gErr("Google sign-in is missing from this app version. Install the latest FinTrack app."))}return slReady}
+async function gNativeLogin(silent){
+  const SL=await slInit();
+  const r=await SL.login({provider:"google",options:{scopes:[DRIVE_SCOPE],filterByAuthorizedAccounts:!!silent,autoSelectEnabled:!!silent}});
+  const res=(r&&r.result)||r||{},tok=res.accessToken&&res.accessToken.token;
+  if(!tok)throw gErr("Google did not give FinTrack access to your Drive.");
+  GA.patch({token:tok,exp:Date.now()+50*60000,backoff:0,reconnect:false});
+  return res.profile||{};
+}
+function gNativeErrText(e){const m=String(e&&e.message||e||"");return /cancel/i.test(m)?"Sign-in was cancelled.":"Google sign-in failed: "+m}
+async function gToken(){if(tokenOk())return GA.get().token;if(NATIVE&&navigator.onLine){try{await gNativeLogin(true);return GA.get().token}catch(e){GA.patch({reconnect:true})}}return null}
+
+/* Drive */
+async function dfetch(url,opt){
+  const t=await gToken();if(!t)throw gErr("Sign in to Google again to back up.",{auth:true});
+  opt=opt||{};let r;
+  try{r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+t},opt.headers||{})}))}catch(e){throw gErr("No internet connection.",{net:true})}
+  if(r.status===401){GA.patch({token:"",exp:0});throw gErr("Google sign-in expired.",{auth:true})}
+  if(!r.ok){let m="";try{m=(await r.json()).error.message}catch(e){}throw gErr(m||("Google Drive error "+r.status),{status:r.status})}
+  return r}
+const dq=s=>"'"+String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+"'";
+async function dList(query,extra){const r=await dfetch(`${DRV}/files?q=${encodeURIComponent(query)}&spaces=drive&fields=files(id,name,modifiedTime,appProperties)&pageSize=100${extra||""}`);return(await r.json()).files||[]}
+async function dFolder(){const g=GA.get();if(g.folder)return g.folder;
+  let f=(await dList(`name=${dq("FinTrack")} and mimeType='application/vnd.google-apps.folder' and trashed=false`,"&orderBy=createdTime"))[0];
+  if(!f)f=await(await dfetch(`${DRV}/files?fields=id`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"FinTrack",mimeType:"application/vnd.google-apps.folder"})})).json();
+  GA.patch({folder:f.id});return f.id}
+async function dLatest(folder){const g=GA.get();
+  if(g.latest){try{const f=await(await dfetch(`${DRV}/files/${g.latest}?fields=id,name,modifiedTime,appProperties,trashed`)).json();if(!f.trashed)return f}catch(e){if(e.status!==404)throw e}GA.patch({latest:""})}
+  const f=(await dList(`name=${dq(LATEST)} and ${dq(folder)} in parents and trashed=false`,"&orderBy=modifiedTime desc"))[0]||null;
+  if(f)GA.patch({latest:f.id});return f}
+async function dPut(id,meta,blob){const b="ftb"+uid()+uid();
+  const body=new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${XMIME}\r\n\r\n`,blob,`\r\n--${b}--`]);
+  return(await dfetch(`${UPL}/files${id?"/"+id:""}?uploadType=multipart&fields=id,modifiedTime,appProperties`,{method:id?"PATCH":"POST",headers:{"Content-Type":"multipart/related; boundary="+b},body})).json()}
+async function dPrune(folder){try{const list=(await dList(`name contains 'FinTrack-backup-' and ${dq(folder)} in parents and trashed=false`,"&orderBy=name desc")).filter(f=>/^FinTrack-backup-\d{4}-\d\d-\d\d\.xlsx$/.test(f.name));
+  for(const f of list.slice(30))await dfetch(`${DRV}/files/${f.id}?fields=id`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({trashed:true})})}catch(e){}}
+async function dDownload(f){const r=await dfetch(`${DRV}/files/${f.id}?alt=media`);return bookFromWorkbook(XLSX.read(await r.arrayBuffer(),{type:"array"}))}
+
+/* backup: upload this phone's book */
+async function gBackup(force){
+  if(!signedIn()||S.demo||!window.XLSX)return;
+  if(gBusy){gAgain=true;return}
+  if(!navigator.onLine){paintTop();return}
+  gBusy=true;paintTop();
+  let retried=false;
+  const run=async()=>{
+    const folder=await dFolder(),latest=await dLatest(folder),g=GA.get(),ap0=(latest&&latest.appProperties)||{};
+    if(!force&&latest&&ap0.ftRev&&ap0.ftRev!==g.rev&&ap0.ftDevice!==deviceId())return latest;
+    const rev=uid()+uid(),ap={ftRev:rev,ftDevice:deviceId(),ftEntries:String(S.entries.length)};
+    const blob=new Blob([XLSX.write(backupWorkbook(),{bookType:"xlsx",type:"array"})],{type:XMIME});
+    const up=await dPut(latest?latest.id:null,latest?{appProperties:ap}:{name:LATEST,parents:[folder],mimeType:XMIME,appProperties:ap},blob);
+    const dn="FinTrack-backup-"+today()+".xlsx";let did=g.daily&&g.daily.name===dn?g.daily.id:"";
+    if(!did){const f=(await dList(`name=${dq(dn)} and ${dq(folder)} in parents and trashed=false`))[0];did=f?f.id:""}
+    const du=await dPut(did||null,did?{appProperties:ap}:{name:dn,parents:[folder],mimeType:XMIME,appProperties:ap},blob);
+    GA.patch({latest:up.id,daily:{name:dn,id:du.id},rev,pending:false,lastSync:Date.now(),err:"",conflictId:""});
+    if(!did)dPrune(folder);
+    return null};
+  let conflict=null;
+  try{conflict=await run()}
+  catch(e){
+    if(e.status===404&&!retried){retried=true;GA.patch({folder:"",latest:"",daily:null});try{conflict=await run()}catch(e2){e=e2}}
+    if(GA.get().pending){if(e.auth){if(NATIVE)GA.patch({reconnect:true})}else if(!e.net)GA.patch({err:e.message})}
+  }
+  gBusy=false;paintTop();if(U.page==="settings")render();
+  if(conflict){gConflict(conflict);return}
+  if(gAgain){gAgain=false;if(GA.get().pending)gBackup()}
+}
+/* check Drive for changes from another device */
+async function gCheck(){
+  if(!signedIn()||!navigator.onLine||gBusy||!(tokenOk()||NATIVE))return;
+  gLastCheck=Date.now();
+  try{const folder=await dFolder(),f=await dLatest(folder),g=GA.get();
+    if(!f){if(!S.demo&&g.pending)gBackup();return}
+    const ap=f.appProperties||{};
+    if(ap.ftRev&&ap.ftRev!==g.rev&&ap.ftDevice!==deviceId()){
+      if(S.demo||(!g.pending&&!dirty)){const B=await dDownload(f);const first=S.demo;gApply(B,f);toast(first?"Welcome back. Your book was restored from Google Drive.":"Updated with changes from your other device.")}
+      else gConflict(f)}
+    else if(g.pending&&!dirty)gBackup();
+  }catch(e){if(!e.auth&&!e.net)GA.patch({err:e.message});paintTop()}}
+function gApply(B,f){
+  S=Object.assign(blankBook(),B);S.demo=false;fixDash();ls.set("tapledger.v1",JSON.stringify(S));dirty=false;
+  GA.patch({latest:f.id,rev:(f.appProperties||{}).ftRev||"",pending:false,lastSync:Date.now(),conflictId:"",err:""});paintTop();render()}
+function gConflict(remote){
+  const ap=remote.appProperties||{};GA.patch({conflictId:remote.id});paintTop();
+  openSheet(head("Two versions of your book")+`<p style="margin-top:0">Your Google Drive has a version saved ${remote.modifiedTime?"on "+esc(whenText(Date.parse(remote.modifiedTime))):""} from another device${ap.ftEntries?` (${esc(ap.ftEntries)} entries)`:""}. This phone has ${S.entries.length} entries${GA.get().pending?", including changes that are not backed up yet":""}.</p>
+  <p class="lbl">Whichever you choose, the daily copies of earlier days stay in the FinTrack folder in your Google Drive.</p>
+  <div class="acts"><button class="btn" data-act="gUseDrive" id="gUseDriveBtn">Use Google Drive version</button><button class="btn pri" data-act="gKeepPhone">Keep this phone's version</button></div>`)}
+
+/* sign-in flow */
+function showLogin(msg,isErr){const l=$("#login");l.hidden=false;$("#app").setAttribute("aria-hidden","true");loginMsg(msg||"",isErr)}
+function hideLogin(){$("#login").hidden=true;$("#app").removeAttribute("aria-hidden")}
+function loginMsg(t,isErr){const m=$("#loginMsg");m.textContent=t||"";m.classList.toggle("err",!!isErr);const b=$("#gLoginBtn");b.disabled=/…$/.test(t||"")}
+function gSetUser(user){const old=GA.get(),ow=ls.get("tapledger.owner");const same=!ow||ow===user.email;
+  GA.set(Object.assign(same?old:{token:old.token,exp:old.exp},{user,owner:user.email,reconnect:false,backoff:0}));ls.set("tapledger.owner",user.email)}
+async function gAfterLogin(profile){
+  loginMsg("Signing in…");profile=profile||{};
+  let u={};try{u=await(await dfetch("https://www.googleapis.com/oauth2/v3/userinfo")).json()}catch(e){if(!profile.email){loginMsg(e.net?"No internet connection. Connect and try again.":"Could not finish signing in. Please try again.",true);return}}
+  const user={id:u.sub||profile.id||"",email:u.email||profile.email||"",name:u.name||profile.name||u.email||profile.email||"",picture:u.picture||profile.imageUrl||""};
+  const owner=ls.get("tapledger.owner");
+  if(owner&&user.email&&owner!==user.email&&!S.demo){gSwitchAccount(owner,user);return}
+  gSetUser(user);
+  if(!S.demo&&!GA.get().lastSync)GA.patch({pending:true});
+  hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));
+  gCheck();
+}
+function gSwitchAccount(owner,user){
+  const pend=GA.get().pending;
+  openSheet(head("Different Google account")+`<p style="margin-top:0">This phone holds the book of <b>${esc(owner)}</b>. Continue as <b>${esc(user.email)}</b>?</p>
+  <p class="lbl">${esc(owner)}'s book will be removed from this phone. ${pend?"Its latest changes are <b>not backed up yet</b>, so they would be lost. Cancel and sign in as "+esc(owner)+" first to back them up.":"It stays safe in "+esc(owner)+"'s Google Drive."}</p>
+  <div class="acts"><button class="btn" data-act="gSwitchNo">Cancel</button><button class="btn ${pend?"danger":"pri"}" data-act="gSwitchYes" data-user="${esc(JSON.stringify(user))}">Continue as ${esc(user.email)}</button></div>`)}
+function gSignOut(){
+  if(NATIVE)slInit().then(SL=>SL.logout({provider:"google"})).catch(()=>{});
+  const g=GA.get();GA.set({owner:g.owner,folder:g.folder,latest:g.latest,daily:g.daily,rev:g.rev,lastSync:g.lastSync,pending:g.pending});
+  showLogin("Signed out. Your data is still on this phone.")}
+function gSync(){if(!signedIn()||S.demo)return;if(!navigator.onLine){paintTop();return}
+  if(tokenOk()||NATIVE){gBackup();return}
+  const g=GA.get();if(!(g.backoff>Date.now()))gBounce("backup");else paintTop()}
+function gStatus(){const g=GA.get();
+  if(mode==="loading")return["Opening…",""];if(!g.user)return["On this phone",""];if(gBusy)return["Backing up…",""];
+  if(g.conflictId)return["Choose version","warn"];
+  if(g.pending){if(!navigator.onLine)return["Offline","warn"];if(g.reconnect)return["Reconnect","warn"];if(g.err)return["Backup problem","warn"];return["Not backed up","warn"]}
+  if(g.lastSync)return["Backed up "+ago(g.lastSync),"ok"];return["Signed in",""]}
+function gStatusLong(){const g=GA.get();
+  if(gBusy)return"Backing up to Google Drive…";
+  if(g.conflictId)return"Waiting for you to choose between this phone's version and the one in Google Drive.";
+  if(g.pending){if(!navigator.onLine)return"Offline. Your changes are saved on this phone and will back up when you're online.";
+    if(g.reconnect)return"Google needs you to sign in again. Tap Back up now.";if(g.err)return"Last backup failed: "+g.err;return"Changes saved on this phone, waiting to back up."}
+  if(g.lastSync)return"Backed up "+ago(g.lastSync)+" ("+whenText(g.lastSync)+").";return"No backup yet. Press Save to make the first one."}
+function gCard(){const g=GA.get(),u=g.user||{};if(!u.email)return"";const init=esc((u.name||u.email||"?").trim().charAt(0).toUpperCase());
+  return `<div class="card"><h3>Google account</h3>
+  <div class="acct"><span class="av">${init}${u.picture?`<img class="avimg" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:""}</span><span class="t"><b>${esc(u.name||u.email)}</b><small>${esc(u.email)}</small></span></div>
+  <div class="kv"><span class="muted">Backup</span><span class="${g.pending||g.conflictId?"warn":""}" style="text-align:right;max-width:70%">${esc(gStatusLong())}</span></div>
+  <p class="lbl">Every Save goes to the <b>FinTrack</b> folder in your Google Drive: "${esc(LATEST)}" plus one copy per day for 30 days. FinTrack can only see the files it creates there.</p>
+  <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="gBackupNow">Back up now</button>${g.folder?`<a class="btn" href="https://drive.google.com/drive/folders/${esc(g.folder)}" target="_blank" rel="noopener">Open in Google Drive</a>`:""}<button class="btn danger" data-act="gSignOut" id="gSignOutBtn">Sign out</button></div></div>`}
+async function gBoot(){
+  if(NATIVE)slInit().catch(()=>{});
+  const r=gRedirect;
+  if(r&&r.ok&&(r.purpose==="login"||!signedIn())){showLogin("Signing in…");await gAfterLogin();return}
+  if(!signedIn()){showLogin(r&&r.error?gErrText(r.error):"",!!(r&&r.error));return}
+  hideLogin();
+  if(r&&r.error){if(r.silent)GA.patch({reconnect:true,backoff:Date.now()+15*60000});else if(r.error!=="state")toast(gErrText(r.error))}
+  paintTop();
+  if(!navigator.onLine)return;
+  if(r&&r.ok&&r.purpose==="keep"){gBackup(true);return}
+  if(tokenOk()||NATIVE){await gCheck();return}
+  const g=GA.get();if(g.pending&&!S.demo&&!(g.backoff>Date.now()))gBounce("backup");
+}
+document.addEventListener("error",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("avimg"))t.remove()},true);
+setInterval(()=>{if(mode!=="loading")paintTop()},60000);
+addEventListener("online",()=>{paintTop();if(signedIn()&&GA.get().pending&&(tokenOk()||NATIVE)&&!dirty)gBackup()});
+addEventListener("offline",()=>paintTop());
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible"||!signedIn()||!navigator.onLine||dirty||Date.now()-gLastCheck<120000)return;
+  if(tokenOk()||NATIVE){gCheck();return}
+  const g=GA.get();if(g.pending&&!S.demo&&!(g.backoff>Date.now())){gLastCheck=Date.now();gBounce("backup")}});
+
 
 /* ---------- events ---------- */
 let confirmArm=null;
@@ -1244,19 +1438,30 @@ const ACT={
   dlStmt(el){openDl(el.dataset.id)},
   dlPreset(el){DF.preset=el.dataset.k;if(el.dataset.k!=="custom"){const [f,t]=presetRange(el.dataset.k);DF.from=f;DF.to=t}DF.err="";renderDl()},
   xlBackup(){doBackup()},
-  async gsConnect(){const url=($("#gsUrl").value||"").trim(),key=($("#gsKey").value||"").trim();
-    if(!GS_URL_RE.test(url)){toast("Paste the Web app URL. It starts with https://script.google.com/macros/s/ and ends with /exec");return}
-    if(key.length<6){toast("Type the sync code you set in the script.");return}
-    const b=$("#gsConnectBtn");b.disabled=true;b.textContent="Connecting…";
-    try{const o=await gsCall({url,key},{action:"ping"});GS.set({url,key,name:o.name||"Google Sheet",last:null,err:"",dirty:true});render();
-      if(S.demo)toast("Connected. Your own data will sync after you start your book and press Save.");else{toast("Connected to "+(o.name||"your sheet"));gsPush(true)}}
-    catch(e){toast("Could not connect: "+e.message);b.disabled=false;b.textContent="Connect"}},
-  gsSync(){gsPush(true)},
-  async gsPull(){if(!armed("gsPullBtn"))return;const c=GS.get();if(!c)return;toast("Fetching your book from Google…");
-    try{const o=await gsCall(c,{action:"pull"});const B=JSON.parse(o.book);if(!B||!Array.isArray(B.accounts)||!Array.isArray(B.entries))throw new Error("The sheet's FinTrack copy is damaged.");
-      S=Object.assign(blankBook(),B);S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"} from Google Sheets. Press Save to keep them.`)}
-    catch(e){toast("Restore failed: "+e.message);render()}},
-  gsOff(){if(!armed("gsOffBtn"))return;ls.set("tapledger.gsync","null");render();toast("Disconnected. Your Google Sheet keeps its last copy.")},
+  async gLogin(){if(!navigator.onLine){loginMsg("Connect to the internet to sign in for the first time.",true);return}
+    loginMsg("Opening Google…");
+    if(!NATIVE){gWebAuth(false,"login");return}
+    try{const p=await gNativeLogin(false);await gAfterLogin(p)}catch(e){loginMsg(gNativeErrText(e),true)}},
+  gStatus(){const g=GA.get();if(!g.user)return;
+    if(g.conflictId){gLastCheck=0;if(tokenOk()||NATIVE)gCheck();else gWebAuth(true,"check");return}
+    if(g.pending&&g.reconnect&&!NATIVE){gWebAuth(false,"backup");return}
+    U.page="settings";U.setTab="data";render();scrollTo(0,0)},
+  async gBackupNow(){if(!navigator.onLine){toast("You're offline. It will back up when you're online.");return}
+    const g=GA.patch({pending:true,err:""});
+    if(NATIVE&&g.reconnect){try{await gNativeLogin(false)}catch(e){toast(gNativeErrText(e));return}}
+    if(tokenOk()||NATIVE){gBackup();return}
+    gWebAuth(!g.reconnect,"backup")},
+  async gUseDrive(){const id=GA.get().conflictId;if(!id){closeSheet();return}const b=$("#gUseDriveBtn");if(b){b.disabled=true;b.textContent="Loading…"}
+    try{const f=await(await dfetch(`${DRV}/files/${id}?fields=id,modifiedTime,appProperties`)).json();const B=await dDownload(f);closeSheet();gApply(B,f);toast("Loaded the version from Google Drive.")}
+    catch(e){toast("Could not load it: "+e.message);if(b){b.disabled=false;b.textContent="Use Google Drive version"}}},
+  gKeepPhone(){closeSheet();GA.patch({conflictId:"",pending:true});paintTop();if(tokenOk()||NATIVE)gBackup(true);else gWebAuth(true,"keep")},
+  gSwitchYes(el){let user;try{user=JSON.parse(el.dataset.user)}catch(e){return}closeSheet();
+    try{localStorage.removeItem("tapledger.v1")}catch(e){}S=exampleBook();fixDash();dirty=false;
+    const g=GA.get();GA.set({token:g.token,exp:g.exp});try{localStorage.removeItem("tapledger.owner")}catch(e){}
+    gSetUser(user);hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));gCheck()},
+  gSwitchNo(){closeSheet();GA.patch({token:"",exp:0});if(NATIVE)slInit().then(SL=>SL.logout({provider:"google"})).catch(()=>{});showLogin("Sign in with the account that owns the book on this phone.")},
+  gSignOut(){if(!armed("gSignOutBtn"))return;gSignOut()},
+  bkLater(){bkSnooze=true;render()},
   copyInstall(){const u=installUrl();try{navigator.clipboard.writeText(u).then(()=>toast("Link copied"),()=>toast(u))}catch(e){toast(u)}},
   wipe(){if(!armed("wipeBtn"))return;S=blankBook();markDirty();render();toast("Cleared. Press Save to make it permanent.")}
 };
@@ -1279,7 +1484,7 @@ document.addEventListener("input",ev=>{const t=ev.target;
     else{if(t.value==="")delete S.checks[id];else S.checks[id]={actual:r2(t.value),date:today()};$("#rd_"+id).innerHTML=diffChip(t.value===""?null:r2(+t.value-bal(id)))}markDirty()}
 });
 document.addEventListener("change",ev=>{const t=ev.target;
-  if(t.id==="xlRestore"){restoreExcel(t.files&&t.files[0]);t.value=""}
+  if(t.id==="xlRestore"||t.id==="xlRestore2"){restoreExcel(t.files&&t.files[0]);t.value=""}
   else if(t.dataset.reserve){S.reserve=S.reserve||{};const v=r2(t.value);if(v>0)S.reserve[t.dataset.reserve]=v;else delete S.reserve[t.dataset.reserve];markDirty();render()}
   else if(t.dataset.bk!=null){const b=BK.get();b.freq=t.value;BK.set(b);render()}
   else if(t.dataset.rep!=null&&SF){applyRep(SF,t.value);renderSched()}
@@ -1318,15 +1523,15 @@ if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener
 
 /* ---------- phone lifecycle ---------- */
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="hidden"&&dirty&&!saving&&!S.demo){ls.set("tapledger.v1",JSON.stringify(S));dirty=false;paintTop();gsMarkDirty()}
-  if(document.visibilityState==="visible"){const c=GS.get();if(c&&c.url&&c.dirty&&!dirty)gsPush()}});
-addEventListener("online",()=>{const c=GS.get();if(c&&c.url&&c.dirty&&!dirty)gsPush()});
+  if(document.visibilityState==="hidden"&&dirty&&!saving&&!S.demo){ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true});paintTop();backupPending=true;bkSnooze=false;if(NATIVE)autoBackupNative()}});
+try{localStorage.removeItem("tapledger.gsync")}catch(e){}
 if(!NATIVE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
 /* ---------- boot ---------- */
+gRedirect=NATIVE?null:gReadRedirect();
 S=exampleBook();fixDash();dirty=false;mode="loading";paintTop();render();
-initStore();
+initStore().then(gBoot);
 })();
 </script>
 
