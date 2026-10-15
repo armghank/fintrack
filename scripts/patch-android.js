@@ -84,6 +84,22 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 );
 console.log("wrote", mainActivity);
 
+// The Google sign-in component pulls in androidx.browser 1.9.0, which needs Android 36 and a newer
+// Gradle plugin than Capacitor 7 uses. 1.8.0 does the same job and builds with the current setup.
+patch("android/build.gradle", [
+  [
+    "task clean(type: Delete) {",
+    `allprojects {
+    configurations.all {
+        resolutionStrategy.force 'androidx.browser:browser:1.8.0'
+    }
+}
+
+task clean(type: Delete) {`,
+    "androidx.browser:browser:1.8.0",
+  ],
+]);
+
 patch("android/app/src/main/AndroidManifest.xml", [
   [
     `    <application\n        android:allowBackup="true"`,
