@@ -104,6 +104,17 @@ jobs:
           name: fintrack-apk
           path: www
 
+      - name: Write update info (Android apps check this to offer updates)
+        env:
+          N: ${{ github.run_number }}
+        run: |
+          node -e '
+            const fs=require("fs");
+            let notes="";try{notes=fs.readFileSync("whats-new.txt","utf8").trim()}catch(e){}
+            fs.writeFileSync("www/version.json",JSON.stringify({version:"1.0."+process.env.N,code:Number(process.env.N),apk:"fintrack.apk",notes,date:new Date().toISOString()},null,1));
+          '
+          cat www/version.json
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
