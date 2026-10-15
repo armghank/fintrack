@@ -202,6 +202,8 @@ a.btn{text-decoration:none;color:inherit}a.btn.pri{color:var(--accent-fg)}
 .avbtn{border:0;background:none;padding:0;border-radius:50%;cursor:pointer;flex:none;line-height:0}
 .avbtn .av{width:36px;height:36px;font-size:15px;box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line)}
 .avbtn:hover .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
+.upd{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.updnotes{margin:4px 0 8px;padding-left:20px}.updnotes li{margin:3px 0}
 .acct{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .acct .t{min-width:0}.acct .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.acct .t small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
 .av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:18px;position:relative;overflow:hidden;flex:none}
@@ -709,7 +711,7 @@ function pSettings(){
     body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off and move them up or down.</p>${S.dash.map((d,i)=>`<div class="wl"><input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Move up">↑</button><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="1" ${i===S.dash.length-1?"disabled":""} aria-label="Move down">↓</button></div>`).join("")}</div>
     <div class="card" style="margin-top:12px"><div class="field"><label for="cur">Currency label</label><input class="inp" id="cur" data-cur value="${esc(S.currency)}" maxlength="5" style="max-width:120px"></div></div>`;
   }else{
-    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p></div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
@@ -1387,12 +1389,41 @@ document.addEventListener("visibilitychange",()=>{
   const g=GA.get();if(g.pending&&!S.demo&&!(g.backoff>Date.now())){gLastCheck=Date.now();gBounce("backup")}});
 
 
+/* ---------- Android: "new version available" popup ----------
+   The build publishes version.json next to the APK. The Android app checks it when opened
+   (and when brought back after 15+ minutes). "Later" hides it until the next open. */
+const SITE="https://armghank.github.io/fintrack/";
+const myBuild=()=>{const m=String(APP_VERSION).match(/^1\.0\.(\d+)$/);return m?+m[1]:0};
+let updShown=false,updInfo=null,hiddenAt=0;
+async function updFetch(){const url=SITE+"version.json?t="+Date.now();const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();j.apkUrl=new URL(j.apk||"fintrack.apk",url).href;return j}
+async function updCheck(manual){
+  if(!NATIVE)return;if(!manual&&(updShown||!navigator.onLine||!myBuild()))return;
+  let j;try{j=await updFetch()}catch(e){if(manual)toast("Could not check for updates. Check your internet connection.");return}
+  if(!(+j.code>myBuild())){if(manual)toast("FinTrack is up to date ("+APP_VERSION+").");return}
+  updInfo=j;
+  if($("#sheetRoot").innerHTML){if(!manual){setTimeout(()=>updCheck(false),4000)}return}
+  updShown=true;updPopup()}
+function updPopup(){const j=updInfo;if(!j)return;
+  const notes=String(j.notes||"").split(/\n+/).map(l=>l.replace(/^\s*[•\-*]\s*/,"").trim()).filter(Boolean);
+  openSheet(head("Update available")+`<div class="upd"><div class="lg-mark" style="width:52px;height:52px;border-radius:15px;font-size:20px" aria-hidden="true">FT</div>
+  <div><b style="font-size:17px">FinTrack ${esc(j.version)}</b><div class="lbl">You have ${esc(APP_VERSION)}${j.date?" · released "+esc(dLong(String(j.date).slice(0,10))):""}</div></div></div>
+  ${notes.length?`<div class="fl">What's new</div><ul class="updnotes">${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}
+  <p class="lbl">Your data stays on the phone and in Google Drive. Updating takes about a minute: the new version downloads, then tap <b>Install</b> (or <b>Update</b>).</p>
+  <div class="acts"><button class="btn" data-act="updLater">Later</button><a class="btn pri" href="${esc(j.apkUrl)}" data-act="updNow">Update now</a></div>`)}
+document.addEventListener("visibilitychange",()=>{if(!NATIVE)return;
+  if(document.visibilityState==="hidden"){hiddenAt=Date.now();return}
+  if(hiddenAt&&Date.now()-hiddenAt>=15*60000){updShown=false;updCheck(false)}});
+
 /* ---------- events ---------- */
 let confirmArm=null;
 function armed(id){if(confirmArm===id){confirmArm=null;return true}confirmArm=id;const b=document.getElementById(id);if(b){b.textContent="Tap again to confirm"}setTimeout(()=>{if(confirmArm===id)confirmArm=null},4000);return false}
 const ACT={
   go(el){U.page=el.dataset.p;if(el.dataset.t){if(U.page==="settings")U.setTab=el.dataset.t;if(U.page==="ledgers"){U.ledTab=el.dataset.t;U.ledAcc=null}}if(U.page==="ledgers"&&!el.dataset.t&&el.closest(".nav"))U.ledAcc=null;render();scrollTo(0,0)},
   theme(el){const n=el.dataset.t;if(n==="auto"){document.documentElement.removeAttribute("data-theme");try{localStorage.removeItem("tapledger.theme")}catch(e){}}else{document.documentElement.setAttribute("data-theme",n);ls.set("tapledger.theme",n)}paintTop();render()},
+  updLater(){closeSheet();toast("OK. We'll remind you next time you open FinTrack.")},
+  updNow(el,ev){closeSheet();toast("Downloading the update…");setTimeout(()=>{location.href=el.getAttribute("href")},150)},
+  updCheckNow(){updCheck(true)},
   gAccount(){U.page="settings";U.setTab="data";render();scrollTo(0,0)},
   save(){save()},
   fresh(){S=blankBook();markDirty();render();toast("Clean book ready. Add your accounts in Manage.");U.page="settings";U.setTab="accounts";render()},
@@ -1541,7 +1572,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
 /* ---------- boot ---------- */
 gRedirect=NATIVE?null:gReadRedirect();
 S=exampleBook();fixDash();dirty=false;mode="loading";paintTop();render();
-initStore().then(gBoot);
+initStore().then(gBoot).then(()=>setTimeout(()=>updCheck(false),1500));
 })();
 </script>
 
