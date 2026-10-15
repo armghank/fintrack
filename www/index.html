@@ -204,6 +204,11 @@ a.btn{text-decoration:none;color:inherit}a.btn.pri{color:var(--accent-fg)}
 .avbtn:hover .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
 .upd{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .updnotes{margin:4px 0 8px;padding-left:20px}.updnotes li{margin:3px 0}
+.splitbox{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface2)}
+.sphead{display:flex;align-items:center;justify-content:space-between}
+.spadd{display:flex;gap:6px;margin-top:8px}.spadd .inp{flex:1}
+.sprow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.sprow:last-of-type{border-bottom:0}.sprow .t{min-width:0}.sprow .inp{width:120px;text-align:right}
 .acct{display:flex;align-items:center;gap:12px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
 .acct .t{min-width:0}.acct .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.acct .t small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis}
 .av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:18px;position:relative;overflow:hidden;flex:none}
@@ -729,13 +734,47 @@ function pSettings(){
 /* ---------- entry form ---------- */
 const TYPES=[["expense","Expense"],["income","Income"],["transfer","Transfer"],["party","Person"],["journal","Journal"]];
 const PACT=[["paid","I paid / lent them"],["recv","They paid / lent me"],["owe","I owe them (bill)"],["owed","They owe me (invoice)"]];
-function newForm(type){const m=moneyAccs();const cash=byGrp("cash")[0];return {type:type||"expense",amount:"",date:today(),memo:"",cat:null,from:(cash||m[0]||{}).id||null,to:(byGrp("bank")[0]||m[0]||{}).id||null,party:null,pact:"paid",newParty:"",lines:[{a:"",dr:"",cr:""},{a:"",dr:"",cr:""}],editId:null,err:""}}
+function newForm(type){const m=moneyAccs();const cash=byGrp("cash")[0];return {type:type||"expense",amount:"",date:today(),memo:"",cat:null,from:(cash||m[0]||{}).id||null,to:(byGrp("bank")[0]||m[0]||{}).id||null,party:null,pact:"paid",newParty:"",lines:[{a:"",dr:"",cr:""},{a:"",dr:"",cr:""}],split:null,editId:null,err:""}}
 function chipList(list,field,sel){return `<div class="chips">${list.map(a=>`<button type="button" class="${sel===a.id?"on":""}" data-act="fpick" data-f="${field}" data-id="${a.id}">${dot(a.color)}${esc(a.name)}</button>`).join("")}</div>`}
+/* ---------- split an expense (Splitwise-style) ---------- */
+const splitOn=()=>F&&F.type==="expense"&&F.split&&F.split.on;
+function splitName(id){return id&&id.startsWith("__n:")?(F.split&&F.split.names[id])||"New person":accName(id)}
+function splitShares(){const sp=F.split,total=Math.round((+F.amount||0)*100),ppl=sp.people;
+  if(sp.mode==="equal"){const n=ppl.length+(sp.me?1:0);const out={me:0,people:ppl.map(p=>({id:p.id,amt:0})),left:0};if(!n||total<=0)return out;
+    const base=Math.floor(total/n);let extra=total-base*n;const parts=[];for(let i=0;i<n;i++){parts.push(base+(extra>0?1:0));if(extra>0)extra--}
+    let k=0;if(sp.me)out.me=parts[k++]/100;out.people.forEach(p=>{p.amt=parts[k++]/100});return out}
+  const people=ppl.map(p=>({id:p.id,amt:r2(p.amt)}));const sum=Math.round(people.reduce((t,p)=>t+p.amt*100,0));
+  return sp.me?{me:(total-sum)/100,people,left:0}:{me:0,people,left:(total-sum)/100}}
+function splitLines(a){const sh=splitShares(),L=[];if(sh.me>0)L.push([F.cat,sh.me,0]);sh.people.forEach(p=>{if(p.amt>0)L.push([p.id,p.amt,0])});L.push([F.from,0,a]);return L}
+function splitValidate(){const sp=F.split;if(!sp.people.length)return"Choose who you split this with, or turn Split off.";
+  const sh=splitShares();if(sh.people.some(p=>p.amt<0))return"A share can't be negative.";
+  if(sp.mode==="manual"){if(sp.me&&sh.me<-0.004)return`The shares add up to more than ${f2(r2(F.amount))}. Reduce someone's share.`;
+    if(!sp.me&&Math.abs(sh.left)>0.004)return sh.left>0?`${f2(sh.left)} is not assigned to anyone yet.`:`The shares add up to more than ${f2(r2(F.amount))}.`;
+    if(sh.people.some(p=>!(p.amt>0)))return"Enter an amount for each person, or remove them from the split."}
+  if(sh.me>0&&!F.cat)return"Pick a category for your share.";
+  return""}
+function splitBox(){const sp=F.split;
+  if(!sp||!sp.on)return `<div style="margin-top:12px"><button type="button" class="btn sm" data-act="spToggle">➗ Split with others</button></div>`;
+  const parties=byGrp("party"),sel=new Set(sp.people.map(p=>p.id)),sh=splitShares(),eq=sp.mode==="equal";
+  const row=(label,id,amt,me)=>`<div class="sprow"><span class="t">${label}</span>${eq||me?`<span class="num" id="${me?"sp_me":"sp_"+id}">${f2(amt)}</span>`:`<input class="inp num" inputmode="decimal" id="spa_${id}" data-spamt="${id}" value="${esc((sp.people.find(p=>p.id===id)||{}).amt||"")}" placeholder="0.00" aria-label="Share of ${esc(splitName(id))}">`}</div>`;
+  return `<div class="splitbox"><div class="sphead"><b>Split with others</b><button type="button" class="link" data-act="spToggle">Turn off</button></div>
+  <div class="fl" style="margin-top:4px">With</div><div class="chips">${parties.map(a=>`<button type="button" class="${sel.has(a.id)?"on":""}" data-act="spPerson" data-id="${a.id}">${esc(a.name)}</button>`).join("")}${sp.people.filter(p=>p.id.startsWith("__n:")).map(p=>`<button type="button" class="on" data-act="spPerson" data-id="${esc(p.id)}">${esc(sp.names[p.id])}</button>`).join("")}</div>
+  <div class="spadd"><input class="inp" id="sp-new" data-spnew placeholder="Add a new person" value="${esc(sp.newName||"")}" autocomplete="off"><button type="button" class="btn sm" data-act="spAdd">Add</button></div>
+  <div class="seg" style="margin:12px 0 6px"><button type="button" class="${eq?"on":""}" data-act="spMode" data-k="equal">Equally</button><button type="button" class="${!eq?"on":""}" data-act="spMode" data-k="manual">Manually</button><button type="button" class="${sp.me?"on":""}" data-act="spMe" aria-pressed="${sp.me}">${sp.me?"✓ ":""}Include me</button></div>
+  ${sp.people.length?`${sp.me?row("<b>Me</b> <small class=\"muted\">→ your expense</small>","me",sh.me,true):""}${sp.people.map(p=>row(esc(splitName(p.id))+" <small class=\"muted\">→ owes you</small>",p.id,(sh.people.find(x=>x.id===p.id)||{}).amt||0,false)).join("")}
+  <p class="lbl" id="sp_note" style="margin:6px 0 0">${splitNote(sh)}</p>`:`<p class="lbl" style="margin:6px 0 0">Tap the people who shared this expense.</p>`}</div>`}
+function splitNote(sh){const sp=F.split,tot=r2(F.amount);if(!(tot>0))return"Enter the full amount you paid above.";
+  if(sp.mode==="equal")return`${sp.people.length+(sp.me?1:0)} people · ${f2(sh.people[0]?sh.people[0].amt:sh.me)} each${sp.me?"":" (you're not included)"}.`;
+  if(sp.me)return sh.me<-0.004?`<span class="neg">Shares exceed the total by ${f2(-sh.me)}.</span>`:`Your share is what's left: ${f2(sh.me)}.`;
+  return Math.abs(sh.left)<0.005?"All assigned.":`<span class="${sh.left<0?"neg":"warn"}">${sh.left>0?"Left to assign":"Over by"} ${f2(Math.abs(sh.left))}</span>`}
+function refreshSplit(){if(!splitOn())return;const sh=splitShares();const m=$("#sp_me");if(m)m.textContent=f2(sh.me);
+  if(F.split.mode==="equal")sh.people.forEach(p=>{const el=document.getElementById("sp_"+p.id);if(el)el.textContent=f2(p.amt)});
+  const n=$("#sp_note");if(n)n.innerHTML=splitNote(sh)}
 function formLines(){
   const a=r2(F.amount);const L=[];
   const cat=F.cat,from=F.from,to=F.to,party=F.party==="__new"?"__new":F.party;
   switch(F.type){
-    case"expense":L.push([cat,a,0],[from,0,a]);break;
+    case"expense":if(splitOn()&&F.split.people.length){L.push(...splitLines(a));break}L.push([cat,a,0],[from,0,a]);break;
     case"income":L.push([to,a,0],[cat,0,a]);break;
     case"transfer":L.push([to,a,0],[from,0,a]);break;
     case"party":
@@ -750,10 +789,11 @@ function formLines(){
 function validate(lines){
   if(F.type!=="journal"&&!(r2(F.amount)>0))return"Enter an amount above zero.";
   if(!F.date)return"Pick a date.";
+  if(splitOn()){const se=splitValidate();if(se)return se;if(!F.from)return"Pick the account you paid from."}
   if(lines.length<2)return"A journal entry needs at least two lines.";
   if(lines.some(l=>!l.a))return F.type==="expense"||F.type==="income"?"Pick a category and an account.":F.type==="party"?"Pick a person, and a category or account.":"Pick both accounts.";
   if(F.type==="party"&&F.party==="__new"&&!F.newParty.trim())return"Type the new person's name.";
-  if(F.type!=="journal"&&lines[0].a===lines[1].a)return"The two sides must be different accounts.";
+  if(F.type!=="journal"&&!splitOn()&&lines[0].a===lines[1].a)return"The two sides must be different accounts.";
   const d=r2(lines.reduce((s,l)=>s+l.dr,0)),c=r2(lines.reduce((s,l)=>s+l.cr,0));
   if(d<=0)return"Enter at least one amount.";
   if(Math.abs(d-c)>0.004)return`Debits (${f2(d)}) and credits (${f2(c)}) must be equal.`;
@@ -762,7 +802,7 @@ function validate(lines){
 function renderForm(){
   const exp=S.accounts.filter(a=>a.kind==="expense"&&!a.archived),inc=S.accounts.filter(a=>a.kind==="income"&&!a.archived),mon=moneyAccs(),parties=byGrp("party");
   let body="";
-  if(F.type==="expense")body=`<div class="fl">Category</div>${chipList(exp,"cat",F.cat)}<div class="fl">Paid from</div>${chipList(mon,"from",F.from)}`;
+  if(F.type==="expense")body=`<div class="fl">Category${splitOn()?" <span class=\"muted\" style=\"text-transform:none;letter-spacing:0;font-weight:400\">(for your share)</span>":""}</div>${chipList(exp,"cat",F.cat)}<div class="fl">Paid from${splitOn()?" <span class=\"muted\" style=\"text-transform:none;letter-spacing:0;font-weight:400\">(the full amount)</span>":""}</div>${chipList(mon,"from",F.from)}${splitBox()}`;
   else if(F.type==="income")body=`<div class="fl">Income type</div>${chipList(inc,"cat",F.cat)}<div class="fl">Received in</div>${chipList(mon,"to",F.to)}`;
   else if(F.type==="transfer")body=`<div class="fl">From</div>${chipList(mon.concat(byGrp("loan")),"from",F.from)}<div class="fl">To</div>${chipList(mon.concat(byGrp("loan")),"to",F.to)}`;
   else if(F.type==="party"){
@@ -775,7 +815,7 @@ function renderForm(){
     body=`<div class="grid3 lbl"><span>Account</span><span style="text-align:right">Debit</span><span style="text-align:right">Credit</span><span></span></div>`+F.lines.map((l,i)=>`<div class="grid3"><select class="inp" id="jl_a_${i}" data-jl="${i}" data-k="a" aria-label="Account line ${i+1}">${opts(l.a)}</select><input class="inp num" id="jl_d_${i}" inputmode="decimal" data-jl="${i}" data-k="dr" value="${esc(l.dr)}" placeholder="0.00" style="text-align:right" aria-label="Debit line ${i+1}"><input class="inp num" id="jl_c_${i}" inputmode="decimal" data-jl="${i}" data-k="cr" value="${esc(l.cr)}" placeholder="0.00" style="text-align:right" aria-label="Credit line ${i+1}"><button type="button" class="btn sm ghost" data-act="jlDel" data-i="${i}" ${F.lines.length<=2?"disabled":""} aria-label="Remove line">✕</button></div>`).join("")+`<button type="button" class="link" data-act="jlAdd">+ Add line</button>`;
   }
   const lines=formLines();
-  const pv=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):accName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>");
+  const pv=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>");
   openSheet(head(F.editId?"Edit entry":"New entry")+
   `<form id="eform" novalidate><div class="seg">${TYPES.map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
   ${F.type!=="journal"?`<label class="amt"><span>${esc(S.currency)}</span><input id="f-amt" data-f="amount" inputmode="decimal" placeholder="0.00" value="${esc(F.amount)}" autocomplete="off" aria-label="Amount"></label>`:""}
@@ -786,19 +826,23 @@ function renderForm(){
   <div class="acts">${F.editId?`<button type="button" class="btn danger" data-act="delEntry" id="delBtn">Delete</button><span style="flex:1"></span>`:""}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn pri">${F.editId?"Update":"Record"}</button></div></form>`);
   if(F.type!=="journal"&&!F.editId&&!F.amount){const i=$("#f-amt");if(i)i.focus()}
 }
-function updatePreview(){const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):accName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
+function updatePreview(){const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
   if(F.type==="journal"){const d=r2(lines.reduce((s,l)=>s+l.dr,0)),c=r2(lines.reduce((s,l)=>s+l.cr,0));p.innerHTML+=`<br><span class="${Math.abs(d-c)<0.005?"pos":"e"}">Dr ${f2(d)} · Cr ${f2(c)}${Math.abs(d-c)<0.005?" · balanced":" · difference "+f2(d-c)}</span>`}}
 function submitForm(){
   let lines=formLines();const err=validate(lines);if(err){F.err=err;renderForm();return}
   if(F.type==="party"&&F.party==="__new"){const id=uid();S.accounts.push({id,name:F.newParty.trim(),kind:"asset",grp:"party",color:PAL[S.accounts.length%PAL.length],budget:0,archived:false});lines=lines.map(l=>l.a==="__new"?{...l,a:id}:l);F.party=id}
-  const t=F.type==="journal"?null:{type:F.type,cat:F.cat,from:F.from,to:F.to,party:F.party,pact:F.pact};
+  let splitMsg="";
+  if(splitOn()){const map={};for(const p of F.split.people)if(p.id.startsWith("__n:")){const id=uid();map[p.id]=id;S.accounts.push({id,name:F.split.names[p.id],kind:"asset",grp:"party",color:PAL[S.accounts.length%PAL.length],budget:0,archived:false})}
+    lines=lines.map(l=>map[l.a]?{...l,a:map[l.a]}:l);F.split.people=F.split.people.map(p=>({id:map[p.id]||p.id,amt:p.amt}));F.split.names={};F.split.newName="";
+    const owed=r2(lines.filter(l=>l.dr>0&&acc(l.a)&&acc(l.a).grp==="party").reduce((t,l)=>t+l.dr,0)),n=F.split.people.length;splitMsg=` ${n===1?accName(F.split.people[0].id)+" owes":n+" people owe"} you ${f2(owed)}.`}
+  const t=F.type==="journal"?null:{type:F.type,cat:F.cat,from:F.from,to:F.to,party:F.party,pact:F.pact,split:splitOn()?JSON.parse(JSON.stringify(F.split)):null};
   const e={id:F.editId||uid(),date:F.date,memo:F.memo.trim(),lines,t};
   if(F.editId){const i=S.entries.findIndex(x=>x.id===F.editId);S.entries[i]=e}else S.entries.push(e);
-  const wasEdit=!!F.editId;closeSheet();markDirty();render();toast(wasEdit?"Entry updated. Press Save to keep it.":"Recorded. Press Save to keep it.");
+  const wasEdit=!!F.editId;closeSheet();markDirty();render();toast((wasEdit?"Entry updated.":"Recorded.")+splitMsg+" Press Save to keep it.");
 }
 function editEntry(id){
   const e=S.entries.find(x=>x.id===id);if(!e)return;F=newForm();F.editId=id;F.date=e.date;F.memo=e.memo||"";
-  if(e.t&&e.t.type){Object.assign(F,e.t);F.amount=String(r2(e.lines.reduce((s,l)=>s+(+l.dr||0),0)))}
+  if(e.t&&e.t.type){Object.assign(F,JSON.parse(JSON.stringify(e.t)));if(F.split)F.split.names=F.split.names||{};F.amount=String(r2(e.lines.reduce((s,l)=>s+(+l.dr||0),0)))}
   else{F.type="journal";F.lines=e.lines.map(l=>({a:l.a,dr:l.dr?String(l.dr):"",cr:l.cr?String(l.cr):""}))}
   renderForm();
 }
@@ -1432,6 +1476,13 @@ const ACT={
   close(){closeSheet();SF=null;AF=null;PF=null;render()},
   scrim(el,ev){if(ev.target===el){closeSheet();SF=null;AF=null;PF=null;render()}},
   ftype(el){F.type=el.dataset.k;F.cat=null;F.err="";renderForm()},
+  spToggle(){if(F.split&&F.split.on)F.split.on=false;else F.split=Object.assign({on:true,mode:"equal",me:true,people:[],names:{},newName:""},F.split||{},{on:true});F.err="";renderForm()},
+  spPerson(el){const id=el.dataset.id,sp=F.split,i=sp.people.findIndex(p=>p.id===id);if(i>=0){sp.people.splice(i,1);if(id.startsWith("__n:"))delete sp.names[id]}else sp.people.push({id,amt:""});F.err="";renderForm()},
+  spAdd(){const sp=F.split,name=(sp.newName||"").trim();if(!name){toast("Type the person's name first.");return}
+    const ex=byGrp("party").find(a=>a.name.toLowerCase()===name.toLowerCase());if(ex){if(!sp.people.some(p=>p.id===ex.id))sp.people.push({id:ex.id,amt:""})}
+    else{const id="__n:"+uid();sp.names[id]=name;sp.people.push({id,amt:""})}sp.newName="";renderForm();const i=$("#sp-new");if(i)i.focus()},
+  spMode(el){F.split.mode=el.dataset.k;renderForm()},
+  spMe(){F.split.me=!F.split.me;renderForm()},
   fpick(el){F[el.dataset.f]=el.dataset.id;F.err="";renderForm()},
   fpact(el){F.pact=el.dataset.k;F.cat=null;renderForm()},
   jlAdd(){F.lines.push({a:"",dr:"",cr:""});renderForm()},
@@ -1514,7 +1565,9 @@ document.addEventListener("input",ev=>{const t=ev.target;
   else if(t.dataset.pf&&PF){PF[t.dataset.pf]=t.value}
   else if(t.dataset.pg&&PF){PF.gen[t.dataset.pg]=t.value}
   else if(t.dataset.pc!=null&&PF){PF.chqs[+t.dataset.pc][t.dataset.k]=t.value}
-  else if(t.dataset.f&&F){F[t.dataset.f]=t.value;updatePreview()}
+  else if(t.dataset.f&&F){F[t.dataset.f]=t.value;updatePreview();refreshSplit()}
+  else if(t.dataset.spamt&&F&&F.split){const p=F.split.people.find(x=>x.id===t.dataset.spamt);if(p)p.amt=t.value;updatePreview();refreshSplit()}
+  else if(t.dataset.spnew!=null&&F&&F.split){F.split.newName=t.value}
   else if(t.dataset.jl!=null&&F){const l=F.lines[+t.dataset.jl];l[t.dataset.k]=t.value;if(t.dataset.k==="dr"&&t.value)l.cr="",document.getElementById("jl_c_"+t.dataset.jl).value="";if(t.dataset.k==="cr"&&t.value)l.dr="",document.getElementById("jl_d_"+t.dataset.jl).value="";updatePreview()}
   else if(t.dataset.s&&SF){SF[t.dataset.s]=t.value}
   else if(t.dataset.a&&AF){AF[t.dataset.a]=t.type==="checkbox"?t.checked:t.value}
@@ -1557,7 +1610,7 @@ document.addEventListener("pointerdown",ev=>{const el=ttTarget(ev.target);docume
 document.addEventListener("focusin",ev=>{const el=ttTarget(ev.target);if(el)showTT(el)});
 document.addEventListener("focusout",ev=>{const el=ttTarget(ev.target);if(el&&!ttTarget(ev.relatedTarget))hideTT(el.closest(".ttwrap"))});
 addEventListener("scroll",()=>document.querySelectorAll(".ttwrap").forEach(hideTT),{passive:true});
-document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&$("#sheetRoot").innerHTML){closeSheet();SF=null;AF=null;render()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML){closeSheet();SF=null;AF=null;render()}});
 addEventListener("scroll",()=>$("#top").classList.toggle("scrolled",scrollY>4),{passive:true});
 addEventListener("beforeunload",ev=>{if(dirty){ev.preventDefault();ev.returnValue=""}});
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
