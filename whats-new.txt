@@ -1,3 +1,4 @@
+• Split an expense with friends: equally or manually, with 2 or more people
 • Sign in with Google: backups go to the FinTrack folder in your Google Drive
 • Your Google profile photo in the top bar
 • Theme switch (Light, Dark, Auto) moved to Manage
