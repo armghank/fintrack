@@ -3,7 +3,7 @@
    Fonts, icons and the Excel library are served from cache first. BUILD is replaced on every deploy. */
 const CACHE = "fintrack-BUILD";
 const FILES = [
-  "./", "./index.html", "./install.html", "./manifest.webmanifest",
+  "./", "./index.html", "./install.html", "./privacy.html", "./manifest.webmanifest",
   "./lib/xlsx.full.min.js", "./fonts/fonts.css",
   "./fonts/instrument-sans-latin-400-normal.woff2", "./fonts/instrument-sans-latin-500-normal.woff2",
   "./fonts/instrument-sans-latin-600-normal.woff2", "./fonts/instrument-sans-latin-700-normal.woff2",
