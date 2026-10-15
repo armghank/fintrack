@@ -105,6 +105,30 @@ Project **FinTrack** in console.cloud.google.com, with the Google Drive API enab
 
 ---
 
+## Part E — See who uses FinTrack (user register)
+
+Every person who signs in is listed in a private Google Sheet in **your** account: name, email, iPhone or Android,
+app version, first sign-in and last active. No financial data is ever sent. The app sends a Google ID token, which
+proves who signed in but cannot open anyone's Drive.
+
+### One-time setup (about 10 minutes)
+1. Go to **sheets.new** (signed in as you) and name the sheet `FinTrack users`.
+2. Menu **Extensions → Apps Script**. Delete everything in the editor and paste all of `user-register/FinTrack-Users.gs`. Click **Save** (disk icon).
+3. Optional: choose **setup** in the function list and click **▶ Run**, then allow access. This creates the *Users* and *Summary* tabs now instead of on the first sign-in.
+4. **Deploy → New deployment** → gear icon → **Web app**.
+   - Description `FinTrack users` · **Execute as: Me** · **Who has access: Anyone** → **Deploy**.
+   - **Authorize access** → choose your account → "Google hasn't verified this app" → **Advanced → Go to … (unsafe) → Allow**. This is your own script.
+5. Copy the **Web app URL** (starts with `https://script.google.com/macros/s/`, ends with `/exec`).
+6. Open that link in a browser. It should show `{"ok":true,"app":"FinTrack user register",...}`.
+7. Put the link in the app: in `www/index.html`, the line `const REGISTER_URL="";` gets the link between the quotes. Commit.
+
+Users appear when they next sign in, or within a day for people already signed in. The **Summary** tab shows total users,
+active in the last 7 and 30 days, Android vs iPhone, and new this month.
+
+If you change the script later: **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. The link stays the same.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -115,6 +139,7 @@ Project **FinTrack** in console.cloud.google.com, with the Google Drive API enab
 | Google says "Error 400: redirect_uri_mismatch" | In the Web client, the redirect URI must be exactly `https://armghank.github.io/fintrack/index.html`. |
 | Google says "Access blocked" or the user isn't allowed | Add that person's Gmail under Audience → Test users (or publish the app). |
 | Android sign-in fails with "Developer error" or code 10 | The Android client's package name or SHA-1 doesn't match. Check them against Part D. |
+| Nobody appears in the users sheet | Check `REGISTER_URL` in `www/index.html` is your `/exec` link, and that the deployment's **Who has access** is **Anyone**. |
 | Top bar keeps saying "Reconnect" | Tap it and sign in again. In Testing mode Google asks for this about once a week. |
 | iPhone shows a browser bar | It was opened in Safari instead of from the Home Screen icon. Add it to the Home Screen and open it from there. |
 
@@ -125,5 +150,6 @@ Project **FinTrack** in console.cloud.google.com, with the Google Drive API enab
 | `www/` | The app itself (`index.html`), install page, offline support, icons, fonts, Excel library |
 | `assets/` | Source artwork for the Android icon and splash screen |
 | `scripts/patch-android.js` | Applies FinTrack's Android settings during the build (version, signing, storage, Google sign-in) |
+| `user-register/FinTrack-Users.gs` | Script for your private who-uses-FinTrack Google Sheet (Part E) |
 | `.github/workflows/build.yml` | The automatic build and hosting |
 | `capacitor.config.json`, `package.json` | Android app settings (app id `app.fintrack.personal`, Capacitor 7, Google sign-in component) |
