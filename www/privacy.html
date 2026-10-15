@@ -30,10 +30,10 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px;wor
 <body>
 <main>
   <div class="brand"><img src="icons/icon-192.png" alt=""><h1>FinTrack Privacy Policy</h1></div>
-  <p class="muted">Last updated 15 October 2026</p>
+  <p class="muted">Last updated 15 October 2026 (added: who-uses-FinTrack list)</p>
 
   <div class="card">
-    <p style="margin:0"><b>In short:</b> FinTrack has no servers and no database of its own. Your financial records stay on your phone and in your own Google Drive. Nobody else, including the people who made FinTrack, can see them.</p>
+    <p style="margin:0"><b>In short:</b> Your financial records stay on your phone and in your own Google Drive. Nobody else, including FinTrack's owner, can see them. The only thing shared with FinTrack's owner is <b>your name and email address</b>, so they know who uses the app.</p>
   </div>
 
   <h2>What FinTrack is</h2>
@@ -50,10 +50,19 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px;wor
   </ul>
   <p>The connection goes directly from your device to Google. Your sign-in pass is stored only on your device and expires automatically.</p>
 
+  <h2>Who-uses-FinTrack list (name and email)</h2>
+  <p>When you sign in, and at most once a day while you use FinTrack, the app sends the following to a private Google Sheet owned by FinTrack's owner:</p>
+  <ul>
+    <li>your <b>name</b> and <b>email address</b> from your Google account;</li>
+    <li>whether you use the Android app, an iPhone or a browser, and the FinTrack version;</li>
+    <li>the date you first signed in and the date you were last active.</li>
+  </ul>
+  <p>To prove the sign-in is genuine, the app sends a Google <i>ID token</i>. It only confirms who you are; it cannot open your Google Drive or your backups. <b>No financial information is ever sent.</b> The list is used only so the owner knows who uses FinTrack and can contact users about the app. It is not sold or shared. Using FinTrack requires this list; to be removed from it, contact the owner (see Contact) and stop using the app.</p>
+
   <h2>How your Google data is used</h2>
   <ul>
     <li>Backups are written to the FinTrack folder in your Google Drive when you press Save, and read back when you sign in on a new device or choose to restore.</li>
-    <li>FinTrack does not sell, share, transfer or disclose your Google data or your financial records to anyone.</li>
+    <li>FinTrack does not sell, share, transfer or disclose your Google data or your financial records to anyone. The only exception is your name and email in the owner's user list described above.</li>
     <li>FinTrack does not use your data for advertising, profiling or training of any kind.</li>
     <li>FinTrack's use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener" target="_blank">Google API Services User Data Policy</a>, including its Limited Use requirements.</li>
   </ul>
@@ -62,7 +71,7 @@ code{font-size:13px;background:var(--line);padding:1px 5px;border-radius:5px;wor
   <p>On Android, FinTrack also saves Excel backups in <code>Documents/FinTrack/Backups</code> on your phone. You can also download statements and backups yourself. These files stay on your device under your control.</p>
 
   <h2>Analytics, cookies and tracking</h2>
-  <p>FinTrack contains no analytics, no advertising and no tracking. It stores your data and settings in your device's local app storage only.</p>
+  <p>FinTrack contains no advertising and no third-party analytics or tracking. Apart from the user list above, it stores your data and settings in your device's local app storage and your own Google Drive.</p>
 
   <h2>Deleting your data</h2>
   <ul>

@@ -196,6 +196,7 @@ button.store:hover{background:var(--surface2)}
 .lg-msg.err{color:var(--neg)}
 .lg-points{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:13.5px;color:var(--muted);width:100%}
 .lg-points li{display:flex;gap:9px}
+.lg-notice{margin:2px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
 .lg-legal{margin:14px 0 0;font-size:13px}.lg-legal a{color:var(--muted)}
 .lg-points li::before{content:"✓";color:var(--pos);font-weight:700;flex:none}
 a.btn{text-decoration:none;color:inherit}a.btn.pri{color:var(--accent-fg)}
@@ -288,6 +289,7 @@ svg circle.tt:focus-visible{stroke-width:22}
     <h1>FinTrack</h1>
     <p class="lg-sub">Your money, in double entry. Private to you.</p>
     <button class="gbtn" id="gLoginBtn" data-act="gLogin">Continue with Google</button>
+    <p class="lg-notice">By continuing, your name and email are shared with FinTrack's owner so they know who uses the app. Your financial data is never shared.</p>
     <p class="lg-msg" id="loginMsg" role="status" aria-live="polite"></p>
     <ul class="lg-points">
       <li>Backs up to a FinTrack folder in your own Google Drive every time you save.</li>
@@ -1256,7 +1258,7 @@ function redirectUri(){return location.origin+location.pathname.replace(/[^/]*$/
 function gWebAuth(silent,purpose){
   const st=uid()+uid()+uid(),g=GA.get();
   ls.set("tapledger.gstate",JSON.stringify({st,purpose,silent:!!silent,page:U.page,setTab:U.setTab,plansTab:U.plansTab,ledTab:U.ledTab}));
-  const p=new URLSearchParams({client_id:GOOGLE_WEB_ID,redirect_uri:redirectUri(),response_type:"token",scope:G_SCOPES.join(" "),include_granted_scopes:"true",state:st});
+  const p=new URLSearchParams({client_id:GOOGLE_WEB_ID,redirect_uri:redirectUri(),response_type:"token id_token",nonce:uid()+uid(),scope:G_SCOPES.join(" "),include_granted_scopes:"true",state:st});
   if(g.user&&g.user.email)p.set("login_hint",g.user.email);
   if(silent)p.set("prompt","none");else if(!g.user)p.set("prompt","select_account");
   location.href="https://accounts.google.com/o/oauth2/v2/auth?"+p.toString();
@@ -1270,7 +1272,7 @@ function gReadRedirect(){
   ["page","setTab","plansTab","ledTab"].forEach(k=>{if(saved[k])U[k]=saved[k]});
   if(q.get("error"))return{error:q.get("error"),silent:saved.silent,purpose:saved.purpose};
   const scope=q.get("scope")||"";if(scope&&scope.indexOf(DRIVE_SCOPE)<0)return{error:"drive_denied",purpose:saved.purpose};
-  GA.patch({token:q.get("access_token"),exp:Date.now()+((+q.get("expires_in"))||3600)*1000,backoff:0,reconnect:false});
+  GA.patch({token:q.get("access_token"),exp:Date.now()+((+q.get("expires_in"))||3600)*1000,idt:q.get("id_token")||"",idExp:Date.now()+50*60000,backoff:0,reconnect:false});
   return{ok:true,purpose:saved.purpose};
 }
 function gBounce(purpose){if(dirty||saving||$("#sheetRoot").innerHTML)return false;toast("Connecting to Google…");setTimeout(()=>gWebAuth(true,purpose),350);return true}
@@ -1283,7 +1285,7 @@ async function gNativeLogin(silent){
   const r=await SL.login({provider:"google",options:{scopes:[DRIVE_SCOPE],filterByAuthorizedAccounts:!!silent,autoSelectEnabled:!!silent}});
   const res=(r&&r.result)||r||{},tok=res.accessToken&&res.accessToken.token;
   if(!tok)throw gErr("Google did not give FinTrack access to your Drive.");
-  GA.patch({token:tok,exp:Date.now()+50*60000,backoff:0,reconnect:false});
+  GA.patch({token:tok,exp:Date.now()+50*60000,idt:res.idToken||"",idExp:Date.now()+50*60000,backoff:0,reconnect:false});
   return res.profile||{};
 }
 function gNativeErrText(e){const m=String(e&&e.message||e||"");return /cancel/i.test(m)?"Sign-in was cancelled.":"Google sign-in failed: "+m}
@@ -1313,6 +1315,23 @@ async function dPut(id,meta,blob){const b="ftb"+uid()+uid();
 async function dPrune(folder){try{const list=(await dList(`name contains 'FinTrack-backup-' and ${dq(folder)} in parents and trashed=false`,"&orderBy=name desc")).filter(f=>/^FinTrack-backup-\d{4}-\d\d-\d\d\.xlsx$/.test(f.name));
   for(const f of list.slice(30))await dfetch(`${DRV}/files/${f.id}?fields=id`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({trashed:true})})}catch(e){}}
 async function dDownload(f){const r=await dfetch(`${DRV}/files/${f.id}?alt=media`);return bookFromWorkbook(XLSX.read(await r.arrayBuffer(),{type:"array"}))}
+
+/* user register: tells the app owner's Google Sheet who uses FinTrack (name + email only).
+   Sends a Google ID token, which proves who signed in but cannot open anyone's Drive. */
+const REGISTER_URL="https://script.google.com/macros/s/AKfycbwOIgM6TOZ1h_9Gcu8CDjN8myO6umFhqdJi1GpC-5PTO4nuJ68vaYbY2JreXtCd5zxv/exec"; // the user-register web app link (ends with /exec)
+function platformName(){return NATIVE?"Android app":IOS?"iPhone":/Android/i.test(navigator.userAgent)?"Android (browser)":"Computer (browser)"}
+let regBusy=false;
+async function gRegister(force){
+  if(!REGISTER_URL||!signedIn()||!navigator.onLine||regBusy)return;
+  const g=GA.get(),key=today()+"|"+((g.user||{}).email||""),prev=ls.get("tapledger.reg");
+  if(!force&&prev===key)return;
+  if(!g.idt||!(g.idExp>Date.now()))return;
+  regBusy=true;ls.set("tapledger.reg",key);
+  try{const r=await fetch(REGISTER_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({idToken:g.idt,platform:platformName(),version:APP_VERSION})});
+    let o=null;try{o=await r.json()}catch(e){}if(o&&o.ok===false)ls.set("tapledger.reg",prev||"")}
+  catch(e){ls.set("tapledger.reg",prev||"")}
+  regBusy=false;
+}
 
 /* backup: upload this phone's book */
 async function gBackup(force){
@@ -1346,7 +1365,7 @@ async function gBackup(force){
 /* check Drive for changes from another device */
 async function gCheck(){
   if(!signedIn()||!navigator.onLine||gBusy||!(tokenOk()||NATIVE))return;
-  gLastCheck=Date.now();
+  gLastCheck=Date.now();gRegister(false);
   try{const folder=await dFolder(),f=await dLatest(folder),g=GA.get();
     if(!f){if(!S.demo&&g.pending)gBackup();return}
     const ap=f.appProperties||{};
@@ -1376,7 +1395,7 @@ async function gAfterLogin(profile){
   const user={id:u.sub||profile.id||"",email:u.email||profile.email||"",name:u.name||profile.name||u.email||profile.email||"",picture:u.picture||profile.imageUrl||""};
   const owner=ls.get("tapledger.owner");
   if(owner&&user.email&&owner!==user.email&&!S.demo){gSwitchAccount(owner,user);return}
-  gSetUser(user);
+  gSetUser(user);gRegister(true);
   if(!S.demo&&!GA.get().lastSync)GA.patch({pending:true});
   hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));
   gCheck();
@@ -1408,7 +1427,7 @@ function gCard(){const g=GA.get(),u=g.user||{};if(!u.email)return"";const init=e
   return `<div class="card"><h3>Google account</h3>
   <div class="acct"><span class="av">${init}${u.picture?`<img class="avimg" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:""}</span><span class="t"><b>${esc(u.name||u.email)}</b><small>${esc(u.email)}</small></span></div>
   <div class="kv"><span class="muted">Backup</span><span class="${g.pending||g.conflictId?"warn":""}" style="text-align:right;max-width:70%">${esc(gStatusLong())}</span></div>
-  <p class="lbl">Every Save goes to the <b>FinTrack</b> folder in your Google Drive: "${esc(LATEST)}" plus one copy per day for 30 days. FinTrack can only see the files it creates there.</p>
+  <p class="lbl">Every Save goes to the <b>FinTrack</b> folder in your Google Drive: "${esc(LATEST)}" plus one copy per day for 30 days. FinTrack can only see the files it creates there. Your name and email are shared with FinTrack's owner; your financial data is not.</p>
   <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="gBackupNow">Back up now</button>${g.folder?`<a class="btn" href="https://drive.google.com/drive/folders/${esc(g.folder)}" target="_blank" rel="noopener">Open in Google Drive</a>`:""}<button class="btn danger" data-act="gSignOut" id="gSignOutBtn">Sign out</button></div></div>`}
 async function gBoot(){
   if(NATIVE)slInit().catch(()=>{});
@@ -1550,7 +1569,7 @@ const ACT={
   gSwitchYes(el){let user;try{user=JSON.parse(el.dataset.user)}catch(e){return}closeSheet();
     try{localStorage.removeItem("tapledger.v1")}catch(e){}S=exampleBook();fixDash();dirty=false;
     const g=GA.get();GA.set({token:g.token,exp:g.exp});try{localStorage.removeItem("tapledger.owner")}catch(e){}
-    gSetUser(user);hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));gCheck()},
+    gSetUser(user);gRegister(true);hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));gCheck()},
   gSwitchNo(){closeSheet();GA.patch({token:"",exp:0});if(NATIVE)slInit().then(SL=>SL.logout({provider:"google"})).catch(()=>{});showLogin("Sign in with the account that owns the book on this phone.")},
   gSignOut(){if(!armed("gSignOutBtn"))return;gSignOut()},
   bkLater(){bkSnooze=true;render()},
