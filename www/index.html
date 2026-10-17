@@ -123,6 +123,8 @@ button{cursor:pointer}
 .dh{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--muted);font-size:19px;padding:6px 6px;margin-left:-6px;line-height:1;flex:none}
 [data-drow].dragging{opacity:.8;background:var(--accent-soft);border-radius:8px}
 .btn.mv{padding:3px 7px;flex:none}
+.card.arranging{padding-block:8px}.card.arranging>h3{margin:0}.card.arranging>h3 .sp,.card.arranging .eyebtn{display:none}.card.arranging .arr{margin-left:auto;display:inline-flex;gap:2px;text-transform:none}.card.arranging>h3 .dh{margin-left:-4px}
+.wl .dh{margin-left:-6px}
 .catrow{gap:4px;padding-block:2px}
 .rowmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:8px 0}
 .rowmain .t{flex:1;min-width:0}.rowmain .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rowmain .t small{color:var(--muted);font-size:12.5px;display:block}
@@ -371,9 +373,13 @@ let F=null; // entry form state
 
 const acc=id=>S.accounts.find(a=>a.id===id);
 const accName=id=>{const a=acc(id);return a?a.name:"(deleted)"};
-const byGrp=g=>S.accounts.filter(a=>a.grp===g&&!a.archived);
-const moneyAccs=()=>S.accounts.filter(a=>!a.archived&&["bank","cash","card"].includes(a.grp));
-const liquidAccs=()=>S.accounts.filter(a=>!a.archived&&["bank","cash"].includes(a.grp));
+const ordOf=a=>typeof a.ord==="number"?a.ord:1e6;
+const GIDX={bank:0,cash:1,pot:2,card:3,loan:4,party:5,asset:6,liab:7,income:8,expense:9,equity:10};
+const byOrd=l=>l.sort((a,b)=>((GIDX[a.grp]||0)-(GIDX[b.grp]||0))||(ordOf(a)-ordOf(b)));
+const grpAll=g=>byOrd(S.accounts.filter(a=>a.grp===g));
+const byGrp=g=>byOrd(S.accounts.filter(a=>a.grp===g&&!a.archived));
+const moneyAccs=()=>byOrd(S.accounts.filter(a=>!a.archived&&["bank","cash","card"].includes(a.grp)));
+const liquidAccs=()=>byOrd(S.accounts.filter(a=>!a.archived&&["bank","cash"].includes(a.grp)));
 const money=(n,cls)=>`<span class="num ${cls||""}"><span class="cur">${esc(S.currency)}</span>${f2(n)}</span>`;
 
 function blankBook(){
@@ -560,13 +566,15 @@ const ICON_EYE_OPEN='<svg viewBox="0 0 24 24" width="17" height="17" fill="none"
 const ICON_EYE_SHUT='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.9 3.9M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>';
 const hideBal=()=>ls.get("tapledger.hidebal")==="1";
 function pHome(){
-  const shown=S.dash.filter(d=>d.on);
-  const ws=shown.map(d=>{const c=COL.has(d.id);
-    const btn=`<button class="cbtn" data-act="collapse" data-w="${d.id}" aria-expanded="${!c}" aria-label="${c?"Show":"Hide"} ${esc(WIDGETS[d.id])}" title="${c?"Show card":"Hide card"}">${c?ICON_EYE_OFF:ICON_EYE}</button>`;
-    return W[d.id]().replace('<section class="card','<section data-w="'+d.id+'" class="card'+(c?" collapsed":"")).replace("</h3>",btn+"</h3>")}).join("");
+  const shown=S.dash.filter(d=>d.on),AR=!!U.arrange;
+  const ws=shown.map((d,i)=>{const c=COL.has(d.id)||AR;
+    const btn=AR?`<span class="arr">${moveBtns(d.id,i===0,i===shown.length-1).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</span>`:`<button class="cbtn" data-act="collapse" data-w="${d.id}" aria-expanded="${!c}" aria-label="${c?"Show":"Hide"} ${esc(WIDGETS[d.id])}" title="${c?"Show card":"Hide card"}">${c?ICON_EYE_OFF:ICON_EYE}</button>`;
+    let h=W[d.id]().replace('<section class="card','<section data-w="'+d.id+'"'+(AR?' data-drow="'+d.id+'"':"")+' class="card'+(c?" collapsed":"")+(AR?" arranging":"")).replace("</h3>",btn+"</h3>");
+    if(AR)h=h.replace("<h3>","<h3>"+dragHandle);return h}).join("");
   const anyCol=shown.some(d=>COL.has(d.id));
-  return `<div class="ph"><h1>Overview</h1>${monthNav()}</div><div class="stack">${ws||'<div class="card empty">All dashboard cards are hidden. Turn them on in Manage → Dashboard.</div>'}
-  <div style="text-align:center"><button class="link" data-act="go" data-p="settings" data-t="dash">Arrange dashboard</button>${shown.length?` · <button class="link" data-act="collapseAll" data-v="${anyCol?"show":"hide"}">${anyCol?"Show all cards":"Hide all cards"}</button>`:""}</div></div>`;
+  const bar=AR?`<div class="banner" style="position:sticky;top:calc(62px + env(safe-area-inset-top,0px));z-index:5"><p><b>Arrange your cards.</b> Drag ≡ or use the arrows.</p><button class="btn sm pri" data-act="arrange">Done</button></div>`:"";
+  return `<div class="ph"><h1>Overview</h1>${monthNav()}</div>${bar}<div class="stack" data-dlist="dash">${ws||'<div class="card empty">All dashboard cards are hidden. Turn them on in Manage → Dashboard.</div>'}
+  <div style="text-align:center">${AR?`<button class="link" data-act="arrange">Done arranging</button>`:`<button class="link" data-act="arrange">Arrange cards</button> · <button class="link" data-act="go" data-p="settings" data-t="dash">Show or hide cards</button>${shown.length?` · <button class="link" data-act="collapseAll" data-v="${anyCol?"show":"hide"}">${anyCol?"Show all":"Fold all"}</button>`:""}`}</div></div>`;
 }
 const W={
   hold(){
@@ -684,7 +692,7 @@ function pLedgers(){
   return `<div class="ph"><h1>Ledgers</h1><button class="btn sm" data-act="dlStmt">Download statement</button></div><div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button class="${U.ledTab===k?"on":""}" data-act="ledTab" data-t="${k}">${l}</button>`).join("")}</div>`+({accounts:lAccounts,daybook:lDaybook,trial:lTrial,stmt:lStmt}[U.ledTab])();
 }
 function lAccounts(){
-  return GROUPS.map(g=>{const list=S.accounts.filter(a=>a.grp===g.k&&!a.archived);if(!list.length)return"";
+  return GROUPS.map(g=>{const list=g.k==="income"||g.k==="expense"?catsOf(g.k):byGrp(g.k);if(!list.length)return"";
     const sum=r2(list.reduce((s,a)=>s+bal(a.id),0));
     return `<div class="grp"><span>${g.label}</span><span class="num">${f2(sum)}</span></div><div class="card" style="padding-block:2px"><div class="rows">${list.map(a=>{const b=bal(a.id);return `<button class="row" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.grp==="party"&&Math.abs(b)>0.004?`<small>${b>0?"Owes you":"You owe"}</small>`:""}</span><span class="r">${money(b,b<0?"neg":"")}</span><span class="muted">›</span></button>`}).join("")}</div></div>`}).join("");
 }
@@ -786,10 +794,10 @@ function pSettings(){
       if(g.k==="income"||g.k==="expense"){const list=catsOf(g.kind,true);
         return `${g.k==="income"?`<div class="field" style="margin:16px 2px 0;max-width:260px"><label for="catSort">Sort categories</label><select class="inp" id="catSort" data-prefsel="catSort">${CAT_SORTS.map(([v,l])=>`<option value="${v}"${cm===v?" selected":""}>${l}</option>`).join("")}</select></div><p class="lbl" style="margin:4px 2px 0">${mine?"Drag ≡ or use the arrows. New entry and Budgets use the same order.":"Switch to My order to arrange by hand."}</p>`:""}
         <div class="grp"><span>${g.label}</span><button class="link" data-act="editAcc" data-g="${g.k}">+ Add</button></div><div class="card" style="padding-block:2px"><div class="rows" data-dlist>${list.map((a,i)=>`<div class="row catrow" data-drow="${a.id}">${mine?dragHandle:""}<button type="button" class="rowmain" data-act="editAcc" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.archived?"<small>Hidden</small>":a.kind==="expense"&&a.budget?`<small>Budget ${f2(a.budget)}/month</small>`:""}</span></button>${mine?moveBtns(a.id,i===0,i===list.length-1,true):`<span class="muted">›</span>`}</div>`).join("")||'<p class="empty">None yet.</p>'}</div></div>`}
-      const list=S.accounts.filter(a=>a.grp===g.k);const add=g.k==="pot"?`<button class="link" data-act="editPot">+ Add</button>`:`<button class="link" data-act="editAcc" data-g="${g.k}">+ Add</button>`;
-      return `<div class="grp"><span>${g.label}</span>${add}</div><div class="card" style="padding-block:2px"><div class="rows">${list.map(a=>`<button class="row" data-act="${g.k==="pot"?"editPot":"editAcc"}" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.archived?"<small>Hidden</small>":g.k==="pot"?`<small>${f2(bal(a.id))} · in ${esc(accName((a.goal||{}).bank))}</small>`:""}</span><span class="muted">Edit ›</span></button>`).join("")||'<p class="empty">None yet.</p>'}</div></div>`}).join("");
+      const list=grpAll(g.k);const add=g.k==="pot"?`<button class="link" data-act="editPot">+ Add</button>`:`<button class="link" data-act="editAcc" data-g="${g.k}">+ Add</button>`;const many=list.length>1;
+      return `<div class="grp"><span>${g.label}</span>${add}</div><div class="card" style="padding-block:2px"><div class="rows" data-dlist>${list.map((a,i)=>`<div class="row catrow" data-drow="${a.id}">${many?dragHandle:""}<button type="button" class="rowmain" data-act="${g.k==="pot"?"editPot":"editAcc"}" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.archived?"<small>Hidden</small>":g.k==="pot"?`<small>${f2(bal(a.id))} · in ${esc(accName((a.goal||{}).bank))}</small>`:""}</span></button>${many?moveBtns(a.id,i===0,i===list.length-1,true):`<span class="muted">›</span>`}</div>`).join("")||'<p class="empty">None yet.</p>'}</div></div>`}).join("");
   }else if(U.setTab==="dash"){
-    body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off and move them up or down.</p>${S.dash.map((d,i)=>`<div class="wl"><input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Move up">↑</button><button class="btn sm" data-act="dashMove" data-i="${i}" data-d="1" ${i===S.dash.length-1?"disabled":""} aria-label="Move down">↓</button></div>`).join("")}</div>`;
+    body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.map((d,i)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===S.dash.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
   }else if(U.setTab==="prefs"){body=settingsCard()
   }else{
     body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div>
@@ -1146,7 +1154,7 @@ function renderAcc(){
 }
 function submitAcc(){
   const a=AF;if(!a.name.trim()){a.err="Type a name.";renderAcc();return}
-  const op=r2(a.opening);const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived};
+  const op=r2(a.opening);const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;
   if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec}else{S.accounts.push(rec);
     if(op){const eq=equityId();const dr=op*SIGN[rec.kind];S.entries.push({id:uid(),date:today(),memo:"Opening balance · "+rec.name,lines:dr>0?[{a:rec.id,dr:Math.abs(op),cr:0},{a:eq,dr:0,cr:Math.abs(op)}]:[{a:eq,dr:Math.abs(op),cr:0},{a:rec.id,dr:0,cr:Math.abs(op)}],t:null})}}
   closeSheet();AF=null;markDirty();render();
@@ -1613,10 +1621,10 @@ const budSortMode=()=>S.prefs.budSort||"mine";
 const catsOf=(kind,withHidden)=>sortCats(S.accounts.filter(a=>a.kind===kind&&(withHidden||!a.archived)),catSortMode());
 const CAT_SORTS=[["mine","My order"],["used","Most used"],["az","A–Z"]];
 const BUD_SORTS=[["mine","My order"],["pct","Most used %"],["big","Biggest budget"],["az","A–Z"]];
-function renorm(kind){S.accounts.filter(a=>a.kind===kind).sort((a,b)=>a.ord-b.ord).forEach((a,i)=>a.ord=i)}
-function moveCat(id,d,withHidden){const a=acc(id);if(!a)return;renorm(a.kind);const list=S.accounts.filter(x=>x.kind===a.kind&&(withHidden||!x.archived)).sort((x,y)=>x.ord-y.ord);
+function renorm(grp){byOrd(S.accounts.filter(a=>a.grp===grp)).forEach((a,i)=>a.ord=i)}
+function moveCat(id,d,withHidden){const a=acc(id);if(!a)return;renorm(a.grp);const list=S.accounts.filter(x=>x.grp===a.grp&&(withHidden||!x.archived)).sort((x,y)=>x.ord-y.ord);
   const i=list.indexOf(a),j=i+d;if(j<0||j>=list.length)return;const t=list[j].ord;list[j].ord=a.ord;a.ord=t;markDirty();render()}
-function applyOrder(ids){const as=ids.map(acc).filter(Boolean);if(as.length<2)return render();renorm(as[0].kind);const before=as.map(a=>a.ord),slots=before.slice().sort((x,y)=>x-y);
+function applyOrder(ids){const as=ids.map(acc).filter(Boolean);if(as.length<2)return render();renorm(as[0].grp);const before=as.map(a=>a.ord),slots=before.slice().sort((x,y)=>x-y);
   if(before.every((v,i)=>v===slots[i]))return render();as.forEach((a,i)=>a.ord=slots[i]);markDirty();render()}
 const dragHandle=`<span class="dh" data-dh aria-hidden="true" title="Drag to reorder">≡</span>`;
 const moveBtns=(id,first,last,hid)=>`<button type="button" class="btn sm ghost mv" data-act="catMove" data-id="${id}" data-d="-1"${hid?' data-h="1"':""} ${first?"disabled":""} aria-label="Move up">↑</button><button type="button" class="btn sm ghost mv" data-act="catMove" data-id="${id}" data-d="1"${hid?' data-h="1"':""} ${last?"disabled":""} aria-label="Move down">↓</button>`;
@@ -1625,7 +1633,10 @@ document.addEventListener("pointerdown",ev=>{const h=ev.target.closest&&ev.targe
   ev.preventDefault();DR={row,list,id:ev.pointerId};row.classList.add("dragging");try{h.setPointerCapture(ev.pointerId)}catch(e){}});
 document.addEventListener("pointermove",ev=>{if(!DR||ev.pointerId!==DR.id)return;ev.preventDefault();
   for(const r of DR.list.querySelectorAll(":scope>[data-drow]")){if(r===DR.row)continue;const b=r.getBoundingClientRect();if(ev.clientY>b.top&&ev.clientY<b.bottom){DR.list.insertBefore(DR.row,ev.clientY<b.top+b.height/2?r:r.nextSibling);break}}},{passive:false});
-function dragEnd(ev){if(!DR||ev.pointerId!==DR.id)return;const ids=[...DR.list.querySelectorAll(":scope>[data-drow]")].map(r=>r.dataset.drow);DR.row.classList.remove("dragging");DR=null;applyOrder(ids)}
+function dragEnd(ev){if(!DR||ev.pointerId!==DR.id)return;const ids=[...DR.list.querySelectorAll(":scope>[data-drow]")].map(r=>r.dataset.drow),dash=DR.list.dataset.dlist==="dash";DR.row.classList.remove("dragging");DR=null;if(dash)applyDash(ids);else applyOrder(ids)}
+function applyDash(ids){const slots=ids.map(id=>S.dash.findIndex(d=>d.id===id)).filter(i=>i>=0).sort((a,b)=>a-b);const items=ids.map(id=>S.dash.find(d=>d.id===id)).filter(Boolean);
+  const before=slots.map(i=>S.dash[i].id).join();items.forEach((d,i)=>S.dash[slots[i]]=d);if(S.dash.filter((d,i)=>slots.includes(i)).map(d=>d.id).join()!==before)markDirty();render()}
+function dashMoveId(id,d,all){const list=S.dash.filter(x=>all||x.on).map(x=>x.id);const i=list.indexOf(id),j=i+d;if(i<0||j<0||j>=list.length)return;[list[i],list[j]]=[list[j],list[i]];applyDash(list)}
 document.addEventListener("pointerup",dragEnd);document.addEventListener("pointercancel",dragEnd);
 
 /* ---------- savings pots ---------- */
@@ -1963,6 +1974,8 @@ const ACT={
   goSavings(){U.page="plans";U.plansTab="savings";render();scrollTo(0,0)},
   goProj(){U.page="plans";U.plansTab="proj";render();scrollTo(0,0)},
   catMove(el){moveCat(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
+  dashMoveId(el){dashMoveId(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
+  arrange(){U.arrange=!U.arrange;render();if(U.arrange)scrollTo(0,0)},
   projH(el){if(el.dataset.m==="custom"){S.prefs.projCustom=true}else{S.prefs.projCustom=false;S.prefs.projH=+el.dataset.m}markDirty();render()},
   projView(el){S.prefs.projView=el.dataset.k;markDirty();render()},
   projMetric(el){S.prefs.projMetric=el.dataset.k;markDirty();render()},
