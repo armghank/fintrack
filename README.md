@@ -127,6 +127,12 @@ active in the last 7 and 30 days, Android vs iPhone, and new this month.
 
 If you change the script later: **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. The link stays the same.
 
+### Country column (added in the October 2026 update)
+The sheet now also records each person's **country** (the one they pick in FinTrack, never a location), and the **Summary** tab shows **Users by country**.
+To switch it on: open the sheet → **Extensions → Apps Script**, replace everything with the new `user-register/FinTrack-Users.gs`, **Save**, then
+**Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. The link stays the same, so nothing changes in the app.
+Optional: choose **setup** and click **▶ Run** once to add the new column and the country table straight away.
+
 ---
 
 ## Troubleshooting

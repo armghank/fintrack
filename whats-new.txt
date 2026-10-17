@@ -1,5 +1,8 @@
-• Split an expense with friends: equally or manually, with 2 or more people
-• Sign in with Google: backups go to the FinTrack folder in your Google Drive
-• Your Google profile photo in the top bar
-• Theme switch (Light, Dark, Auto) moved to Manage
-• Update reminders like this one
+• Savings pots with goals: fixed deadlines (like visa renewal, with repeat) or flexible goals (like a car)
+• Home shows money available to use, plus a Savings goals card and a Savings trend card
+• Projection: see where you'll stand in 6 months to 5 years, with what-if changes
+• Budget limit for the whole month, and colour bars that go from green to yellow to red
+• Arrange and sort your categories (drag or arrows)
+• Choose the day your month starts (e.g. salary on the 5th)
+• Currency and country setting (Manage → Settings)
+• Financial position chart: income, expenses and savings together
