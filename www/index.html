@@ -1136,28 +1136,67 @@ function calTab(){
 
 /* ---------- accounts edit ---------- */
 let AF=null;
+/* ---------- opening balances (editable later) ---------- */
+const canOpening=a=>a&&["asset","liability"].includes(a.kind);
+const isEqLine=l=>{const x=acc(l.a);return !!x&&x.kind==="equity"};
+function openingEntry(a){if(!a)return null;
+  if(a.grp==="pot"){return S.entries.filter(e=>(e.open===a.id||/^Already saved/.test(e.memo||""))&&e.lines.some(l=>l.a===a.id)).sort(asc)[0]||null}
+  const own=S.entries.find(e=>e.open===a.id);if(own)return own;
+  return S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&e.lines.some(isEqLine)).sort(asc)[0]||null}
+function openingInfo(a){const e=openingEntry(a);if(!e)return {e:null,amt:0,date:""};const v=lineNet(e,a.id)*SIGN[a.kind];return {e,amt:r2(v),date:e.date}}
+function firstOtherDate(a,skip){let m=null;for(const e of S.entries){if(skip&&e===skip)continue;if(e.lines.some(l=>l.a===a.id)&&(!m||e.date<m))m=e.date}return m}
+/* remove this account's line from an opening entry, rebalancing its Opening balance line */
+function stripOpening(e,a){if(e.open===a.id||e.lines.length<=2||a.grp==="pot"){S.entries=S.entries.filter(x=>x!==e);return}
+  const v=lineNet(e,a.id);e.lines=e.lines.filter(l=>l.a!==a.id);const q=e.lines.find(isEqLine);
+  if(q){const n=r2(((+q.dr||0)-(+q.cr||0))+v);q.dr=n>0?n:0;q.cr=n<0?-n:0;if(Math.abs(n)<0.005)e.lines=e.lines.filter(l=>l!==q)}
+  if(e.lines.length<2)S.entries=S.entries.filter(x=>x!==e)}
+function setOpening(a,amt,date){const cur=openingInfo(a);if(cur.e)stripOpening(cur.e,a);amt=r2(amt);if(!amt)return;
+  if(a.grp==="pot"){const bank=(a.goal||{}).bank;if(!bank||!acc(bank))return;const v=Math.abs(amt);
+    S.entries.push({id:uid(),date,memo:"Already saved · "+a.name,lines:amt>0?[{a:a.id,dr:v,cr:0},{a:bank,dr:0,cr:v}]:[{a:bank,dr:v,cr:0},{a:a.id,dr:0,cr:v}],t:{type:"savings",sact:amt>0?"put":"back",pot:a.id,from:bank},oneoff:true,open:a.id});return}
+  const eq=equityId(),dr=amt*SIGN[a.kind],v=Math.abs(amt);
+  S.entries.push({id:uid(),date,memo:"Opening balance · "+a.name,lines:dr>0?[{a:a.id,dr:v,cr:0},{a:eq,dr:0,cr:v}]:[{a:eq,dr:v,cr:0},{a:a.id,dr:0,cr:v}],t:null,open:a.id})}
+function openingCheck(a,amt,date){if(!date)return"Pick the opening balance date.";if(date>today())return"The opening balance date can't be in the future.";
+  if(!a)return"";const cur=openingInfo(a),f=firstOtherDate(a,cur.e);if(f&&date>f)return`${a.name} has entries from ${dLong(f)}. The opening balance must be dated on or before ${dLong(f)}, so it never falls between your entries.`;return""}
+let OPC=null;
+function openingConfirm(a,amt,date,then,back){const cur=openingInfo(a),now=held(a.id),after=r2(now+(r2(amt)-cur.amt));const from=cur.date&&cur.date<date?cur.date:date;
+  OPC={then,back};const lab=a.kind==="liability"?"Owed today":a.grp==="party"?"Balance today":"Balance today";
+  openSheet(head("Change opening balance?")+`<p style="margin-top:0">This changes <b>${esc(a.name)}</b> from <b>${dLong(from)}</b> onwards.</p>
+  <div class="kv"><span class="muted">Opening balance</span><span class="num">${cur.e?f2(cur.amt)+" ("+dShort(cur.date)+")":"none"} → <b>${f2(amt)}</b>${r2(amt)?" ("+dShort(date)+")":""}</span></div>
+  <div class="kv"><span class="muted">${lab}</span><span class="num">${f2(now)} → <b>${f2(after)}</b></span></div>
+  <p class="warn" style="font-size:13.5px">⚠️ Statements you already downloaded or shared for ${esc(a.name)} will no longer match. Download fresh ones after this change.</p>
+  ${S.checks[a.id]?`<p class="lbl">Your "My figure" for this account in Check balances will be cleared.</p>`:""}
+  <div class="acts"><button class="btn" data-act="opNo">Cancel</button><button class="btn pri" data-act="opYes">Update</button></div>`)}
 function editAcc(id,g){
-  const a=id?acc(id):null;AF=a?{...a,opening:""}:{id:null,name:"",grp:g,kind:GL[g].kind,color:PAL[S.accounts.length%PAL.length],budget:0,archived:false,opening:""};
+  const a=id?acc(id):null;const oi=a&&canOpening(a)?openingInfo(a):{amt:0,date:""};
+  AF=a?{...a,opening:oi.amt?String(oi.amt):"",openDate:oi.date||firstOtherDate(a)||today(),open0:oi.amt,openD0:oi.date}:{id:null,name:"",grp:g,kind:GL[g].kind,color:PAL[S.accounts.length%PAL.length],budget:0,archived:false,opening:"",openDate:today()};
   renderAcc();
 }
 function renderAcc(){
-  const a=AF;const used=a.id&&S.entries.some(e=>e.lines.some(l=>l.a===a.id));const canOpen=!a.id&&["asset","liability"].includes(a.kind)&&a.grp!=="equity";
+  const a=AF;const used=a.id&&S.entries.some(e=>e.lines.some(l=>l.a===a.id));const canOpen=["asset","liability"].includes(a.kind)&&a.grp!=="equity";
+  const first=a.id?firstOtherDate(acc(a.id)||a,openingInfo(acc(a.id)||a).e):null;
   openSheet(head(a.id?"Edit "+esc(GL[a.grp].label.split(" ·")[0].toLowerCase()):"Add to "+esc(GL[a.grp].label.split(" ·")[0]))+`<form id="aform" novalidate>
   <div class="field"><label for="a-name">Name</label><input class="inp" id="a-name" data-a="name" value="${esc(a.name)}" placeholder="${a.grp==="bank"?"Mashreq Current":a.grp==="party"?"Person's name":a.grp==="expense"?"School fees":"Name"}"></div>
   <div class="fl">Colour</div><div class="swatches">${PAL.map(c=>`<button type="button" class="${a.color===c?"on":""}" style="background:${c}" data-act="acol" data-c="${c}" aria-label="Colour ${c}"></button>`).join("")}</div>
   ${a.kind==="expense"?`<div class="field" style="margin-top:12px"><label for="a-bud">Monthly budget (${esc(S.currency)})</label><input class="inp num" id="a-bud" inputmode="decimal" data-a="budget" value="${a.budget||""}" placeholder="0"></div>`:""}
-  ${canOpen?`<div class="field" style="margin-top:12px"><label for="a-open">${a.grp==="party"?"They already owe you (use minus if you owe them)":a.kind==="liability"?"Amount currently owed":"Current balance"}</label><input class="inp num" id="a-open" inputmode="decimal" data-a="opening" value="${esc(a.opening)}" placeholder="0.00"></div><p class="lbl">Posted as an opening entry against Opening balance.</p>`:""}
+  ${canOpen?`<div class="grid2" style="margin-top:12px"><div class="field"><label for="a-open">Opening balance${a.grp==="party"?" (they owe you; minus if you owe them)":a.kind==="liability"?" (amount owed)":""}</label><input class="inp num" id="a-open" inputmode="decimal" data-a="opening" value="${esc(a.opening)}" placeholder="0.00"></div>
+    <div class="field"><label for="a-odate">As of</label><input class="inp" type="date" id="a-odate" data-a="openDate" value="${esc(a.openDate)}" max="${first||today()}"></div></div>
+    <p class="lbl">${a.id?(first?`Must be on or before this account's first entry (${dLong(first)}). Set 0 to remove it.`:"Set 0 to remove it."):"Posted as an opening entry against Opening balance on this date."}</p>`:""}
   ${a.id?`<div class="wl" style="margin-top:10px"><input type="checkbox" class="sw" id="a-arch" data-a="archived" ${a.archived?"checked":""}><span>Hide from forms and dashboard</span></div>`:""}
   ${AF.err?`<p class="err" role="alert">${esc(AF.err)}</p>`:""}
   <div class="acts" style="margin-top:14px">${a.id?`<button type="button" class="btn danger" data-act="delAcc" id="delAccBtn" ${used?"disabled title=\"Has entries. Hide it instead.\"":""}>Delete</button><span style="flex:1"></span>`:""}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn pri">Save</button></div>
   ${used?`<p class="lbl">This account has entries, so it can be hidden but not deleted.</p>`:""}</form>`);
 }
-function submitAcc(){
+function submitAcc(force){
   const a=AF;if(!a.name.trim()){a.err="Type a name.";renderAcc();return}
-  const op=r2(a.opening);const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;
-  if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec}else{S.accounts.push(rec);
-    if(op){const eq=equityId();const dr=op*SIGN[rec.kind];S.entries.push({id:uid(),date:today(),memo:"Opening balance · "+rec.name,lines:dr>0?[{a:rec.id,dr:Math.abs(op),cr:0},{a:eq,dr:0,cr:Math.abs(op)}]:[{a:eq,dr:Math.abs(op),cr:0},{a:rec.id,dr:0,cr:Math.abs(op)}],t:null})}}
-  closeSheet();AF=null;markDirty();render();
+  const canOpen=["asset","liability"].includes(a.kind)&&a.grp!=="equity";const op=r2(a.opening);
+  const old=a.id?acc(a.id):null;
+  if(canOpen&&op){const e=openingCheck(old,op,a.openDate);if(e){a.err=e;renderAcc();return}}
+  const changed=old&&canOpen&&(op!==r2(a.open0||0)||(op&&a.openDate!==(a.openD0||"")));
+  if(changed&&!force){openingConfirm(old,op,a.openDate,()=>submitAcc(true),renderAcc);return}
+  const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;
+  if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec;if(changed){setOpening(rec,op,a.openDate);delete S.checks[rec.id]}}
+  else{S.accounts.push(rec);if(canOpen&&op)setOpening(rec,op,a.openDate)}
+  closeSheet();AF=null;markDirty();render();if(changed)toast("Opening balance updated. Press Save to keep it.");
 }
 
 /* ---------- reconciliation ---------- */
@@ -1664,10 +1703,14 @@ function goalInfo(a,asOf){asOf=asOf||today();const g=normGoal(a.goal);const b=ba
     if(r.passed){o.passed=true;return o}
     const base=Math.min(T,r.first?bal(a.id,upto(r.start)):potMinSince(a.id,r.start,asOf));const days=daysBetween(r.start,r.date);
     if(days>=28){const s=cycIdx(cycleOf(r.start)),d=cycIdx(cycleOf(r.date)),c=cycIdx(cycleOf(asOf));const N=Math.max(1,d-s),el=Math.min(N,Math.max(0,c-s+1)),rem=Math.max(1,N-(c-s));
-      o.expected=r2(base+(T-base)*el/N);o.need=r2(Math.max(0,T-b)/rem);o.per="month"}
-    else{const tot=Math.max(1,days),el=Math.min(tot,Math.max(0,daysBetween(r.start,asOf)+1));o.expected=r2(base+(T-base)*el/tot);o.need=r2(Math.max(0,T-b)/Math.max(1,Math.ceil(daysBetween(asOf,r.date)/7)));o.per="week"}
+      o.expected=r2(base+(T-base)*el/N);o.pace=r2((T-base)/N);o.need=r2(Math.max(0,T-b)/rem);o.next=rem>1?r2(Math.max(0,T-b)/(rem-1)):null;o.nextK=addMonths(cycleOf(asOf),1);o.per="month"}
+    else{const tot=Math.max(1,days),el=Math.min(tot,Math.max(0,daysBetween(r.start,asOf)+1));o.expected=r2(base+(T-base)*el/tot);const wk=Math.max(1,Math.ceil(daysBetween(asOf,r.date)/7));o.pace=r2((T-base)/Math.max(1,tot/7));o.need=r2(Math.max(0,T-b)/wk);o.next=null;o.per="week"}
     o.shortBy=o.done?0:r2(Math.max(0,o.expected-b));o.behind=o.shortBy>0.004}
-  else if(T>0&&!o.done){const m=+g.monthly||0;if(m>0)o.eta=addMonths(curCycle(),Math.ceil((T-b)/m))}
+  else{const m=+g.monthly||0,cur=cycleOf(asOf),N=projPrefs().n,startK=cycleOf(g.start||asOf),fc=Math.max(cycIdx(firstCycle()),cycIdx(startK));
+    const ks=[];for(let i=N;i>=1;i--){const k=addMonths(cur,-i);if(cycIdx(k)>=fc)ks.push(k)}
+    const flow=k=>{const f=inMonth(k);let t=0;for(const e of S.entries){if(!f(e)||e.oneoff||potFunded(e))continue;t+=lineNet(e,a.id)}return r2(t)};
+    o.paceN=ks.length;o.pace=ks.length?r2(ks.reduce((t,k)=>t+flow(k),0)/ks.length):null;o.thisMonth=flow(cur);o.plan=m;
+    if(T>0&&!o.done){const left=T-b;if(o.pace!=null&&o.pace>0.004)o.etaPace=addMonths(cur,Math.ceil(left/o.pace));if(m>0)o.eta=addMonths(cur,Math.ceil(left/m))}}
   return o}
 /* how much this pot needs this cycle (added to the budget limit allocation) */
 function potAlloc(a,k){if(a.archived)return 0;const g=normGoal(a.goal);
@@ -1683,17 +1726,22 @@ function goalRow(a,compact){const x=goalInfo(a),g=x.g,T=x.T;let chip="",sub="",l
     if(x.passed){chip=`<span class="chip n">Date passed</span>`;sub=`${f2(x.bal)} of ${f2(T)} · was due ${dLong(x.round.date)}`;line="Set a new target date, or spend it from the pot."}
     else{chip=x.done?`<span class="chip ok">Ready ✓</span>`:x.behind?`<span class="chip bad">Short ${f2(x.shortBy)}</span>`:`<span class="chip ok">On track</span>`;
       sub=`${f2(x.bal)} of ${f2(T)} · by ${dLong(x.round.date)}${g.rep?" · "+repText(g):""}`;
-      line=x.done?"Target reached. Spend it from the pot when you pay.":x.behind?`<span class="neg">Short ${f2(x.shortBy)} as of ${ymLabel(curCycle())}</span> · save ${f2(x.need)}/${x.per} to catch up`:`Save ${f2(x.need)}/${x.per} to reach it on time`}}
-  else if(T>0){chip=x.done?`<span class="chip ok">Reached ✓</span>`:`<span class="chip n">Flexible</span>`;sub=`${f2(x.bal)} of ${f2(T)}${g.monthly>0?" · "+f2(g.monthly)+"/month":""}`;
-    line=x.done?"Target reached.":x.eta?`At ${f2(g.monthly)}/month you'll reach it by ${ymLabel(x.eta)}`:"Add a monthly amount to see when you'll reach it."}
-  else{chip=`<span class="chip n">Savings</span>`;sub=`${f2(x.bal)} saved${g.monthly>0?" · "+f2(g.monthly)+"/month":""}`;line=""}
+      line=x.done?"Target reached. Spend it from the pot when you pay.":x.behind?`<span class="neg">Short ${f2(x.shortBy)} as of ${ymLabel(curCycle())}</span> · put aside ${f2(x.shortBy)} now, then ${f2(x.pace)}/${x.per}${x.next!=null?`<br><span class="muted">or ${f2(x.next)}/month from ${MON[+x.nextK.slice(5)-1]} without the top-up</span>`:""}`:`On track · keep saving ${f2(x.pace)}/${x.per}`}}
+  else{const hasPace=x.pace!=null&&x.paceN>0,month=x.plan>0?(x.thisMonth>=x.plan-0.004?`This month: ${f2(x.thisMonth)} put aside ✓`:`This month: ${f2(Math.max(0,x.thisMonth))} of ${f2(x.plan)} put aside · ${f2(x.plan-Math.max(0,x.thisMonth))} to go`):"";
+    if(T>0){chip=x.done?`<span class="chip ok">Reached ✓</span>`:`<span class="chip n">Flexible</span>`;sub=`${f2(x.bal)} of ${f2(T)}`;
+      if(x.done)line="Target reached.";
+      else{const a1=hasPace&&x.pace>0.004?`At your current pace (<b>${f2(x.pace)}/month</b>) you'll reach it by <b>${ymLabel(x.etaPace)}</b>`:hasPace?`Nothing saved recently`:"";
+        const a2=x.plan>0?`At your plan of ${f2(x.plan)}/month: ${ymLabel(x.eta)}`:"";
+        line=[a1,!hasPace&&a2?a2.replace("At your plan of","At your plan of"):a1&&a2?`<span class="muted">${a2}</span>`:a2,month].filter(Boolean).join("<br>")||"Add a monthly amount to see when you'll reach it."}}
+    else{chip=`<span class="chip n">Savings</span>`;sub=`${f2(x.bal)} saved`;line=[hasPace?`Your pace: ${f2(x.pace)}/month`:x.plan>0?`Plan: ${f2(x.plan)}/month`:"",month].filter(Boolean).join("<br>")}}
   return `<div class="goal tt" tabindex="0"${ttAttr(a.name,[["Saved",f2(x.bal),a.color,""]].concat(T>0?[["Target",f2(T),null,""],["Left",f2(Math.max(0,T-x.bal)),null,""]]:[]).concat(x.behind?[["Should have by now",f2(x.expected),null,"",true],["Short",f2(x.shortBy),null,"neg"]]:[]))}>
   <div class="top2"><span>${dot(a.color)} <b style="font-weight:600">${esc(a.name)}</b></span>${chip}</div><div class="lbl">${sub}</div>${goalBar(x)}${line&&!compact?`<div class="lbl" style="margin-top:4px">${line}</div>`:line?`<div class="lbl" style="margin-top:3px">${line}</div>`:""}</div>`}
 
 /* pot editor */
 let GF=null;
 function editPot(id){const a=id?acc(id):null;const g=normGoal(a&&a.goal);
-  GF=a?{id:a.id,name:a.name,color:a.color,archived:a.archived,...g,opening:""}:{id:null,name:"",color:PAL[(S.accounts.length+3)%PAL.length],archived:false,...normGoal({bank:(byGrp("bank")[0]||byGrp("cash")[0]||{}).id||""}),target:"",monthly:"",opening:"",err:""};renderPot()}
+  const oi=a?openingInfo(a):{amt:0,date:""};
+  GF=a?{id:a.id,name:a.name,color:a.color,archived:a.archived,...g,opening:oi.amt?String(oi.amt):"",openDate:oi.date||firstOtherDate(a)||today(),open0:oi.amt,openD0:oi.date}:{id:null,name:"",color:PAL[(S.accounts.length+3)%PAL.length],archived:false,...normGoal({bank:(byGrp("bank")[0]||byGrp("cash")[0]||{}).id||""}),target:"",monthly:"",opening:"",openDate:today(),err:""};renderPot()}
 function renderPot(){const p=GF,fx=p.mode==="fixed";const used=p.id&&S.entries.some(e=>e.lines.some(l=>l.a===p.id));
   openSheet(head(p.id?"Edit savings pot":"New savings pot")+`<form id="gform" novalidate>
   <div class="field"><label for="g-name">Name</label><input class="inp" id="g-name" data-g="name" value="${esc(p.name)}" placeholder="Visa renewal, Car, Home visit"></div>
@@ -1704,19 +1752,22 @@ function renderPot(){const p=GF,fx=p.mode==="fixed";const used=p.id&&S.entries.s
   ${fx?`<div class="field"><label for="g-date">Target date</label><input class="inp" type="date" id="g-date" data-g="date" value="${esc(p.date)}"></div>`:`<div class="field"><label for="g-monthly">Plan to save each month</label><input class="inp num" id="g-monthly" inputmode="decimal" data-g="monthly" value="${esc(p.monthly||"")}" placeholder="0.00"></div>`}</div>
   ${fx?`<div class="fl">Repeats</div><div class="seg"><button type="button" class="${!p.rep?"on":""}" data-act="grep" data-k="0">Never</button><button type="button" class="${p.rep?"on":""}" data-act="grep" data-k="1">Repeats</button></div>
   ${p.rep?`<div class="grid2"><div class="field"><label for="g-every">Every</label><input class="inp num" id="g-every" inputmode="numeric" data-g="every" value="${esc(p.every)}"></div><div class="field"><label for="g-unit">Unit</label><select class="inp" id="g-unit" data-g="unit">${["day","week","month","year"].map(u=>`<option value="${u}"${p.unit===u?" selected":""}>${u}s</option>`).join("")}</select></div></div><p class="lbl">After the target date the goal restarts with the next date. Money left over stays in the pot and counts toward the next round.</p>`:""}`:""}
-  ${!p.id?`<div class="field" style="margin-top:10px"><label for="g-open">Already saved for this (optional)</label><input class="inp num" id="g-open" inputmode="decimal" data-g="opening" value="${esc(p.opening)}" placeholder="0.00"></div><p class="lbl">Moved into the pot from the account above, dated today.</p>`:""}
+  ${(()=>{const a=p.id&&acc(p.id),first=a?firstOtherDate(a,openingInfo(a).e):null;return `<div class="grid2" style="margin-top:10px"><div class="field"><label for="g-open">Already saved${p.id?"":" (optional)"}</label><input class="inp num" id="g-open" inputmode="decimal" data-g="opening" value="${esc(p.opening)}" placeholder="0.00"></div><div class="field"><label for="g-odate">As of</label><input class="inp" type="date" id="g-odate" data-g="openDate" value="${esc(p.openDate)}" max="${first||today()}"></div></div><p class="lbl">Moved into the pot from the account above on this date.${first?" Must be on or before the pot's first entry ("+dLong(first)+").":""}${p.id?" Set 0 to remove it.":""}</p>`})()}
   <div class="fl">Colour</div><div class="swatches">${PAL.map(c=>`<button type="button" class="${p.color===c?"on":""}" style="background:${c}" data-act="gcol" data-c="${c}" aria-label="Colour ${c}"></button>`).join("")}</div>
   ${p.id?`<div class="wl" style="margin-top:10px"><input type="checkbox" class="sw" id="g-arch" data-g="archived" ${p.archived?"checked":""}><span>Hide this pot</span></div>`:""}
   ${p.err?`<p class="err" role="alert">${esc(p.err)}</p>`:""}
   <div class="acts" style="margin-top:14px">${p.id?`<button type="button" class="btn danger" data-act="delPot" id="delPotBtn" ${used?"disabled":""}>Delete</button><span style="flex:1"></span>`:""}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn pri">Save pot</button></div>
   ${used?`<p class="lbl">This pot has entries. Take the money back first, or hide it.</p>`:""}</form>`)}
-function submitPot(){const p=GF;const T=r2(p.target);
+function submitPot(force){const p=GF;const T=r2(p.target);
   p.err=!p.name.trim()?"Give the pot a name.":!p.bank?"Choose where the money is kept.":p.mode==="fixed"&&!(T>0)?"Enter the target amount.":p.mode==="fixed"&&!p.date?"Pick the target date.":p.mode==="fixed"&&p.rep&&!(parseInt(p.every,10)>=1)?"Repeat every must be 1 or more.":r2(p.opening)<0?"Already saved can't be negative.":"";
+  if(!p.err&&r2(p.opening)){p.err=openingCheck(p.id?acc(p.id):null,r2(p.opening),p.openDate)}
   if(p.err)return renderPot();
+  const opChanged=p.id&&(r2(p.opening)!==r2(p.open0||0)||(r2(p.opening)&&p.openDate!==(p.openD0||"")));
+  if(opChanged&&!force){openingConfirm(acc(p.id),r2(p.opening),p.openDate,()=>submitPot(true),renderPot);return}
   const goal=normGoal({mode:p.mode,target:T,date:p.mode==="fixed"?p.date:"",rep:p.mode==="fixed"&&!!p.rep,every:p.every,unit:p.unit,bank:p.bank,start:p.start||today(),monthly:p.mode==="flex"?r2(p.monthly):0});
-  let newId=null;if(p.id){const a=acc(p.id);const old=normGoal(a.goal);if(old.date!==goal.date||old.mode!==goal.mode||old.target!==goal.target)goal.start=today();Object.assign(a,{name:p.name.trim(),color:p.color,archived:!!p.archived,goal})}
+  let newId=null;if(p.id){const a=acc(p.id);const old=normGoal(a.goal);if(old.date!==goal.date||old.mode!==goal.mode||old.target!==goal.target)goal.start=today();Object.assign(a,{name:p.name.trim(),color:p.color,archived:!!p.archived,goal});if(opChanged){setOpening(a,r2(p.opening),p.openDate);delete S.checks[a.id]}}
   else{const id=uid();newId=id;S.accounts.push({id,name:p.name.trim(),kind:"asset",grp:"pot",color:p.color,budget:0,archived:false,ord:S.accounts.length,goal});
-    const op=r2(p.opening);if(op>0)S.entries.push({id:uid(),date:today(),memo:"Already saved · "+p.name.trim(),lines:[{a:id,dr:op,cr:0},{a:p.bank,dr:0,cr:op}],t:{type:"savings",sact:"put",pot:id,from:p.bank},oneoff:true})}
+    const op=r2(p.opening);if(op>0)setOpening(acc(id),op,p.openDate||today())}
   closeSheet();GF=null;markDirty();render();toast("Savings pot saved. Press Save to keep it.");
   if(U.potFromForm&&newId){U.potFromForm=false;F=newForm("savings");F.pot=newId;F.from=p.bank;renderForm()}U.potFromForm=false}
 
@@ -1973,6 +2024,8 @@ const ACT={
   potEntry(el){F=newForm("savings");F.sact=el.dataset.s;F.pot=el.dataset.id;U.lastPot=el.dataset.id;const g=(acc(el.dataset.id)||{}).goal;if(g&&g.bank&&acc(g.bank))F.from=g.bank;renderForm()},
   goSavings(){U.page="plans";U.plansTab="savings";render();scrollTo(0,0)},
   goProj(){U.page="plans";U.plansTab="proj";render();scrollTo(0,0)},
+  opYes(){const o=OPC;OPC=null;if(o)o.then()},
+  opNo(){const o=OPC;OPC=null;if(o&&o.back)o.back();else closeSheet()},
   catMove(el){moveCat(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
   dashMoveId(el){dashMoveId(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
   arrange(){U.arrange=!U.arrange;render();if(U.arrange)scrollTo(0,0)},
