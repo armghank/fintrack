@@ -1,4 +1,6 @@
 • Savings pots with goals: fixed deadlines (like visa renewal, with repeat) or flexible goals (like a car)
+• If you fall behind on a goal, FinTrack shows how to catch up; flexible goals show when you'll finish at your current pace
+• Fix an account's opening balance and its date any time (Manage → tap the account)
 • Home shows money available to use, plus a Savings goals card and a Savings trend card
 • Projection: see where you'll stand in 6 months to 5 years, with what-if changes
 • Budget limit for the whole month, and colour bars that go from green to yellow to red
