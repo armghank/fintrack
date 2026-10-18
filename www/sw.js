@@ -8,6 +8,7 @@ const FILES = [
   "./fonts/instrument-sans-latin-400-normal.woff2", "./fonts/instrument-sans-latin-500-normal.woff2",
   "./fonts/instrument-sans-latin-600-normal.woff2", "./fonts/instrument-sans-latin-700-normal.woff2",
   "./fonts/ibm-plex-mono-latin-400-normal.woff2", "./fonts/ibm-plex-mono-latin-500-normal.woff2",
+  "./fonts/sora-latin-400-normal.woff2", "./fonts/sora-latin-500-normal.woff2", "./fonts/sora-latin-600-normal.woff2",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png", "./icons/favicon-64.png"
 ];

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FinTrack</title>
 <meta name="description" content="FinTrack - personal double-entry finance tracker">
-<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d1016" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e9eef8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#05060d" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,6 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
+<script>try{if((navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4))document.documentElement.classList.add("lite")}catch(e){}</script>
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
@@ -285,6 +286,133 @@ svg circle.tt:focus-visible{stroke-width:22}
 @media (max-width:420px){.hero{grid-template-columns:1fr}.donut{grid-template-columns:1fr;justify-items:center}.legend{width:100%}.grid2{grid-template-columns:1fr}.rec input{width:96px}}
 </style>
 
+<style>
+/* FinTrack · Glass — frosted panes floating over slow aurora light; dark-first, light variant on pale frost */
+:root{
+  --bg:#e9eef8; --surface:rgba(255,255,255,.55); --surface2:rgba(255,255,255,.55); --line:rgba(20,30,60,.10); --edge:rgba(255,255,255,.75);
+  --fg:#0e1426; --muted:#5a6580; --accent:#5b4bff; --accent2:#00a9d6; --accent-soft:rgba(91,75,255,.12); --accent-fg:#ffffff;
+  --pos:#0a9a6a; --neg:#e0435c; --warn:#c27a00; --pos-soft:rgba(10,154,106,.13); --neg-soft:rgba(224,67,92,.13); --warn-soft:rgba(194,122,0,.13);
+  --orb1:rgba(120,90,255,.45); --orb2:rgba(0,200,255,.38); --orb3:rgba(255,120,200,.28);
+  --glow:0 0 0 rgba(0,0,0,0); --shadow:0 20px 50px rgba(30,40,90,.18);
+  --f-ui:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-num:"Sora","Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+  color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#05060d; --surface:rgba(255,255,255,.055); --surface2:rgba(255,255,255,.07); --line:rgba(255,255,255,.08); --edge:rgba(255,255,255,.14);
+  --fg:#eef1ff; --muted:#9097b5; --accent:#8b7bff; --accent2:#4fe3ff; --accent-soft:rgba(139,123,255,.16); --accent-fg:#05060d;
+  --pos:#41e3a5; --neg:#ff6b86; --warn:#ffc35a; --pos-soft:rgba(65,227,165,.12); --neg-soft:rgba(255,107,134,.13); --warn-soft:rgba(255,195,90,.12);
+  --orb1:rgba(120,80,255,.85); --orb2:rgba(0,200,255,.6); --orb3:rgba(255,60,170,.5);
+  --glow:0 0 24px rgba(120,110,255,.45); --shadow:0 20px 60px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#05060d; --surface:rgba(255,255,255,.055); --surface2:rgba(255,255,255,.07); --line:rgba(255,255,255,.08); --edge:rgba(255,255,255,.14);
+  --fg:#eef1ff; --muted:#9097b5; --accent:#8b7bff; --accent2:#4fe3ff; --accent-soft:rgba(139,123,255,.16); --accent-fg:#05060d;
+  --pos:#41e3a5; --neg:#ff6b86; --warn:#ffc35a; --pos-soft:rgba(65,227,165,.12); --neg-soft:rgba(255,107,134,.13); --warn-soft:rgba(255,195,90,.12);
+  --orb1:rgba(120,80,255,.85); --orb2:rgba(0,200,255,.6); --orb3:rgba(255,60,170,.5);
+  --glow:0 0 24px rgba(120,110,255,.45); --shadow:0 20px 60px rgba(0,0,0,.6); color-scheme:dark}
+
+/* aurora backdrop */
+html{background:var(--bg)}
+body{background:transparent!important}
+body::after{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;
+  background:radial-gradient(48% 34% at 12% 10%,var(--orb1),transparent 70%),radial-gradient(44% 34% at 95% 42%,var(--orb2),transparent 70%),radial-gradient(50% 36% at 30% 88%,var(--orb3),transparent 72%);
+  filter:blur(30px);animation:drift 26s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(3%,-4%,0) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){body::after{animation:none}}
+#app{position:relative;z-index:0}
+
+.num,.cur{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.cur{font-size:.58em;font-weight:500;letter-spacing:.08em;margin-right:.35em;vertical-align:.2em;color:var(--muted)}
+.big{font-family:var(--f-num);font-size:30px;font-weight:600;letter-spacing:-.03em}
+.big .num{background:linear-gradient(100deg,var(--fg) 30%,var(--accent2) 120%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.big.neg .num,.big .num.neg{background:none;color:var(--neg)}
+.big.pos .num,.big .num.pos{background:none;color:var(--pos)}
+
+/* glass recipe */
+.card,.banner,.mnav,.nav,.sheet,.tip,.toast,.top .savebtn,.miles div{
+  background:var(--surface);border:1px solid var(--edge);
+  backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6)}
+.card{border-radius:24px;padding:18px;box-shadow:var(--shadow),inset 0 1px 0 var(--edge)}
+.card h3{font-size:11px;letter-spacing:.16em;color:var(--muted);margin-bottom:14px}
+.card h3 .sp{color:var(--muted)}
+.stack{gap:14px}
+.banner{border-radius:20px}
+.kv,.row,.goal,.wl,.rec{border-color:var(--line)!important}
+.grp{letter-spacing:.16em}
+
+/* top bar */
+.top{background:transparent;backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5)}
+.top.scrolled{border-bottom-color:var(--line)}
+.top::before{background:transparent}
+.brand{font-weight:600;letter-spacing:.02em}
+.brand i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:var(--glow);font-size:11px}
+.ph h1{font-family:var(--f-num);font-weight:600;letter-spacing:-.03em;font-size:28px}
+
+/* buttons */
+.btn{border:1px solid var(--edge);background:var(--surface2);border-radius:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.btn.pri,.top .savebtn.pri{background:linear-gradient(120deg,var(--accent),var(--accent2));border:0;color:#fff;box-shadow:var(--glow)}
+a.btn.pri{color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;backdrop-filter:none}
+.savebtn{border-radius:999px;padding:8px 16px}
+.link{color:var(--accent2)}
+:root:not([data-theme="dark"]) .link{color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .link{color:var(--accent2)}}
+
+/* chips, segments, tabs */
+.chip{border:1px solid currentColor;border-color:color-mix(in srgb,currentColor 30%,transparent);backdrop-filter:blur(8px)}
+.chips button,.seg button{background:var(--surface2);border:1px solid var(--edge);border-radius:14px}
+.chips button.on,.seg button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;box-shadow:var(--glow)}
+.chips button.on .muted{color:#fff;opacity:.75}
+.tabs{background:var(--surface);border:1px solid var(--edge);border-radius:16px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.tabs button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;box-shadow:var(--glow)}
+.mseg{background:var(--surface2);border:1px solid var(--edge)}
+.mseg button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff}
+.mnav{border-radius:999px}
+
+/* bars with glow */
+.bar{height:7px;border-radius:99px;background:var(--line)}
+.bar i{border-radius:99px;filter:saturate(1.25) brightness(1.05)}
+.dotc{border-radius:50%}
+
+/* inputs */
+.inp,select.inp,textarea.inp{background:var(--surface2);border:1px solid var(--edge);border-radius:14px;padding:10px 12px}
+.inp:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent-soft)}
+.amt{background:var(--surface2);border:1px solid var(--edge);border-radius:18px;padding:12px 14px}
+.amt input{font-family:var(--f-num);font-size:34px;font-weight:600}
+.preview{background:var(--surface2);border:1px solid var(--edge);border-radius:14px}
+
+/* sheets */
+.scrim{background:rgba(5,6,13,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sheet{border-radius:28px 28px 0 0;box-shadow:var(--shadow);background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.sheet::before{content:"";display:block;width:40px;height:5px;border-radius:99px;background:var(--edge);margin:-6px auto 12px}
+
+/* floating dock */
+.nav{background:color-mix(in srgb,var(--bg) 62%,transparent)!important;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));border-radius:26px;padding-bottom:0;box-shadow:var(--shadow)}
+.nav button{font-weight:500}
+.nav button.on{color:var(--accent2)}
+:root:not([data-theme="dark"]) .nav button.on{color:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .nav button.on{color:var(--accent2)}}
+.nav .fab{border-radius:50%;width:52px;height:52px;margin:-14px auto 0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:var(--glow),0 10px 24px rgba(60,60,200,.35)}
+.shell{padding-bottom:130px}
+.toast{bottom:108px;border-radius:16px;color:var(--fg)}
+
+/* charts & calendar */
+.cal .d{background:var(--surface2);border:1px solid var(--edge);border-radius:12px}
+.cal .d.sel{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}.cal .d.sel .v{color:#fff}
+.cal .d.today{border-color:var(--accent2)}
+.miles div{border-radius:16px}
+.tip{border-radius:14px}
+svg path[stroke-width="2.2"]{filter:drop-shadow(0 0 3px rgba(130,120,255,.55))}
+.sw:checked{background:linear-gradient(120deg,var(--accent),var(--accent2))}
+table.led th{letter-spacing:.12em}
+.avbtn .av{box-shadow:0 0 0 2px var(--edge),var(--glow)}
+.login{background:color-mix(in srgb,var(--bg) 55%,transparent);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5)}
+.lg-mark{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:var(--glow),var(--shadow)}
+.gbtn{background:var(--surface);border:1px solid var(--edge);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+
+/* lighter glass on low-memory phones: less blur, no drifting light */
+.lite .card,.lite .banner,.lite .mnav,.lite .nav,.lite .sheet,.lite .tabs,.lite .btn,.lite .top{backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}
+.lite body::after{animation:none;filter:blur(20px)}
+</style>
 <div class="shell" id="app">
   <header class="top" id="top">
     <div class="brand"><i>FT</i>FinTrack</div>
