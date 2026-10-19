@@ -1,4 +1,5 @@
 • New look: frosted glass design with a glowing background (light and dark mode)
+• Say it: tap + and speak (keyboard microphone) or type, e.g. "spent 45 on groceries from cash". FinTrack fills the entry; you check and tap Record
 • Savings pots with goals: fixed deadlines (like visa renewal, with repeat) or flexible goals (like a car)
 • If you fall behind on a goal, FinTrack shows how to catch up; flexible goals show when you'll finish at your current pace
 • Fix an account's opening balance and its date any time (Manage → tap the account)
