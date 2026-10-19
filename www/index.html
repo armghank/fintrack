@@ -932,7 +932,7 @@ function pSettings(){
     body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.map((d,i)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===S.dash.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
   }else if(U.setTab==="prefs"){body=settingsCard()
   }else{
-    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
@@ -2235,6 +2235,24 @@ function sayBox(){if(F.editId)return"";
   return `<div class="saybox"><div class="sayrow"><span class="saymic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><input class="inp" id="f-say" data-say placeholder="Say or type: spent 45 on groceries from cash" autocomplete="off" enterkeyhint="go" value="${esc(F.sayDraft||"")}"><button type="button" class="btn sm pri" data-act="sayGo">Fill</button></div>
   <p class="lbl" style="margin:6px 2px 0">${F.sayDone?"":"Tap the 🎤 on your keyboard to speak. FinTrack fills the form; you check it, then tap Record."}</p>${res}</div>`}
 
+
+/* ---------- "What's new": shown once after an update (web, iPhone and Android) ---------- */
+const WN_KEY="tapledger.seenver";let wnTries=0;
+const notesList=j=>String(j.notes||"").split(/\n+/).map(l=>l.replace(/^\s*[•\-*]\s*/,"").trim()).filter(Boolean);
+async function wnFetch(){const url=(NATIVE?SITE:new URL("./",location.href).href)+"version.json?t="+Date.now();const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
+function wnSheet(j,manual){const notes=notesList(j);
+  openSheet(head("What's new")+`<div class="upd"><div class="lg-mark" style="width:52px;height:52px;border-radius:15px;font-size:20px" aria-hidden="true">FT</div>
+  <div><b style="font-size:17px">FinTrack ${esc(j.version||APP_VERSION)}</b><div class="lbl">${manual?"Latest update":"You're on the latest version"}${j.date?" · released "+esc(dLong(String(j.date).slice(0,10))):""}</div></div></div>
+  ${notes.length?`<ul class="updnotes">${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:`<p class="lbl">Small fixes and improvements.</p>`}
+  <div class="acts"><button class="btn pri" data-act="wnOk">Got it</button></div>`)}
+async function wnCheck(){const b=myBuild();if(!b)return;
+  if(!ls.get("tapledger.v1")&&!ls.get(WN_KEY)){ls.set(WN_KEY,APP_VERSION);return}
+  if(ls.get(WN_KEY)===APP_VERSION)return;
+  if($("#sheetRoot").innerHTML||!$("#login").hidden){if(++wnTries<20)setTimeout(wnCheck,4000);return}
+  let j;try{j=await wnFetch()}catch(e){return}
+  if(+j.code!==b){if(+j.code<b)ls.set(WN_KEY,APP_VERSION);return}
+  if($("#sheetRoot").innerHTML){if(++wnTries<20)setTimeout(wnCheck,4000);return}
+  ls.set(WN_KEY,APP_VERSION);wnSheet(j,false)}
 /* ---------- events ---------- */
 let confirmArm=null;
 function armed(id){if(confirmArm===id){confirmArm=null;return true}confirmArm=id;const b=document.getElementById(id);if(b){b.textContent="Tap again to confirm"}setTimeout(()=>{if(confirmArm===id)confirmArm=null},4000);return false}
@@ -2244,6 +2262,8 @@ const ACT={
   updLater(){closeSheet();toast("OK. We'll remind you next time you open FinTrack.")},
   updNow(el,ev){closeSheet();toast("Downloading the update…");setTimeout(()=>{location.href=el.getAttribute("href")},150)},
   updCheckNow(){updCheck(true)},
+  wnOk(){ls.set(WN_KEY,APP_VERSION);closeSheet();render()},
+  async wnShow(){try{wnSheet(await wnFetch(),true)}catch(e){toast("Connect to the internet to see what's new.")}},
   gAccount(){U.page="settings";U.setTab="data";render();scrollTo(0,0)},
   save(){save()},
   fresh(){const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);fixDash();markDirty();render();toast("Clean book ready. Add your accounts in Manage.");U.page="settings";U.setTab="accounts";render()},
@@ -2443,7 +2463,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
 /* ---------- boot ---------- */
 gRedirect=NATIVE?null:gReadRedirect();
 S=exampleBook();fixDash();dirty=false;mode="loading";paintTop();render();
-initStore().then(gBoot).then(()=>setTimeout(()=>updCheck(false),1500));
+initStore().then(gBoot).then(()=>{setTimeout(()=>updCheck(false),1500);setTimeout(wnCheck,2500)});
 })();
 </script>
 
