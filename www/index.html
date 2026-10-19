@@ -227,6 +227,10 @@ a.btn{text-decoration:none;color:inherit}a.btn.pri{color:var(--accent-fg)}
 .avbtn:hover .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
 .upd{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .updnotes{margin:4px 0 8px;padding-left:20px}.updnotes li{margin:3px 0}
+.saybox{margin:-2px 0 12px;padding:10px;border-radius:16px;background:var(--surface2);border:1px solid var(--line)}
+.sayrow{display:flex;gap:8px;align-items:center}.sayrow .inp{flex:1;min-width:0}
+.saymic{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--accent-fg);background:var(--accent)}
+.sayres{margin-top:8px;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
 .splitbox{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface2)}
 .sphead{display:flex;align-items:center;justify-content:space-between}
 .spadd{display:flex;gap:6px;margin-top:8px}.spadd .inp{flex:1}
@@ -1036,7 +1040,7 @@ function renderForm(){
   const lines=formLines();
   const pv=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>");
   openSheet(head(F.editId?"Edit entry":"New entry")+
-  `<form id="eform" novalidate><div class="seg">${TYPES.map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
+  `<form id="eform" novalidate>${sayBox()}<div class="seg">${TYPES.map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
   ${F.type!=="journal"?`<label class="amt"><span>${esc(S.currency)}</span><input id="f-amt" data-f="amount" inputmode="decimal" placeholder="0.00" value="${esc(F.amount)}" autocomplete="off" aria-label="Amount"></label>`:""}
   ${body}
   <div class="grid2" style="margin-top:12px"><div class="field"><label for="f-date">Date</label><input class="inp" type="date" id="f-date" data-f="date" value="${esc(F.date)}"></div><div class="field"><label for="f-memo">Note</label><input class="inp" id="f-memo" data-f="memo" value="${esc(F.memo)}" placeholder="Optional"></div></div>
@@ -2101,6 +2105,136 @@ function settingsCard(){const ms=mStart(),k=curCycle();
   <div class="card"><h3>My month</h3><div class="field" style="max-width:220px"><label for="setMs">My month starts on day</label><input class="inp num" id="setMs" inputmode="numeric" data-setms value="${ms}"></div>
   <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div></div>`}
 
+/* ---------- "Say it": turn a spoken or typed sentence into a draft entry (on the phone, no AI) ---------- */
+const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function wordsToDigits(s){const t=s.split(/(\s+)/);const out=[];let run=null;
+  const flush=()=>{if(run){out.push(String(run.total+run.cur));run=null}};
+  for(let i=0;i<t.length;i++){const w=t[i],lw=w.toLowerCase().replace(/[^a-z-]/g,"");
+    if(/^\s+$/.test(w)){if(!run)out.push(w);continue}
+    const parts=lw.split("-");
+    if(parts.every(p=>p in NUMW)&&lw){run=run||{total:0,cur:0};parts.forEach(p=>run.cur+=NUMW[p]);continue}
+    if(run&&lw==="hundred"){run.cur=(run.cur||1)*100;continue}
+    if(run&&(lw==="thousand"||lw==="k")){run.total+=(run.cur||1)*1000;run.cur=0;continue}
+    if(run&&lw==="and"){continue}
+    if(lw==="a"&&/^(hundred|thousand)$/i.test((t[i+2]||"").replace(/[^a-z]/gi,""))){run={total:0,cur:1};continue}
+    if(run){flush();out.push(" ")}out.push(w)}
+  flush();return out.join("").replace(/\s{2,}/g," ")}
+const MONTHS=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+const DAYS=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+function sayDate(s){const t=today();let m;
+  if(/\bday before yesterday\b/.test(s))return [addDays(t,-2),s.replace(/\bday before yesterday\b/,"")];
+  if(/\byesterday\b/.test(s))return [addDays(t,-1),s.replace(/\byesterday\b/,"")];
+  if(/\btoday\b/.test(s))return [t,s.replace(/\btoday\b/,"")];
+  if(m=s.match(/\blast (sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/)){const want=DAYS.indexOf(m[1]),d=new Date(t+"T00:00");let back=(d.getDay()-want+7)%7||7;return [addDays(t,-back),s.replace(m[0],"")]}
+  const mon="(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+  const fix=(dd,mi)=>{let y=+t.slice(0,4);let d=iso(new Date(y,mi,dd));if(d>t)d=iso(new Date(y-1,mi,dd));return d};
+  if(m=s.match(new RegExp("\\b(?:on )?(?:the )?(\\d{1,2})(?:st|nd|rd|th)?(?: of)? "+mon+"\\b"))){return [fix(+m[1],MONTHS.indexOf(m[2].slice(0,3))),s.replace(m[0],"")]}
+  if(m=s.match(new RegExp("\\b(?:on )?"+mon+" (\\d{1,2})(?:st|nd|rd|th)?\\b"))){return [fix(+m[2],MONTHS.indexOf(m[1].slice(0,3))),s.replace(m[0],"")]}
+  if(m=s.match(/\bon the (\d{1,2})(?:st|nd|rd|th)?\b|\bon (\d{1,2})(?:st|nd|rd|th)\b/)){const dd=+(m[1]||m[2]);let d=t.slice(0,8)+p2(dd);if(d>t)d=addMonths(t.slice(0,7),-1)+"-"+p2(dd);return [d,s.replace(m[0],"")]}
+  return [null,s]}
+const GENERIC=new Set(["current","savings","saving","account","bank","the","and","card","credit","cash","hand","in","other","loan","pot"]);
+function accAliases(a){const n=a.name.toLowerCase(),w=a.name.split(/\s+/),out=new Set([n]);
+  w.forEach((x,i)=>{const l=x.toLowerCase().replace(/[^a-z0-9&]/g,"");if(l.length>=3&&!GENERIC.has(l))out.add(l);if(/^[A-Z]{2,}$/.test(x)&&i>0)out.add((w[i-1][0]+x).toLowerCase())});
+  if(a.grp==="cash")out.add("cash");if(a.grp==="card"){out.add("card");out.add("credit card")}return [...out]}
+const hasWord=(s,w)=>new RegExp("(^|[^a-z0-9])"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^a-z0-9])").test(s);
+function findAcc(s,list){let best=null,bl=0;for(const a of list)for(const al of accAliases(a))if(hasWord(s,al)&&al.length>bl){best=a;bl=al.length}return best}
+function findAccAfter(s,words,list){for(const w of words){const m=s.match(new RegExp("\\b"+w+"\\s+(?:my\\s+|the\\s+)?([a-z0-9& ]{2,30})"));if(m){const a=findAcc(m[1].split(/\b(?:and|for|on|to|from|with|at|by)\b/)[0],list);if(a)return a}}return null}
+const CATSYN={grocer:["grocery","groceries","supermarket","carrefour","lulu","spinneys","union coop","bakala","baqala","vegetables","fruits","choithrams"],dining:["dinner","lunch","breakfast","restaurant","food","cafe","coffee","shawarma","pizza","burger","talabat","deliveroo","dining","karak","starbucks"],fuel:["fuel","petrol","diesel","adnoc","enoc","eppco","emarat","taxi","uber","careem","metro","bus","salik","parking","nol","transport"],electric:["dewa","sewa","addc","fewa","electricity","water","utility","utilities"],mobile:["mobile","phone","internet","wifi","du","etisalat","recharge"],health:["pharmacy","doctor","clinic","medicine","hospital","dental","medical","aster"],shopping:["clothes","shopping","amazon","noon","shoes","mall","namshi","ikea"],rent:["rent"],entertain:["cinema","movie","netflix","games","concert","vox","spotify"],family:["family","sent home","parents","remittance"],school:["school","tuition","books"],insurance:["insurance"],"bank charge":["bank charge","bank charges","bank fee"],interest:["interest"],salary:["salary","paycheck","wage","wages"],freelance:["freelance","client","gig"],"other income":["refund","cashback","bonus","gift"]};
+function findCat(s,kind){let best=null,bs=0,hit="";
+  for(const a of S.accounts){if(a.kind!==kind||a.archived)continue;const n=a.name.toLowerCase();let sc=0,h="";
+    for(const w of n.split(/[^a-z]+/))if(w.length>=4&&w!=="other"&&hasWord(s,w)){sc+=3;h=h||w}
+    for(const k in CATSYN)if(n.includes(k))for(const syn of CATSYN[k])if(hasWord(s,syn)){sc+=2;h=h||syn}
+    if(sc>bs){bs=sc;best=a;hit=h}}
+  return best?{a:best,hit}:null}
+function findParty(s){let best=null,bl=0;for(const a of byGrp("party")){const f=a.name.toLowerCase().split(/\s+/)[0];for(const al of [a.name.toLowerCase(),f])if(al.length>=2&&hasWord(s,al)&&al.length>bl){best=a;bl=al.length}}return best}
+function findPot(s){let best=null,bl=0;for(const a of pots()){const n=a.name.toLowerCase();const cands=[n].concat(n.split(/\s+/).filter(w=>w.length>=3&&!GENERIC.has(w)&&w!=="renewal"));for(const al of cands)if(hasWord(s,al)&&al.length>bl){best=a;bl=al.length}}return best}
+const cap=w=>w.replace(/\b[a-z]/g,c=>c.toUpperCase());
+function parseSay(raw){
+  const note=[];let s=" "+wordsToDigits(String(raw||"")).toLowerCase().replace(/[’']/g,"'").replace(/(\d),(\d{3})/g,"$1$2").replace(/(\d),(\d{3})/g,"$1$2")+" ";
+  s=s.replace(/(\d+(?:\.\d+)?)\s?k\b/g,(m,n)=>String(Math.round(+n*1000))).replace(/\b(aed|dhs?|dirhams?)\b/g," ").replace(/[!?;]/g," ");
+  let date;[date,s]=sayDate(s);
+  const R={type:null,amount:"",date:date||today(),dateSaid:!!date,cat:null,from:null,to:null,party:null,pact:"paid",pot:null,sact:"put",memo:"",split:null,note};
+  const at=s.match(/\bat ([a-z0-9& ]{2,30}?)(?= (?:with|from|by|using|for|on|and|in|i paid|paid)\b|[,.]| $)/);if(at)R.memo=cap(at[1].trim());
+  const mon=moneyAccs(),liq=liquidAccs();
+  // ---- split ----
+  if(/\bsplit\w*\b|\bshar(?:e|ed|ing)\b|\bbetween (?:me|us)\b/.test(s)){R.type="expense";R.noSplit=true;
+    const amt0=(s.match(/\b(\d+(?:\.\d+)?)\b/)||[])[1];if(amt0)R.amount=amt0;const c0=findCat(s,"expense");if(c0){R.cat=c0.a.id;if(!R.memo&&c0.hit&&!c0.a.name.toLowerCase().includes(c0.hit))R.memo=cap(c0.hit)}
+    const fa0=findAccAfter(s,["paid by","paid from","paid with","by","from","using","via","on my"],mon)||findAcc(s,mon);if(fa0)R.from=fa0.id;finishSay(R);return R}
+  if(false){
+    const me=!/\b(not including me|without me|excluding me|exclude me|not me|for them)\b/.test(s);
+    let ppl=[],manual=false;
+    const w=s.match(/\b(?:with|between)\s+(.+?)(?=\s+(?:i paid|paid|from|using|by|on|for|at|via|equally|evenly|manually)\b|[.]|\s*$)/);
+    let parts=w?w[1].split(/,|\band\b|&/):[];if(w){const pr=[...w[1].matchAll(/([a-z][a-z'-]*(?: [a-z][a-z'-]*)?)\s+(\d+(?:\.\d+)?)/g)];if(pr.length>1||(pr.length===1&&parts.length===1))parts=pr.map(m=>m[1].replace(/^(and|&)\s+/,"")+" "+m[2]).concat(parts.filter(x=>!/\d/.test(x)))}
+    if(w){for(let part of parts){part=part.trim();if(/^(me|myself|my share|mine|i|us)\b/.test(part)){if(/\d/.test(part))manual=true;continue}if(!part||/^\d/.test(part))continue;
+      const mm=part.match(/^([a-z][a-z .'-]*?)\s+(\d+(?:\.\d+)?)$/);let name=mm?mm[1].trim():part.replace(/\s+\d+(?:\.\d+)?$/,"").trim(),amt=mm?+mm[2]:"";
+      if(/^(me|myself|i|my share|mine)$/.test(name))continue;if(mm)manual=true;
+      name=name.replace(/\b(equally|evenly|each)\b/g,"").trim();if(!name||name.length>24)continue;
+      const ex=byGrp("party").find(a=>a.name.toLowerCase()===name||a.name.toLowerCase().split(/\s+/)[0]===name.split(/\s+/)[0]);
+      const dup=ppl.find(q=>ex?q.id===ex.id:(q.name||"").toLowerCase()===name.toLowerCase());if(dup){if(amt!=="")dup.amt=amt;continue}ppl.push(ex?{id:ex.id,amt}:{id:"__n:"+uid(),name:cap(name),amt})}}
+    const nums=[...s.matchAll(/\b(\d+(?:\.\d+)?)\b/g)].map(m=>+m[1]);const used=ppl.map(p=>p.amt).filter(x=>x!=="");
+    const total=nums.find(n=>!used.includes(n))||(manual?used.reduce((a,b)=>a+b,0):"");R.amount=total?String(total):"";
+    const c=findCat(s,"expense");if(c){R.cat=c.a.id;if(!R.memo&&c.hit&&!c.a.name.toLowerCase().includes(c.hit))R.memo=cap(c.hit)}
+    const fa=findAccAfter(s,["paid by","paid from","paid with","by","from","using","with my","via","on my"],mon)||findAcc(s.replace(w?w[0]:"",""),mon);if(fa)R.from=fa.id;
+    if(!ppl.length)note.push("Who to split with");
+    R.split={on:true,mode:manual?"manual":"equal",me,people:ppl.map(p=>({id:p.id,amt:p.amt===""?"":String(p.amt)})),names:Object.fromEntries(ppl.filter(p=>p.name).map(p=>[p.id,p.name])),newName:""};
+    finishSay(R);return R}
+  const amt=(s.match(/\b(\d+(?:\.\d+)?)\b/)||[])[1];if(amt)R.amount=amt;
+  // ---- savings pots ----
+  const pot=findPot(s);
+  if(pot&&/\b(put|putting|set|keep|kept|save|saved|saving|add|added|move|moved|aside|take|took|withdr\w*|back|spen[dt]|spending|paid|pay|used)\b/.test(s)){R.type="savings";R.pot=pot.id;
+    if(/\b(take|took|taking|back|withdr\w*|return(ed)?)\b/.test(s)){R.sact="back"}
+    else if(/\b(spen[dt]|spending|paid|pay|used|bought)\b/.test(s)&&!/\b(aside|save|saved|put|putting)\b/.test(s)){R.sact="spend";const c=findCat(s,"expense");if(c)R.cat=c.a.id}
+    else R.sact="put";
+    const a=findAcc(s.replace(new RegExp(pot.name.toLowerCase(),"g"),""),liq)||(acc((pot.goal||{}).bank)||null);if(a)R.from=a.id;
+    finishSay(R);return R}
+  // ---- people ----
+  const pa=findParty(s);
+  if(pa){const n=pa.name.toLowerCase().split(/\s+/)[0],N="(?:"+pa.name.toLowerCase()+"|"+n+")";R.type="party";R.party=pa.id;
+    if(new RegExp("\\b"+N+" (?:has )?(?:paid|gave|sent|returned|repaid|transferred) (?:me|back)\\b").test(s)||/\b(received|got|collected)\b/.test(s)||/\bborrowed\b/.test(s))R.pact="recv";
+    else if(new RegExp("\\bi owe "+N+"\\b").test(s)){R.pact="owe";const c=findCat(s,"expense");if(c)R.cat=c.a.id}
+    else if(new RegExp("\\b"+N+" owes me\\b").test(s)){R.pact="owed";const c=findCat(s,"income");if(c)R.cat=c.a.id}
+    else R.pact="paid";
+    if(R.pact==="paid"||R.pact==="recv"){const a=findAcc(s.replace(new RegExp("\\b"+N+"\\b","g")," "),mon);if(a)R.from=a.id}
+    finishSay(R);return R}
+  // ---- transfers ----
+  if(/\b(transfer\w*|moved?|withdr\w*|atm|deposit\w*|top ?up|topped up)\b/.test(s)||/\b(paid|pay|cleared|settled) (?:my |the )?(?:credit )?card\b/.test(s)){R.type="transfer";
+    const tr=mon.concat(byGrp("loan"));let f=findAccAfter(s,["from"],tr),t=findAccAfter(s,["to","into","in"],tr);
+    if(/\b(withdr\w*|atm)\b/.test(s)){t=t||byGrp("cash")[0]||null;if(!f){const o=findAcc(s.replace(/\bcash\b/g,""),mon.filter(a=>a.grp!=="cash"));if(o)f=o}}
+    if(/\bdeposit\w*\b/.test(s)){f=f||byGrp("cash")[0]||null;if(!t){const o=findAcc(s.replace(/\bcash\b/g,""),mon.filter(a=>a.grp!=="cash"));if(o)t=o}}
+    if(/\b(paid|pay|cleared|settled) (?:my |the )?(?:credit )?card\b/.test(s)){t=t||byGrp("card")[0]||null;if(!f){const o=findAcc(s.replace(/\b(credit )?card\b/g,""),liq);if(o)f=o}}
+    if(f)R.from=f.id;if(t)R.to=t.id;finishSay(R);return R}
+  // ---- income ----
+  if(/\b(received|receive|got|earned|earn|salary|income|credited|refund\w*|bonus|cashback|paid me|deposited into)\b/.test(s)){R.type="income";
+    const c=findCat(s,"income");if(c)R.cat=c.a.id;
+    const t=findAccAfter(s,["in","into","to","on"],mon)||findAcc(s,mon);if(t)R.to=t.id;
+    const fr=s.match(/\bfrom ([a-z0-9& ]{2,24}?)(?= in| into| to| on|[,.]| $)/);if(fr&&!R.memo&&!findAcc(fr[1],mon))R.memo=cap(fr[1].trim());
+    finishSay(R);return R}
+  // ---- expense (default) ----
+  R.type="expense";const c=findCat(s,"expense");if(c){R.cat=c.a.id;if(!R.memo&&c.hit&&!c.a.name.toLowerCase().includes(c.hit))R.memo=cap(c.hit)}
+  const fa=findAccAfter(s,["from","by","with","using","via","on my","paid by","paid with"],mon)||findAcc(s,mon);if(fa)R.from=fa.id;
+  finishSay(R);return R}
+function finishSay(R){const n=R.note;
+  if(!R.amount)n.push("Amount");
+  if(R.type==="expense"&&!R.cat)n.push(R.split?"Category for your share":"Category");
+  if(R.type==="expense"&&!R.from)n.push("Paid from");
+  if(R.type==="income"&&!R.cat)n.push("Income type");if(R.type==="income"&&!R.to)n.push("Received in");
+  if(R.type==="transfer"&&(!R.from||!R.to))n.push(!R.from&&!R.to?"From and To accounts":!R.from?"From account":"To account");
+  if(R.type==="savings"&&R.sact==="spend"&&!R.cat)n.push("What it was spent on");
+  if(R.type==="party"&&(R.pact==="owe"||R.pact==="owed")&&!R.cat)n.push("What it was for");
+  if(R.type==="party"&&(R.pact==="paid"||R.pact==="recv")&&!R.from)n.push(R.pact==="paid"?"Paid from":"Received in");
+  if(!R.dateSaid)R.note2="Date: today";}
+function sayApply(text){const R=parseSay(text);const keepSay=text;F=newForm(R.type);
+  Object.assign(F,{amount:R.amount,date:R.date,memo:R.memo,cat:R.cat,party:R.party,pact:R.pact,pot:R.pot,sact:R.sact});
+  if(R.type==="income"){F.to=R.to}else if(R.type==="transfer"){F.from=R.from;F.to=R.to}else{F.from=R.from}
+  if(R.split)F.split=R.split;
+  F.sayText=keepSay;F.sayNote=R.note;F.sayNoSplit=!!R.noSplit;F.sayDone=true;renderForm();
+  const sum=R.type==="expense"&&R.split?"split expense":R.type==="party"?{paid:"payment to a person",recv:"money from a person",owe:"bill you owe",owed:"amount owed to you"}[R.pact]:R.type==="savings"?{put:"put aside",back:"take back",spend:"spend from pot"}[R.sact]:R.type;
+  return sum}
+function sayBox(){if(F.editId)return"";
+  const res=F.sayDone?`<div class="sayres"><div><span class="lbl">Heard</span> “${esc(F.sayText)}”</div>${F.sayNote&&F.sayNote.length?`<div class="warn" style="font-size:13px">Please pick: ${esc(F.sayNote.join(", "))}</div>`:`<div class="pos" style="font-size:13px">✓ Everything filled. Check and tap Record.</div>`}${F.sayNoSplit?`<div class="lbl" style="font-size:13px">Splitting by voice isn't available yet. To split this, tap <b>➗ Split with others</b> below and add the people.</div>`:""}</div>`:"";
+  return `<div class="saybox"><div class="sayrow"><span class="saymic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><input class="inp" id="f-say" data-say placeholder="Say or type: spent 45 on groceries from cash" autocomplete="off" enterkeyhint="go" value="${esc(F.sayDraft||"")}"><button type="button" class="btn sm pri" data-act="sayGo">Fill</button></div>
+  <p class="lbl" style="margin:6px 2px 0">${F.sayDone?"":"Tap the 🎤 on your keyboard to speak. FinTrack fills the form; you check it, then tap Record."}</p>${res}</div>`}
+
 /* ---------- events ---------- */
 let confirmArm=null;
 function armed(id){if(confirmArm===id){confirmArm=null;return true}confirmArm=id;const b=document.getElementById(id);if(b){b.textContent="Tap again to confirm"}setTimeout(()=>{if(confirmArm===id)confirmArm=null},4000);return false}
@@ -2118,6 +2252,7 @@ const ACT={
   close(){closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");WF=null}render()},
   scrim(el,ev){if(ev.target===el){if(WF)return;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;render()}},
   ftype(el){F.type=el.dataset.k;F.cat=null;F.err="";if(F.type==="savings"){const ps=pots();if(!F.pot&&ps.length)F.pot=(U.lastPot&&ps.find(a=>a.id===U.lastPot)||ps[0]).id;const g=F.pot&&acc(F.pot).goal;if(g&&g.bank&&acc(g.bank))F.from=g.bank}renderForm()},
+  sayGo(){const i=$("#f-say");const v=(i?i.value:F.sayDraft||"").trim();if(!v){toast("Say or type what happened first.");if(i)i.focus();return}sayApply(v)},
   fsact(el){F.sact=el.dataset.k;F.cat=null;F.err="";renderForm()},
   spToggle(){if(F.split&&F.split.on)F.split.on=false;else F.split=Object.assign({on:true,mode:"equal",me:true,people:[],names:{},newName:""},F.split||{},{on:true});F.err="";renderForm()},
   spPerson(el){const id=el.dataset.id,sp=F.split,i=sp.people.findIndex(p=>p.id===id);if(i>=0){sp.people.splice(i,1);if(id.startsWith("__n:"))delete sp.names[id]}else sp.people.push({id,amt:""});F.err="";renderForm()},
@@ -2235,6 +2370,7 @@ document.addEventListener("input",ev=>{const t=ev.target;
   else if(t.dataset.f&&F){F[t.dataset.f]=t.value;updatePreview();refreshSplit()}
   else if(t.dataset.spamt&&F&&F.split){const p=F.split.people.find(x=>x.id===t.dataset.spamt);if(p)p.amt=t.value;updatePreview();refreshSplit()}
   else if(t.dataset.spnew!=null&&F&&F.split){F.split.newName=t.value}
+  else if(t.dataset.say!=null&&F){F.sayDraft=t.value}
   else if(t.dataset.jl!=null&&F){const l=F.lines[+t.dataset.jl];l[t.dataset.k]=t.value;if(t.dataset.k==="dr"&&t.value)l.cr="",document.getElementById("jl_c_"+t.dataset.jl).value="";if(t.dataset.k==="cr"&&t.value)l.dr="",document.getElementById("jl_d_"+t.dataset.jl).value="";updatePreview()}
   else if(t.dataset.s&&SF){SF[t.dataset.s]=t.value}
   else if(t.dataset.a&&AF){AF[t.dataset.a]=t.type==="checkbox"?t.checked:t.value}
@@ -2292,7 +2428,7 @@ document.addEventListener("pointerdown",ev=>{const el=ttTarget(ev.target);docume
 document.addEventListener("focusin",ev=>{const el=ttTarget(ev.target);if(el)showTT(el)});
 document.addEventListener("focusout",ev=>{const el=ttTarget(ev.target);if(el&&!ttTarget(ev.relatedTarget))hideTT(el.closest(".ttwrap"))});
 addEventListener("scroll",()=>document.querySelectorAll(".ttwrap").forEach(hideTT),{passive:true});
-document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML&&!WF){closeSheet();SF=null;AF=null;GF=null;render()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Enter"&&ev.target&&ev.target.id==="f-say"){ev.preventDefault();ACT.sayGo();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML&&!WF){closeSheet();SF=null;AF=null;GF=null;render()}});
 addEventListener("scroll",()=>$("#top").classList.toggle("scrolled",scrollY>4),{passive:true});
 addEventListener("beforeunload",ev=>{if(dirty){ev.preventDefault();ev.returnValue=""}});
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
