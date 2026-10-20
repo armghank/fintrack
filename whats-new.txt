@@ -1,4 +1,7 @@
-• On a computer, FinTrack now opens as a full web app: sidebar menu, cards side by side and wider tables
-• Hold any card on Home and drag it to a new place; the other cards move out of the way
-• Big amounts sit side by side when there's room and stack neatly on smaller screens
-• Fixed: Manage → Dashboard rows now line up neatly
+• On a computer, drag Home cards into columns and place them side by side
+• The side menu folds to icons with the arrow, and opens again with names
+• The month picker stays in the top bar on a computer, and the Overview row stays at the top on phones
+• New glass look for the top bar, the Overview row and every drop-down list (no more white lists in dark mode)
+• Long lists like Country now have a search box
+• Credit cards and loans show what you owe in red as "Payable", in green when "In credit"
+• Overview now sits above notices on Home
