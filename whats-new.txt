@@ -1,13 +1,4 @@
-• New look: frosted glass design with a glowing background (light and dark mode)
-• Say it: tap + and speak (keyboard microphone) or type, e.g. "spent 45 on groceries from cash". FinTrack fills the entry; you check and tap Record
-• What's new: after each update FinTrack shows what changed (also in Manage → Data)
-• Savings pots with goals: fixed deadlines (like visa renewal, with repeat) or flexible goals (like a car)
-• If you fall behind on a goal, FinTrack shows how to catch up; flexible goals show when you'll finish at your current pace
-• Fix an account's opening balance and its date any time (Manage → tap the account)
-• Home shows money available to use, plus a Savings goals card and a Savings trend card
-• Projection: see where you'll stand in 6 months to 5 years, with what-if changes
-• Budget limit for the whole month, and colour bars that go from green to yellow to red
-• Arrange accounts, categories and Home cards: drag ≡ or use the arrows
-• Choose the day your month starts (e.g. salary on the 5th)
-• Currency and country setting (Manage → Settings)
-• Financial position chart: income, expenses and savings together
+• On a computer, FinTrack now opens as a full web app: sidebar menu, cards side by side and wider tables
+• Hold any card on Home and drag it to a new place; the other cards move out of the way
+• Big amounts sit side by side when there's room and stack neatly on smaller screens
+• Fixed: Manage → Dashboard rows now line up neatly
