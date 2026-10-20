@@ -125,7 +125,18 @@ button{cursor:pointer}
 [data-drow].dragging{opacity:.8;background:var(--accent-soft);border-radius:8px}
 .btn.mv{padding:3px 7px;flex:none}
 .card.arranging{padding-block:8px}.card.arranging>h3{margin:0}.card.arranging>h3 .sp,.card.arranging .eyebtn{display:none}.card.arranging .arr{margin-left:auto;display:inline-flex;gap:2px;text-transform:none}.card.arranging>h3 .dh{margin-left:-4px}
-.wl .dh{margin-left:-6px}
+.wl .dh{margin-left:-6px;flex:none}
+#main section[data-w]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:transform .18s ease,box-shadow .18s ease}
+#main section[data-w].pressing{transform:scale(.985)}
+#main section.lifted{background:color-mix(in srgb,var(--bg) 94%,var(--accent))!important;backdrop-filter:blur(30px)!important;-webkit-backdrop-filter:blur(30px)!important;transform:scale(1.03);box-shadow:0 24px 60px rgba(0,0,0,.45),0 0 0 2px var(--accent)!important;cursor:grabbing;transition:transform .18s ease,box-shadow .18s ease}
+.card-ph{border:2px dashed var(--edge,var(--line));border-radius:24px;background:color-mix(in srgb,var(--accent) 6%,transparent)}
+#main .stack[data-dlist="dash"]>.card-ph{break-inside:avoid;margin:0 0 18px}
+@media (max-width:959px){#main .stack[data-dlist="dash"]>.card-ph{margin:0}}
+#main section[data-drow].dragging{transform:scale(1.02);box-shadow:0 18px 40px rgba(0,0,0,.35),0 0 0 2px var(--accent)!important;opacity:1;position:relative;z-index:5}
+@media (prefers-reduced-motion:reduce){#main section[data-w]{transition:none}}
+.wl .sw{flex:none}
+.wl>span:not(.dh){flex:1;min-width:0}
+.wl .mv{flex:none}
 .catrow{gap:4px;padding-block:2px}
 .rowmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:8px 0}
 .rowmain .t{flex:1;min-width:0}.rowmain .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rowmain .t small{color:var(--muted);font-size:12.5px;display:block}
@@ -417,6 +428,76 @@ table.led th{letter-spacing:.12em}
 .lite .card,.lite .banner,.lite .mnav,.lite .nav,.lite .sheet,.lite .tabs,.lite .btn,.lite .top{backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}
 .lite body::after{animation:none;filter:blur(20px)}
 </style>
+<style>
+/* responsive safety: big figures stack when there's no room, and never spill out of cards */
+.hero{display:flex!important;flex-wrap:wrap;gap:10px 36px;justify-content:space-between}
+.hero>div:last-child:not(:first-child){text-align:right;margin-left:auto}
+.hero.wrapped>div:last-child:not(:first-child){text-align:left;margin-left:0}
+.hero>div{min-width:0;flex:0 1 auto;max-width:100%}
+.big{font-size:clamp(24px,7.4vw,30px);overflow-wrap:anywhere}
+.card{min-width:0;overflow-wrap:anywhere}
+.kv>*,.row .r{min-width:0}
+.miles b{overflow-wrap:anywhere}
+@media (max-width:440px){.row .t small,.row .t b{white-space:normal}}
+</style>
+<style>
+/* ---------- Desktop web-app layout (wide screens only; phones keep the app layout) ---------- */
+@media (min-width:960px){
+  :root{--side:248px}
+  body{font-size:15px}
+  /* sidebar: the bottom bar becomes a fixed left rail */
+  .nav{top:12px!important;bottom:12px!important;left:12px!important;right:auto!important;width:var(--side);border-radius:24px!important;padding:0!important}
+  .nav .in{position:relative;max-width:none;height:100%;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:18px 14px}
+  .nav .in::before{content:"FinTrack";display:flex;align-items:center;height:40px;padding:0 12px 0 52px;margin-bottom:14px;font-weight:600;font-size:18px;letter-spacing:.01em;color:var(--fg);
+    background:linear-gradient(135deg,var(--accent),var(--accent2)) 12px 50%/30px 30px no-repeat;border-radius:10px;position:relative;order:-2}
+  .nav .in::after{content:"FT";position:absolute;top:23px;left:26px;width:30px;height:30px;display:grid;place-items:center;color:#fff;font:700 11px "Instrument Sans",sans-serif;pointer-events:none}
+  .nav button{flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 14px;font-size:14.5px;font-weight:500;border-radius:14px;color:var(--muted)}
+  .nav button:hover{background:var(--surface2);color:var(--fg)}
+  .nav button.on{background:var(--accent-soft);color:var(--fg)!important;font-weight:600}
+  .nav svg{width:20px;height:20px}
+  .nav .fab{order:-1;width:auto!important;height:48px!important;margin:0 0 16px!important;border-radius:16px!important;justify-content:center;gap:8px;font-size:15px;font-weight:600}
+  .nav .fab::after{content:"New entry"}
+  .nav .fab svg{width:20px;height:20px}
+
+  /* content area */
+  .shell{max-width:none;margin:0 0 0 calc(var(--side) + 24px);padding:0 32px 48px!important}
+  .top{margin:0 -32px;padding:14px 32px}
+  .top .brand{visibility:hidden}
+  #main{max-width:1280px;margin:0 auto}
+  .ph{margin-block:22px 18px}
+  .ph h1{font-size:32px}
+  .banner{max-width:none}
+
+  /* Home dashboard: cards flow into columns */
+  #main .stack[data-dlist="dash"]{display:block;columns:380px 3;column-gap:18px}
+  #main .stack[data-dlist="dash"]>section.card{break-inside:avoid;margin:0 0 18px;display:block}
+  #main .stack[data-dlist="dash"]>div{column-span:all;break-inside:avoid}
+  #main .stack[data-dlist="dash"]>.card.arranging{display:block}
+  #main .arrange-mode .stack[data-dlist="dash"],#main .stack[data-dlist="dash"]:has(.arranging){columns:1;max-width:720px;margin:0 auto}
+
+  /* other pages: comfortable reading width, two-column where it helps */
+  .tabs{max-width:none}
+  #main>.stack:not([data-dlist]),#main .stack.wide2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:18px;align-items:start}
+  table.led{font-size:14px}
+  .tw{margin:0;padding:0}
+  .cal .d{min-height:86px}
+  .cal .d .v{font-size:12px}
+  .big{font-size:34px}
+
+  /* pop-ups: centred dialogs */
+  .scrim{align-items:center!important;justify-content:center;padding-left:calc(var(--side) + 24px)}
+  .sheet{max-width:640px;border-radius:26px!important;max-height:86vh}
+  .sheet::before{display:none}
+  .toast{bottom:28px;left:calc(50% + var(--side)/2)}
+  .tip{max-width:300px}
+  .ttwrap>svg,.card>.ttwrap>svg,.donut svg{max-height:320px}
+  .ttwrap>svg{display:block;margin-inline:auto}
+  .card.ttwrap>svg{max-height:320px}
+}
+@media (min-width:1500px){
+  #main{max-width:1440px}
+}
+</style>
 <div class="shell" id="app">
   <header class="top" id="top">
     <div class="brand"><i>FT</i>FinTrack</div>
@@ -687,7 +768,12 @@ function render(){
   const m=$("#main");
   m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing is kept until you press Save.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
     ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings}[U.page])();
+  heroFix();
 }
+/* two big figures: side by side (second on the right) when they fit, else stacked and left-aligned */
+function heroFix(){document.querySelectorAll(".hero").forEach(h=>{const k=[...h.children];if(k.length<2)return;h.classList.remove("wrapped");const t=k[0].offsetTop;if(k.some(c=>c.offsetTop>t+2))h.classList.add("wrapped")})}
+try{new ResizeObserver(()=>heroFix()).observe(document.getElementById("main"))}catch(e){addEventListener("resize",heroFix)}
+try{document.fonts&&document.fonts.ready.then(heroFix)}catch(e){}
 
 /* Home */
 const ICON_EYE='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
@@ -704,7 +790,7 @@ function pHome(){
     let h=W[d.id]().replace('<section class="card','<section data-w="'+d.id+'"'+(AR?' data-drow="'+d.id+'"':"")+' class="card'+(c?" collapsed":"")+(AR?" arranging":"")).replace("</h3>",btn+"</h3>");
     if(AR)h=h.replace("<h3>","<h3>"+dragHandle);return h}).join("");
   const anyCol=shown.some(d=>COL.has(d.id));
-  const bar=AR?`<div class="banner" style="position:sticky;top:calc(62px + env(safe-area-inset-top,0px));z-index:5"><p><b>Arrange your cards.</b> Drag ≡ or use the arrows.</p><button class="btn sm pri" data-act="arrange">Done</button></div>`:"";
+  const bar=AR?`<div class="banner" style="position:sticky;top:calc(62px + env(safe-area-inset-top,0px));z-index:5"><p><b>Arrange your cards.</b> Drag ≡ or use the arrows. Tip: you can also hold any card on Home and drag it.</p><button class="btn sm pri" data-act="arrange">Done</button></div>`:"";
   return `<div class="ph"><h1>Overview</h1>${monthNav()}</div>${bar}<div class="stack" data-dlist="dash">${ws||'<div class="card empty">All dashboard cards are hidden. Turn them on in Manage → Dashboard.</div>'}
   <div style="text-align:center">${AR?`<button class="link" data-act="arrange">Done arranging</button>`:`<button class="link" data-act="arrange">Arrange cards</button> · <button class="link" data-act="go" data-p="settings" data-t="dash">Show or hide cards</button>${shown.length?` · <button class="link" data-act="collapseAll" data-v="${anyCol?"show":"hide"}">${anyCol?"Show all":"Fold all"}</button>`:""}`}</div></div>`;
 }
@@ -2253,6 +2339,41 @@ async function wnCheck(){const b=myBuild();if(!b)return;
   if(+j.code!==b){if(+j.code<b)ls.set(WN_KEY,APP_VERSION);return}
   if($("#sheetRoot").innerHTML){if(++wnTries<20)setTimeout(wnCheck,4000);return}
   ls.set(WN_KEY,APP_VERSION);wnSheet(j,false)}
+
+/* ---------- Home: tap and hold a card to pick it up and move it ---------- */
+let LP=null;
+document.addEventListener("pointerdown",ev=>{if(U.page!=="home"||DR||LP||CD||U.arrange||ev.button>0)return;const sec=ev.target.closest&&ev.target.closest("#main section[data-w]");
+  if(!sec||ev.target.closest("button,a,input,select,textarea,label,.tt,[data-dh]"))return;
+  LP={x:ev.clientX,y:ev.clientY,id:sec.dataset.w,pid:ev.pointerId,sec,t:setTimeout(lpStart,480)};sec.classList.add("pressing")});
+function lpCancel(){if(!LP)return;clearTimeout(LP.t);LP.sec.classList.remove("pressing");LP=null}
+document.addEventListener("pointermove",ev=>{if(LP&&ev.pointerId===LP.pid&&Math.hypot(ev.clientX-LP.x,ev.clientY-LP.y)>10)lpCancel()},true);
+document.addEventListener("pointerup",lpCancel,true);document.addEventListener("pointercancel",lpCancel,true);
+addEventListener("scroll",()=>{if(LP)lpCancel()},{passive:true});
+let CD=null;
+function lpStart(){const l=LP;if(!l)return;LP=null;try{navigator.vibrate&&navigator.vibrate(15)}catch(e){}
+  const card=l.sec,r=card.getBoundingClientRect(),list=card.parentNode;
+  const ph=document.createElement("div");ph.className="card-ph";ph.style.height=r.height+"px";list.insertBefore(ph,card);
+  card.classList.remove("pressing");card.classList.add("lifted");
+  Object.assign(card.style,{position:"fixed",left:r.left+"px",top:r.top+"px",width:r.width+"px",zIndex:70,margin:"0"});
+  CD={card,ph,list,pid:l.pid,offX:l.x-r.left,offY:l.y-r.top,x:l.x,y:l.y,free:innerWidth>=960};cdLoop()}
+function cdMove(){const c=CD;c.card.style.top=(c.y-c.offY)+"px";if(c.free)c.card.style.left=(c.x-c.offX)+"px"}
+function cdPlace(){const c=CD;if(!c)return;const others=[...c.list.querySelectorAll(":scope>section[data-w]")].filter(x=>x!==c.card);if(!others.length)return;
+  let best=null,bd=Infinity;for(const o of others){const r=o.getBoundingClientRect();const cx=Math.min(Math.max(c.x,r.left),r.right),cy=Math.min(Math.max(c.y,r.top),r.bottom);const d=Math.hypot(c.x-cx,c.y-cy);if(d<bd){bd=d;best=o}}
+  const r=best.getBoundingClientRect(),before=c.y<r.top+r.height/2,ref=before?best:best.nextSibling;
+  if(ref===c.ph||(before&&best.previousSibling===c.ph)||(!before&&best.nextSibling===c.ph))return;
+  const was=new Map(others.map(o=>[o,o.getBoundingClientRect()]));c.list.insertBefore(c.ph,ref);
+  for(const o of others){const a=was.get(o),n=o.getBoundingClientRect(),dx=a.left-n.left,dy=a.top-n.top;if(!dx&&!dy)continue;
+    o.style.transition="none";o.style.transform="translate("+dx+"px,"+dy+"px)";o.getBoundingClientRect();o.style.transition="transform .22s ease";o.style.transform=""}}
+function cdLoop(){if(!CD)return;const top=90,bot=innerHeight-(innerWidth>=960?60:130);let v=0;if(CD.y<top)v=-(top-CD.y)/5;else if(CD.y>bot)v=(CD.y-bot)/5;if(v){scrollBy(0,v);cdPlace()}requestAnimationFrame(cdLoop)}
+function cdEnd(){const c=CD;if(!c)return;CD=null;const pr=c.ph.getBoundingClientRect();
+  c.card.style.transition="top .16s ease,left .16s ease,transform .16s ease";c.card.style.top=pr.top+"px";c.card.style.left=pr.left+"px";c.card.classList.remove("lifted");
+  setTimeout(()=>{c.list.insertBefore(c.card,c.ph);c.ph.remove();["position","left","top","width","zIndex","margin","transition"].forEach(k=>c.card.style[k]="");
+    applyDash([...c.list.querySelectorAll(":scope>section[data-w]")].map(x=>x.dataset.w))},170)}
+document.addEventListener("pointermove",ev=>{if(!CD||ev.pointerId!==CD.pid)return;ev.preventDefault();CD.x=ev.clientX;CD.y=ev.clientY;cdMove();cdPlace()},{passive:false});
+document.addEventListener("pointerup",ev=>{if(CD&&ev.pointerId===CD.pid)cdEnd()});
+document.addEventListener("pointercancel",ev=>{if(CD&&ev.pointerId===CD.pid)cdEnd()});
+document.addEventListener("touchmove",ev=>{if(DR||CD)ev.preventDefault()},{passive:false});
+document.addEventListener("contextmenu",ev=>{if((LP||DR||CD)&&ev.target.closest&&ev.target.closest("#main"))ev.preventDefault()});
 /* ---------- events ---------- */
 let confirmArm=null;
 function armed(id){if(confirmArm===id){confirmArm=null;return true}confirmArm=id;const b=document.getElementById(id);if(b){b.textContent="Tap again to confirm"}setTimeout(()=>{if(confirmArm===id)confirmArm=null},4000);return false}
