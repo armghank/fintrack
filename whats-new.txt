@@ -1,7 +1,3 @@
-• On a computer, drag Home cards into columns and place them side by side
-• The side menu folds to icons with the arrow, and opens again with names
-• The month picker stays in the top bar on a computer, and the Overview row stays at the top on phones
-• New glass look for the top bar, the Overview row and every drop-down list (no more white lists in dark mode)
-• Long lists like Country now have a search box
-• Credit cards and loans show what you owe in red as "Payable", in green when "In credit"
-• Overview now sits above notices on Home
+• New Simple and Pro modes: Simple keeps just the everyday things, and the Pro switch in the menu turns on EMIs, cheques, savings pots, projections and reports. Your data never changes when you switch
+• On phones, tap ☰ next to the logo to open the menu, and add entries with the round + button at the bottom right
+• New to FinTrack? A short tour shows you around. Replay it any time from Manage → Data → Show the tour
