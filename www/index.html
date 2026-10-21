@@ -52,6 +52,85 @@ html.lite .gpop{background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop
 .gpop .gq input{width:100%;border:1px solid var(--edge);background:var(--surface2);color:var(--fg);border-radius:11px;padding:8px 10px;font:inherit;font-size:14px}
 .gpop .gq input:focus{outline:none;border-color:var(--accent2)}
 .gpop .gnone{padding:10px 12px;color:var(--muted);font-size:13px}
+
+/* ---------- phone / app mode: menu slides in from the left, New entry floats bottom-right ---------- */
+.burger,.fab2,.navscrim,.nav .dhead{display:none}
+@media (max-width:959px){
+  html .burger{display:grid;place-items:center;width:40px;height:40px;margin:0 0 0 -8px;border:0;border-radius:12px;background:none;color:var(--fg);flex:none}
+  .burger:active{background:var(--surface2)}
+  html .nav{top:0!important;bottom:0!important;left:0!important;right:auto!important;width:min(300px,84vw);z-index:60!important;border-radius:0 26px 26px 0!important;
+    border:1px solid var(--edge)!important;border-left:0!important;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 calc(env(safe-area-inset-bottom,0px) + 16px)!important;
+    background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)),color-mix(in srgb,var(--bg) 70%,transparent)!important;
+    backdrop-filter:blur(28px) saturate(1.8)!important;-webkit-backdrop-filter:blur(28px) saturate(1.8)!important;box-shadow:var(--shadow)!important;
+    transform:translateX(-104%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s linear .3s}
+  html:root.lite .nav{background:color-mix(in srgb,var(--bg) 92%,transparent)!important}
+  html:root.navopen .nav{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s}
+  html .nav.dragging{transition:none!important}
+  html .nav .in{display:flex!important;flex-direction:column;align-items:stretch;gap:4px;max-width:none;height:100%;padding:0 14px;overflow:auto}
+  html .nav .dhead{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 16px 6px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  html .nav .dhead .brand{display:flex;align-items:center;gap:10px;font-size:18px}
+  html .nav .navx{width:38px;height:38px;padding:0!important;display:grid!important;place-items:center;border-radius:12px!important;color:var(--muted)}
+  html .nav .navx svg{width:20px;height:20px}
+  html .nav button:not(.navx){flex-direction:row!important;justify-content:flex-start!important;gap:14px!important;padding:13px 14px!important;font-size:15.5px!important;font-weight:500;border-radius:14px;color:var(--muted);margin:0!important}
+  html .nav button:not(.navx):active{background:var(--surface2)}
+  html .nav button.on{background:var(--accent-soft)!important;color:var(--fg)!important;font-weight:600}
+  html .nav svg{width:21px;height:21px}
+  html .nav .fab,.nav .navtog{display:none!important}
+  html .navscrim{display:block;position:fixed;inset:0;z-index:55;background:rgba(5,6,13,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
+  html:root.navopen .navscrim{opacity:1;pointer-events:auto}
+  html.navopen,html.navopen body{overflow:hidden}
+  .fab2{display:grid;place-items:center;position:fixed;z-index:40;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    width:58px;height:58px;padding:0;border:0;border-radius:50%;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:var(--glow),0 12px 28px rgba(60,60,200,.38);transition:transform .15s}
+  .fab2:active{transform:scale(.94)}
+  .shell{padding-bottom:110px!important}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+}
+@media (max-width:359px){.top .brand{font-size:0;gap:0}}
+
+/* Pro switch + badge */
+.probadge{display:none;font-style:italic;font-weight:300;font-size:.62em;color:var(--muted);margin-left:-3px;letter-spacing:.02em;align-self:flex-end;padding-bottom:.28em}
+html.pro .probadge{display:inline}
+.nav .protog{order:100}
+.nav .protog .pl{flex:1;text-align:left}
+.nav .protog .pk{flex:none;width:36px;height:21px;border-radius:99px;background:var(--line);position:relative;transition:background .2s}
+.nav .protog .pk::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.nav .protog[aria-checked="true"] .pk{background:linear-gradient(120deg,var(--accent),var(--accent2))}
+.nav .protog[aria-checked="true"] .pk::after{transform:translateX(15px)}
+.nav .protog[aria-checked="true"]{color:var(--fg)}
+.nav .protog[aria-checked="true"] svg{color:var(--accent2)}
+@media (min-width:960px){
+  .nav .protog{display:flex!important;flex-direction:row!important;align-items:center;gap:12px;margin-top:auto!important;padding:11px 14px!important}
+  .navmini .nav .protog{justify-content:center!important;padding:12px 0!important}
+  .navmini .nav .protog .pl,.navmini .nav .protog .pk{display:none}
+  .navmini .nav .protog[aria-checked="true"]{background:var(--accent-soft)}
+}
+@media (max-width:959px){
+  html .nav .in .protog{margin-top:auto!important;border-top:1px solid var(--line);border-radius:0;padding-top:18px!important}
+  .nav .protog .pk{display:block}
+}
+
+/* first-run tour */
+#tourRoot{position:fixed;inset:0;z-index:300}
+.tour-block{position:absolute;inset:0}
+.tour-hole{position:fixed;border-radius:20px;box-shadow:0 0 0 9999px rgba(5,6,13,.66),0 0 0 2px var(--accent2),0 0 24px 4px color-mix(in srgb,var(--accent2) 45%,transparent);transition:all .35s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.tour-tip{position:fixed;width:340px;padding:18px 18px 14px;border-radius:22px;color:var(--fg);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04)),color-mix(in srgb,var(--bg) 78%,transparent);
+  border:1px solid var(--edge);box-shadow:var(--shadow),inset 0 1px 0 var(--edge);backdrop-filter:blur(26px) saturate(1.8);-webkit-backdrop-filter:blur(26px) saturate(1.8);
+  transition:top .35s cubic-bezier(.2,.8,.2,1),left .35s cubic-bezier(.2,.8,.2,1);animation:tourIn .3s ease-out}
+@keyframes tourIn{from{opacity:0;transform:translateY(6px)}}
+#tourRoot.moving .tour-hole,#tourRoot.moving .tour-tip{transition:none}#tourRoot.moving .tour-tip{opacity:0}
+.tour-tip{transition:top .35s cubic-bezier(.2,.8,.2,1),left .35s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.tour-tip.mid{left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(360px,calc(100vw - 32px))!important;text-align:center;animation:none}
+.tour-tip h3{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-.01em;text-transform:none;color:var(--fg)}
+.tour-tip p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5}
+.tour-ico{font-size:34px;margin-bottom:6px}
+.tour-foot{display:flex;align-items:center;gap:8px;margin-top:16px}
+.tour-tip.mid .tour-foot{justify-content:center}
+.tour-dots{display:flex;gap:5px;margin-right:auto}
+.tour-tip.mid .tour-dots{margin-right:8px}
+.tour-dots i{width:6px;height:6px;border-radius:99px;background:var(--line);transition:all .25s}
+.tour-dots i.on{width:18px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
 </style>
 </head>
 <body>
@@ -575,7 +654,8 @@ table.led th{letter-spacing:.12em}
 </style>
 <div class="shell" id="app">
   <header class="top" id="top">
-    <div class="brand"><i>FT</i>FinTrack</div>
+    <button class="burger" data-act="navOpen" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="brand"><i>FT</i>FinTrack<em class="probadge">Pro</em></div>
     <button class="store" id="store" data-act="gStatus" aria-label="Backup status"></button>
     <button class="btn pri savebtn" id="saveBtn" data-act="save"><span class="dot"></span>Save</button>
     <button class="avbtn" id="avBtn" data-act="gAccount" aria-label="Google account" hidden></button>
@@ -583,8 +663,11 @@ table.led th{letter-spacing:.12em}
   <main id="main"></main>
 </div>
 
+<div class="navscrim" data-act="navClose"></div>
 <nav class="nav" aria-label="Main">
   <div class="in">
+    <div class="dhead"><div class="brand"><i>FT</i>FinTrack<em class="probadge">Pro</em></div><button class="navx" data-act="navClose" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <button class="protog" data-act="proTog" role="switch" aria-checked="false" title="Pro mode"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><span class="pl">Pro mode</span><i class="pk" aria-hidden="true"></i></button>
     <button class="navtog" data-act="navTog" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     <button data-act="go" data-p="home" title="Home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Home</button>
     <button data-act="go" data-p="ledgers" title="Ledgers"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Ledgers</button>
@@ -593,6 +676,7 @@ table.led th{letter-spacing:.12em}
     <button data-act="go" data-p="settings" title="Manage"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Manage</button>
   </div>
 </nav>
+<button class="fab2" data-act="newEntry" aria-label="New entry" title="New entry"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 <div class="login" id="login" hidden>
   <div class="lg-in">
     <div class="lg-mark" aria-hidden="true">FT</div>
@@ -654,6 +738,11 @@ const GROUPS=[
   {k:"expense",kind:"expense",label:"Expense categories"},
   {k:"equity",kind:"equity",label:"Equity"}];
 const GL=Object.fromEntries(GROUPS.map(g=>[g.k,g]));
+/* ---------- Simple (default) and Pro mode: Pro only shows more, data is never changed ---------- */
+const LITE_W=new Set(["hold","accounts","spend","budget","parties","recent"]),LITE_T=new Set(["expense","income","transfer","party"]),LITE_LED=new Set(["accounts","daybook"]),LITE_GRP=new Set(["pot","equity"]);
+function isPro(){const v=ls.get("tapledger.pro");if(v==="1")return true;if(v==="0")return false;try{return !S.demo&&S.entries.length>0}catch(e){return false}}
+function paintMode(){const p=isPro();document.documentElement.classList.toggle("pro",p);document.querySelectorAll(".protog").forEach(b=>{b.setAttribute("aria-checked",p?"true":"false")});
+  const pl=document.querySelector('.nav [data-p="plans"]');if(pl){const t=[...pl.childNodes].find(n=>n.nodeType===3);if(t)t.nodeValue=p?"Plans":"Budgets";pl.title=p?"Plans":"Budgets"}}
 const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",goals:"Savings goals",savtrend:"Savings trend",trend:"Financial position (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries"};
 
 /* ---------- state ---------- */
@@ -843,6 +932,7 @@ function daysLeftInMonth(k){const t=today();if(cycleOf(t)!==k)return 0;return da
 
 /* ---------- render ---------- */
 function render(){
+  paintMode();
   document.querySelectorAll(".nav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
   const m=$("#main");
   m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing is kept until you press Save.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
@@ -859,6 +949,52 @@ try{new ResizeObserver(()=>heroFix()).observe(document.getElementById("main"))}c
 function topH(){const t=document.getElementById("top");if(t)document.documentElement.style.setProperty("--toph",t.offsetHeight+"px")}
 try{new ResizeObserver(topH).observe(document.getElementById("top"))}catch(e){addEventListener("resize",topH)}
 addEventListener("scroll",()=>{const ph=document.querySelector(".phhome");if(ph)ph.classList.toggle("stuck",scrollY>ph.offsetTop-ph.offsetHeight)},{passive:true});
+
+/* ---------- first-run tour: a few spotlight tips over the real screen ---------- */
+const TR={i:-1};
+function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
+  {t:"Welcome to FinTrack",b:"Your money in one place. A quick look around takes 30 seconds.",el:null,ico:"👋"},
+  {t:"Add an entry",b:"Tap + for every spend, income or transfer. Or just type “spent 45 on groceries” and FinTrack fills it in.",el:D?".nav .fab":".fab2"},
+  {t:"Your pages",b:D?"Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage live in this menu.":"Tap ☰ to open the menu: Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage.",el:D?".nav [data-p]":".burger",wide:D},
+  {t:"Pick a month",b:"Everything on Home follows the month you choose here.",el:D?".phhome .mnav":".phhome .mnav"},
+  {t:"What you hold",b:"Your bank and cash together. Tap “Check balances” to match it with your real bank.",el:'#main section[data-w="hold"]'},
+  {t:"Who owes whom",b:"Money you lent, borrowed or split with friends shows here.",el:'#main section[data-w="parties"]'},
+  {t:"Want more?",b:pro?"You're in Pro: EMIs, cheques, savings pots and projections are all on.":"Turn on Pro mode at the bottom of the menu for EMIs, cheques, savings pots and projections. You can switch any time.",el:D?".nav .protog":".burger",last:true},
+  {t:"You're ready",b:"This is example data. Play with it, then tap “Start with my own data” when you're ready.",el:null,ico:"✨",end:true}
+].filter(x=>!x.el||document.querySelector(x.el))}
+function tourMaybe(){if(ls.get("tapledger.tour")==="1")return;setTimeout(()=>{if(!$("#sheetRoot").innerHTML)ACT.tourStart()},500)}
+function tourStop(){ls.set("tapledger.tour","1");TR.i=-1;const r=document.getElementById("tourRoot");if(r)r.remove();removeEventListener("resize",tourPlace)}
+function tourGo(i){const st=tourSteps();if(i<0)i=0;if(i>=st.length)return tourStop();TR.i=i;TR.st=st;
+  let r=document.getElementById("tourRoot");if(!r){r=document.createElement("div");r.id="tourRoot";r.innerHTML='<div class="tour-block"></div><div class="tour-hole"></div><div class="tour-tip" role="dialog" aria-live="polite"></div>';document.body.appendChild(r);addEventListener("resize",tourPlace)}
+  const x=st[i],n=st.length;
+  r.querySelector(".tour-tip").innerHTML=`${x.ico?`<div class="tour-ico">${x.ico}</div>`:""}<h3>${x.t}</h3><p>${x.b}</p><div class="tour-foot"><span class="tour-dots">${st.map((_,k)=>`<i${k===i?' class="on"':""}></i>`).join("")}</span>${i>0?'<button class="btn sm ghost" data-act="tourBack">Back</button>':'<button class="btn sm ghost" data-act="tourEnd">Skip</button>'}<button class="btn sm pri" data-act="${i===n-1?"tourEnd":"tourNext"}">${i===n-1?"Let's go":i===0?"Show me":"Next"}</button></div>`;
+  const el=x.el&&document.querySelector(x.el);
+  if(el){const rr=el.getBoundingClientRect();if(rr.top<90||rr.bottom>innerHeight-40){const y=scrollY+rr.top-Math.max(110,(innerHeight-rr.height)/2.6);r.classList.add("moving");scrollTo({top:Math.max(0,y),behavior:"smooth"});clearTimeout(TR.tm);TR.tm=setTimeout(()=>{r.classList.remove("moving");tourPlace()},520)}}
+  tourPlace();const b=r.querySelector(".tour-tip .btn.pri");if(b)b.focus({preventScroll:true})}
+function tourPlace(){if(TR.i<0)return;const r=document.getElementById("tourRoot");if(!r)return;const x=TR.st[TR.i],hole=r.querySelector(".tour-hole"),tip=r.querySelector(".tour-tip");
+  let els=x.el?[...document.querySelectorAll(x.el)]:[];if(!x.wide)els=els.slice(0,1);
+  if(!els.length){hole.style.cssText="left:50%;top:45%;width:0;height:0;";tip.classList.add("mid");tip.style.cssText="";return}
+  tip.classList.remove("mid");const R=els.map(e=>e.getBoundingClientRect());let L=Math.min(...R.map(q=>q.left)),T=Math.min(...R.map(q=>q.top)),Rt=Math.max(...R.map(q=>q.right)),B=Math.max(...R.map(q=>q.bottom));
+  const pad=8,round=els[0].matches(".fab2,.burger")?"50%":"20px";L-=pad;T-=pad;Rt+=pad;B+=pad;
+  hole.style.cssText=`left:${L}px;top:${T}px;width:${Rt-L}px;height:${B-T}px;border-radius:${round}`;
+  const tw=Math.min(340,innerWidth-24);tip.style.width=tw+"px";const th=tip.offsetHeight;
+  let left=Math.min(Math.max(12,(L+Rt)/2-tw/2),innerWidth-tw-12);if(Rt<innerWidth*0.4&&innerWidth>=960&&B-T>200)left=Rt+16;
+  let top=B+14;if(top+th>innerHeight-12)top=T-th-14;if(top<12)top=Math.min(innerHeight-th-12,Math.max(12,B+14));
+  if(innerWidth>=960&&B-T>200&&Rt<innerWidth*0.4)top=Math.min(Math.max(12,T),innerHeight-th-12);
+  tip.style.left=left+"px";tip.style.top=top+"px"}
+document.addEventListener("keydown",e=>{if(TR.i<0)return;if(e.key==="Escape")tourStop();else if(e.key==="ArrowRight")tourGo(TR.i+1);else if(e.key==="ArrowLeft")tourGo(TR.i-1)});
+addEventListener("scroll",()=>{if(TR.i>=0)tourPlace()},{passive:true});
+
+/* phone menu: close on pick, Esc, swipe left, or when the window grows to desktop */
+function navShut(focus){const h=document.documentElement;if(!h.classList.contains("navopen"))return;h.classList.remove("navopen");const b=document.querySelector(".burger");if(b){b.setAttribute("aria-expanded","false");if(focus)b.focus({preventScroll:true})}}
+document.addEventListener("click",e=>{if(e.target.closest(".nav [data-p]"))setTimeout(()=>navShut(),0)},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")navShut(true)});
+addEventListener("resize",()=>{if(innerWidth>=960)navShut()});
+(()=>{const nav=document.querySelector(".nav");if(!nav)return;let x0=null,y0=0,dx=0,lock=0;
+  nav.addEventListener("touchstart",e=>{if(!document.documentElement.classList.contains("navopen"))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;lock=0},{passive:true});
+  nav.addEventListener("touchmove",e=>{if(x0==null)return;const t=e.touches[0];dx=Math.min(0,t.clientX-x0);if(!lock){if(Math.abs(t.clientY-y0)>10&&Math.abs(t.clientY-y0)>Math.abs(dx)){x0=null;return}if(Math.abs(dx)>8){lock=1;nav.classList.add("dragging")}}if(lock)nav.style.transform=`translateX(${dx}px)`},{passive:true});
+  nav.addEventListener("touchend",()=>{if(x0==null)return;x0=null;nav.classList.remove("dragging");nav.style.transform="";if(lock&&dx<-60)navShut()});
+})();
 
 /* ---------- glass dropdowns ---------- */
 const GS_CHEV='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
@@ -883,7 +1019,7 @@ function gsOpen(sel,btn){gsClose();if(sel.disabled)return;
   const big=items.length>12;
   pop.innerHTML=(big?'<div class="gq"><input type="search" placeholder="Search…" aria-label="Search"></div>':"")+'<div class="gl">'+html+'</div>';
   document.body.appendChild(pop);btn.setAttribute("aria-expanded","true");GSP={sel,btn,pop};
-  const place=()=>{const r=btn.getBoundingClientRect(),vw=innerWidth,nv=vw<960&&document.querySelector(".nav"),vh=nv?Math.min(innerHeight,nv.getBoundingClientRect().top):innerHeight;const w=Math.min(Math.max(r.width,180),vw-16);pop.style.width=w+"px";
+  const place=()=>{const r=btn.getBoundingClientRect(),vw=innerWidth,vh=innerHeight;const w=Math.min(Math.max(r.width,180),vw-16);pop.style.width=w+"px";
     let left=Math.min(Math.max(8,r.left),vw-w-8);pop.style.left=left+"px";
     const below=vh-r.bottom-10,above=r.top-10,up=below<220&&above>below;pop.classList.toggle("up",up);
     const mh=Math.max(140,Math.min(320,(up?above:below)-6));pop.style.maxHeight=mh+"px";
@@ -919,7 +1055,7 @@ const ICON_EYE_OPEN='<svg viewBox="0 0 24 24" width="17" height="17" fill="none"
 const ICON_EYE_SHUT='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.9 3.9M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>';
 const hideBal=()=>ls.get("tapledger.hidebal")==="1";
 function pHome(){
-  const shown=S.dash.filter(d=>d.on),AR=!!U.arrange;
+  const PRO=isPro(),shown=S.dash.filter(d=>d.on&&(PRO||LITE_W.has(d.id))),AR=!!U.arrange;
   const NC=deskCols();U.lastCols=NC;
   const ws=shown.map((d,i)=>{const c=COL.has(d.id)||AR;
     const btn=AR?`<span class="arr">${moveBtns(d.id,i===0,i===shown.length-1).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</span>`:`<button class="cbtn" data-act="collapse" data-w="${d.id}" aria-expanded="${!c}" aria-label="${c?"Show":"Hide"} ${esc(WIDGETS[d.id])}" title="${c?"Show card":"Hide card"}">${c?ICON_EYE_OFF:ICON_EYE}</button>`;
@@ -1045,8 +1181,8 @@ function schedRow(s){
 /* Ledgers */
 function pLedgers(){
   if(U.ledAcc&&acc(U.ledAcc))return pAccountLedger(acc(U.ledAcc));
-  const tabs=[["accounts","Accounts"],["daybook","Day book"],["trial","Trial balance"],["stmt","Statements"]];
-  return `<div class="ph"><h1>Ledgers</h1><button class="btn sm" data-act="dlStmt">Download statement</button></div><div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button class="${U.ledTab===k?"on":""}" data-act="ledTab" data-t="${k}">${l}</button>`).join("")}</div>`+({accounts:lAccounts,daybook:lDaybook,trial:lTrial,stmt:lStmt}[U.ledTab])();
+  const tabs=[["accounts","Accounts"],["daybook","Day book"],["trial","Trial balance"],["stmt","Statements"]].filter(t=>isPro()||LITE_LED.has(t[0]));if(!tabs.some(t=>t[0]===U.ledTab))U.ledTab="accounts";
+  return `<div class="ph"><h1>Ledgers</h1>${isPro()?'<button class="btn sm" data-act="dlStmt">Download statement</button>':""}</div><div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button class="${U.ledTab===k?"on":""}" data-act="ledTab" data-t="${k}">${l}</button>`).join("")}</div>`+({accounts:lAccounts,daybook:lDaybook,trial:lTrial,stmt:lStmt}[U.ledTab])();
 }
 function lAccounts(){
   return GROUPS.map(g=>{const list=g.k==="income"||g.k==="expense"?catsOf(g.k):byGrp(g.k);if(!list.length)return"";
@@ -1111,6 +1247,7 @@ function lastDay(k){const [y,m]=k.split("-").map(Number);return k+"-"+p2(new Dat
 /* Plans */
 function pPlans(){
   const tabs=[["sched","EMIs & bills"],["pdc","PDCs"],["cal","Calendar"],["budget","Budgets"],["savings","Savings"],["proj","Projection"]];
+  if(!isPro())U.plansTab="budget";
   let body="";
   if(U.plansTab==="sched"){
     const act=S.schedules.filter(s=>s.active).sort((a,b)=>a.next<b.next?-1:1);const done=S.schedules.filter(s=>!s.active);
@@ -1139,6 +1276,7 @@ function pPlans(){
     <div data-dlist>${rows}</div></div>
     <p class="lbl" style="margin:10px 2px">Spending paid from a savings pot (like your visa) is not counted here, because you already saved for it.</p>`;
   }
+  if(!isPro())return `<div class="ph"><h1>Budgets</h1></div>${body}`;
   return `<div class="ph"><h1>Plans</h1></div><div class="tabs">${tabs.map(([k,l])=>`<button class="${U.plansTab===k?"on":""}" data-act="plansTab" data-t="${k}">${l}</button>`).join("")}</div>${body}`;
 }
 
@@ -1147,17 +1285,17 @@ function pSettings(){
   const tabs=[["accounts","Accounts & categories"],["dash","Dashboard"],["prefs","Settings"],["data","Data"]];let body="";
   if(U.setTab==="accounts"){
     const cm=catSortMode(),mine=cm==="mine";
-    body=GROUPS.map(g=>{
+    body=GROUPS.filter(g=>isPro()||!LITE_GRP.has(g.k)).map(g=>{
       if(g.k==="income"||g.k==="expense"){const list=catsOf(g.kind,true);
         return `${g.k==="income"?`<div class="field" style="margin:16px 2px 0;max-width:260px"><label for="catSort">Sort categories</label><select class="inp" id="catSort" data-prefsel="catSort">${CAT_SORTS.map(([v,l])=>`<option value="${v}"${cm===v?" selected":""}>${l}</option>`).join("")}</select></div><p class="lbl" style="margin:4px 2px 0">${mine?"Drag ≡ or use the arrows. New entry and Budgets use the same order.":"Switch to My order to arrange by hand."}</p>`:""}
         <div class="grp"><span>${g.label}</span><button class="link" data-act="editAcc" data-g="${g.k}">+ Add</button></div><div class="card" style="padding-block:2px"><div class="rows" data-dlist>${list.map((a,i)=>`<div class="row catrow" data-drow="${a.id}">${mine?dragHandle:""}<button type="button" class="rowmain" data-act="editAcc" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.archived?"<small>Hidden</small>":a.kind==="expense"&&a.budget?`<small>Budget ${f2(a.budget)}/month</small>`:""}</span></button>${mine?moveBtns(a.id,i===0,i===list.length-1,true):`<span class="muted">›</span>`}</div>`).join("")||'<p class="empty">None yet.</p>'}</div></div>`}
       const list=grpAll(g.k);const add=g.k==="pot"?`<button class="link" data-act="editPot">+ Add</button>`:`<button class="link" data-act="editAcc" data-g="${g.k}">+ Add</button>`;const many=list.length>1;
       return `<div class="grp"><span>${g.label}</span>${add}</div><div class="card" style="padding-block:2px"><div class="rows" data-dlist>${list.map((a,i)=>`<div class="row catrow" data-drow="${a.id}">${many?dragHandle:""}<button type="button" class="rowmain" data-act="${g.k==="pot"?"editPot":"editAcc"}" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.archived?"<small>Hidden</small>":g.k==="pot"?`<small>${f2(bal(a.id))} · in ${esc(accName((a.goal||{}).bank))}</small>`:""}</span></button>${many?moveBtns(a.id,i===0,i===list.length-1,true):`<span class="muted">›</span>`}</div>`).join("")||'<p class="empty">None yet.</p>'}</div></div>`}).join("");
   }else if(U.setTab==="dash"){
-    body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.map((d,i)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===S.dash.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
+    body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.filter(d=>isPro()||LITE_W.has(d.id)).map((d,i,DL)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===DL.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
   }else if(U.setTab==="prefs"){body=settingsCard()
   }else{
-    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button><button class="btn sm" data-act="tourStart">Show the tour</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
@@ -1244,6 +1382,8 @@ function validate(lines){
   return"";
 }
 function renderForm(){
+  if(!isPro()&&F.editId&&!LITE_T.has(F.type)){openSheet(`<div class="sh-head"><h2>Pro entry</h2><button class="btn ghost icon" data-act="close" aria-label="Close">✕</button></div><p>This entry was made in Pro mode, so it can't be changed in the simple version.</p><p class="lbl">Turn on <b>Pro</b> in the menu to edit it. Your balances already include it.</p><div class="acts"><button class="btn pri" data-act="close">OK</button></div>`);return}
+  if(!isPro()&&!F.editId&&!LITE_T.has(F.type))F.type="expense";
   const exp=catsOf("expense"),inc=catsOf("income"),mon=moneyAccs(),parties=byGrp("party");
   let body="";
   if(F.type==="expense")body=`<div class="fl">Category${splitOn()?" <span class=\"muted\" style=\"text-transform:none;letter-spacing:0;font-weight:400\">(for your share)</span>":""}</div>${chipList(exp,"cat",F.cat)}<div class="fl">Paid from${splitOn()?" <span class=\"muted\" style=\"text-transform:none;letter-spacing:0;font-weight:400\">(the full amount)</span>":""}</div>${chipList(mon,"from",F.from)}${splitBox()}`;
@@ -1265,7 +1405,7 @@ function renderForm(){
   const lines=formLines();
   const pv=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>");
   openSheet(head(F.editId?"Edit entry":"New entry")+
-  `<form id="eform" novalidate>${sayBox()}<div class="seg">${TYPES.map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
+  `<form id="eform" novalidate>${sayBox()}<div class="seg">${TYPES.filter(([k])=>isPro()||LITE_T.has(k)||F.type===k).map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
   ${F.type!=="journal"?`<label class="amt"><span>${esc(S.currency)}</span><input id="f-amt" data-f="amount" inputmode="decimal" placeholder="0.00" value="${esc(F.amount)}" autocomplete="off" aria-label="Amount"></label>`:""}
   ${body}
   <div class="grid2" style="margin-top:12px"><div class="field"><label for="f-date">Date</label><input class="inp" type="date" id="f-date" data-f="date" value="${esc(F.date)}"></div><div class="field"><label for="f-memo">Note</label><input class="inp" id="f-memo" data-f="memo" value="${esc(F.memo)}" placeholder="Optional"></div></div>
@@ -2448,7 +2588,7 @@ function finishSay(R){const n=R.note;
   if(R.type==="party"&&(R.pact==="owe"||R.pact==="owed")&&!R.cat)n.push("What it was for");
   if(R.type==="party"&&(R.pact==="paid"||R.pact==="recv")&&!R.from)n.push(R.pact==="paid"?"Paid from":"Received in");
   if(!R.dateSaid)R.note2="Date: today";}
-function sayApply(text){const R=parseSay(text);const keepSay=text;F=newForm(R.type);
+function sayApply(text){const R=parseSay(text);const keepSay=text;if(!isPro()&&!LITE_T.has(R.type))R.type="transfer";F=newForm(R.type);
   Object.assign(F,{amount:R.amount,date:R.date,memo:R.memo,cat:R.cat,party:R.party,pact:R.pact,pot:R.pot,sact:R.sact});
   if(R.type==="income"){F.to=R.to}else if(R.type==="transfer"){F.from=R.from;F.to=R.to}else{F.from=R.from}
   if(R.split)F.split=R.split;
@@ -2546,7 +2686,7 @@ const ACT={
   fresh(){const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);fixDash();markDirty();render();toast("Clean book ready. Add your accounts in Manage.");U.page="settings";U.setTab="accounts";render()},
   mon(el){U.month=addMonths(U.month,+el.dataset.d);U.monthSet=true;render()},
   newEntry(){F=newForm();renderForm()},
-  close(){closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");WF=null}render()},
+  close(){closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");WF=null;setTimeout(tourMaybe,0)}render()},
   scrim(el,ev){if(ev.target===el){if(WF)return;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;render()}},
   ftype(el){F.type=el.dataset.k;F.cat=null;F.err="";if(F.type==="savings"){const ps=pots();if(!F.pot&&ps.length)F.pot=(U.lastPot&&ps.find(a=>a.id===U.lastPot)||ps[0]).id;const g=F.pot&&acc(F.pot).goal;if(g&&g.bank&&acc(g.bank))F.from=g.bank}renderForm()},
   sayGo(){const i=$("#f-say");const v=(i?i.value:F.sayDraft||"").trim();if(!v){toast("Say or type what happened first.");if(i)i.focus();return}sayApply(v)},
@@ -2586,6 +2726,11 @@ const ACT={
   goProj(){U.page="plans";U.plansTab="proj";render();scrollTo(0,0)},
   opYes(){const o=OPC;OPC=null;if(o)o.then()},
   opNo(){const o=OPC;OPC=null;if(o&&o.back)o.back();else closeSheet()},
+  proTog(){const p=!isPro();ls.set("tapledger.pro",p?"1":"0");paintMode();render();toast(p?"Pro mode on. Everything is shown.":"Simple mode. Advanced tools are hidden, your data is unchanged.")},
+  tourStart(){navShut();U.page="home";U.arrange=false;render();scrollTo(0,0);setTimeout(()=>tourGo(0),120)},
+  tourNext(){tourGo(TR.i+1)},tourBack(){tourGo(TR.i-1)},tourEnd(){tourStop()},
+  navOpen(){if(innerWidth>=960)return;document.documentElement.classList.add("navopen");const b=document.querySelector(".burger");if(b)b.setAttribute("aria-expanded","true");const on=document.querySelector(".nav button.on")||document.querySelector(".nav [data-p]");setTimeout(()=>on&&on.focus({preventScroll:true}),60)},
+  navClose(){navShut(true)},
   navTog(){const m=!document.documentElement.classList.contains("navmini");document.documentElement.classList.toggle("navmini",m);ls.set("tapledger.navmini",m?"1":"0");const b=document.querySelector(".navtog");if(b){b.setAttribute("aria-label",m?"Expand menu":"Collapse menu");b.title=m?"Expand menu":"Collapse menu"}setTimeout(()=>{heroFix();if(U.page==="home"&&deskCols()!==U.lastCols)render()},260)},
   catMove(el){moveCat(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
   dashMoveId(el){dashMoveId(el.dataset.id,+el.dataset.d,!!el.dataset.h)},
@@ -2599,7 +2744,7 @@ const ACT={
   wiAdd(el){const w=S.whatifs=Object.assign(whatifs(),S.whatifs||{});const l=el.dataset.l;w[l]=Array.isArray(w[l])?w[l]:[];w[l].push(l==="events"?{id:uid(),label:"",k:addMonths(curCycle(),1),amount:""}:{id:uid(),cat:"",k:addMonths(curCycle(),1),amount:""});markDirty();render()},
   wiDel(el){const w=S.whatifs||{};const l=el.dataset.l;if(Array.isArray(w[l]))w[l].splice(+el.dataset.i,1);markDirty();render()},
   wiReset(){S.whatifs=null;markDirty();render();toast("What-if changes cleared.")},
-  welcomeOk(){applyLocale(WF.cc,WF.cur);ls.set("tapledger.welcomed","1");WF=null;closeSheet();render();paintTop();if(!S.demo)markDirty();gRegister(true);toast("All set. Amounts show in "+S.currency+".")},
+  welcomeOk(){applyLocale(WF.cc,WF.cur);ls.set("tapledger.welcomed","1");WF=null;closeSheet();render();paintTop();if(!S.demo)markDirty();gRegister(true);toast("All set. Amounts show in "+S.currency+".");tourMaybe()},
   curYes(el){const c=el.dataset.c;S.currency=c;setCurrency(c);LOC.set({cc:S.country,cur:c});closeSheet();markDirty();render();toast("Currency changed to "+c+".")},
   acol(el){AF.color=el.dataset.c;renderAcc()},
   delAcc(){if(!armed("delAccBtn"))return;S.accounts=S.accounts.filter(a=>a.id!==AF.id);closeSheet();AF=null;markDirty();render()},
