@@ -91,7 +91,7 @@ html.lite .gpop{background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop
 /* Pro switch + badge */
 .probadge{display:none;font-style:italic;font-weight:300;font-size:.62em;color:var(--muted);margin-left:-3px;letter-spacing:.02em;align-self:flex-end;padding-bottom:.28em}
 html.pro .probadge{display:inline}
-.nav .protog{order:100}
+.nav .protog{order:101}
 .nav .protog .pl{flex:1;text-align:left}
 .nav .protog .pk{flex:none;width:36px;height:21px;border-radius:99px;background:var(--line);position:relative;transition:background .2s}
 .nav .protog .pk::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
@@ -131,6 +131,30 @@ html.pro .probadge{display:inline}
 .tour-tip.mid .tour-dots{margin-right:8px}
 .tour-dots i{width:6px;height:6px;border-radius:99px;background:var(--line);transition:all .25s}
 .tour-dots i.on{width:18px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* Feedback & help */
+.nav .navfb{order:100}
+#fbMsg{font-family:inherit;font-size:15px;line-height:1.45;min-height:120px;resize:vertical}
+.fbcount{text-align:right;margin-top:4px}
+.fbtypes{flex-wrap:wrap}
+.lg-fb{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
+@media (min-width:960px){
+  .nav .navfb{margin-top:auto!important}
+  .nav .protog{margin-top:0!important}
+}
+@media (max-width:959px){
+  html .nav .in .navfb{margin-top:auto!important;border-top:1px solid var(--line);border-radius:0;padding-top:18px!important}
+  html .nav .in .protog{margin-top:0!important;border-top:0;padding-top:13px!important}
+}
+
+/* welcome choice + status chip */
+.wstart{display:grid;gap:10px;margin-top:8px}
+.wstart .btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:14px 16px;border-radius:16px;height:auto}
+.wstart .btn b{font-size:15.5px}.wstart .btn small{font-weight:400;opacity:.8;font-size:12.5px}
+.wstart .btn.ghost{align-items:center;padding:10px}
+button.store{border:1px solid var(--edge);background:var(--surface2);border-radius:999px;padding:6px 12px;letter-spacing:.02em;text-transform:none;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+button.store.ok{color:var(--pos)}button.store.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}button.store.demo{color:var(--accent2)}
+@media (max-width:959px){.top #store{margin-left:auto}}
 </style>
 </head>
 <body>
@@ -640,6 +664,7 @@ table.led th{letter-spacing:.12em}
 
   /* pop-ups: centred dialogs */
   .scrim{align-items:center!important;justify-content:center;padding-left:calc(var(--side) + 24px)}
+  body:has(#login:not([hidden])) .scrim{padding-left:0}
   .sheet{max-width:640px;border-radius:26px!important;max-height:86vh}
   .sheet::before{display:none}
   .toast{bottom:28px;left:calc(50% + var(--side)/2)}
@@ -657,7 +682,7 @@ table.led th{letter-spacing:.12em}
     <button class="burger" data-act="navOpen" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div class="brand"><i>FT</i>FinTrack<em class="probadge">Pro</em></div>
     <button class="store" id="store" data-act="gStatus" aria-label="Backup status"></button>
-    <button class="btn pri savebtn" id="saveBtn" data-act="save"><span class="dot"></span>Save</button>
+    <button class="btn pri savebtn" id="saveBtn" data-act="save" hidden><span class="dot"></span>Save</button>
     <button class="avbtn" id="avBtn" data-act="gAccount" aria-label="Google account" hidden></button>
   </header>
   <main id="main"></main>
@@ -667,6 +692,7 @@ table.led th{letter-spacing:.12em}
 <nav class="nav" aria-label="Main">
   <div class="in">
     <div class="dhead"><div class="brand"><i>FT</i>FinTrack<em class="probadge">Pro</em></div><button class="navx" data-act="navClose" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <button class="navfb" data-act="fbOpen" title="Feedback & help"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>Feedback & help</button>
     <button class="protog" data-act="proTog" role="switch" aria-checked="false" title="Pro mode"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><span class="pl">Pro mode</span><i class="pk" aria-hidden="true"></i></button>
     <button class="navtog" data-act="navTog" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     <button data-act="go" data-p="home" title="Home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Home</button>
@@ -686,11 +712,11 @@ table.led th{letter-spacing:.12em}
     <p class="lg-notice">By continuing, your name, email and country are shared with FinTrack's owner so they know who uses the app. Your financial data is never shared.</p>
     <p class="lg-msg" id="loginMsg" role="status" aria-live="polite"></p>
     <ul class="lg-points">
-      <li>Backs up to a FinTrack folder in your own Google Drive every time you save.</li>
+      <li>Saves as you go, and backs up to a FinTrack folder in your own Google Drive.</li>
       <li>FinTrack can only see the files it creates. Nobody else sees your data.</li>
       <li>Works offline after you sign in.</li>
     </ul>
-    <p class="lg-legal"><a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+    <p class="lg-legal"><a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a> · <button type="button" class="lg-fb" data-act="fbOpen">Send feedback</button></p>
   </div>
 </div>
 <div id="sheetRoot"></div>
@@ -855,7 +881,11 @@ function catSpend(k,kind){const t=totals(inMonth(k));return S.accounts.filter(a=
 function sumKind(t,kind){let s=0;for(const a of S.accounts)if(a.kind===kind&&t[a.id])s+=(t[a.id].dr-t[a.id].cr)*SIGN[kind];return r2(s)}
 
 /* ---------- persistence ---------- */
-function markDirty(){dirty=true;paintTop()}
+let ASV=null,AUP=null;
+function markDirty(){dirty=true;paintTop();clearTimeout(ASV);if(S&&!S.demo)ASV=setTimeout(()=>save(true),900)}
+/* upload to Drive ~20 s after the last change (one upload for a burst of entries); never jumps to Google mid-use */
+function autoUpload(now){clearTimeout(AUP);const go=()=>{if(!signedIn()||S.demo)return;if(!navigator.onLine){paintTop();return}
+  if(tokenOk()||NATIVE){gBackup();return}GA.patch({reconnect:true});paintTop()};if(now)go();else AUP=setTimeout(go,20000)}
 function storeLabel(){return gStatus()[0]}
 function paintTop(){const b=$("#saveBtn");b.classList.toggle("dirty",dirty);b.lastChild.textContent=saving?"Saving…":"Save";b.disabled=saving;{const st=gStatus(),el=$("#store");el.textContent=st[0];el.className="store "+st[1]}
   {const b=$("#avBtn"),u=(GA.get().user)||null;if(b){b.hidden=!u;if(u){const init=esc((u.name||u.email||"?").trim().charAt(0).toUpperCase());const key=(u.picture||"")+"|"+init;
@@ -882,9 +912,10 @@ async function initStore(){
   }
   fixDash();paintTop();render();
 }
-async function save(){
-  if(saving)return;
-  if(S.demo){S.demo=false}
+async function save(auto){
+  clearTimeout(ASV);
+  if(saving){if(auto)ASV=setTimeout(()=>save(true),600);return}
+  if(S.demo)return;
   saving=true;paintTop();
   try{
     if(mode==="cloud"){
@@ -899,7 +930,7 @@ async function save(){
         else{await col.doc("j_"+k).delete();delete savedMonths[k]}
       }
     }else{ls.set("tapledger.v1",JSON.stringify(S))}
-    dirty=false;backupPending=true;toast("Saved on this phone");afterSave();
+    dirty=false;backupPending=true;if(!auto)toast("Saved on this phone");afterSave();
   }catch(e){toast("Save failed: "+(e&&e.message?e.message:"try again in a moment"))}
   saving=false;paintTop();render();
 }
@@ -932,10 +963,10 @@ function daysLeftInMonth(k){const t=today();if(cycleOf(t)!==k)return 0;return da
 
 /* ---------- render ---------- */
 function render(){
-  paintMode();
+  paintMode();navTrack();
   document.querySelectorAll(".nav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
   const m=$("#main");
-  m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing is kept until you press Save.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
+  m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing here is kept.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm" data-act="keepExample">Keep this as my book</button><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
     ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings}[U.page])();
   /* Home: the Overview row comes first; notices sit below it (and below the arrange bar) */
   const ph=m.querySelector(".phhome");
@@ -950,6 +981,89 @@ function topH(){const t=document.getElementById("top");if(t)document.documentEle
 try{new ResizeObserver(topH).observe(document.getElementById("top"))}catch(e){addEventListener("resize",topH)}
 addEventListener("scroll",()=>{const ph=document.querySelector(".phhome");if(ph)ph.classList.toggle("stuck",scrollY>ph.offsetTop-ph.offsetHeight)},{passive:true});
 
+/* ---------- phone Back button: one step back; on Home, press twice to exit ---------- */
+let NAVSTK=[],NAVKEY="home",NAVBACK=false,BACKAT=0;
+function navTrack(){const k=U.page+(U.page==="ledgers"&&U.ledAcc?":"+U.ledAcc:"");if(k===NAVKEY)return;
+  if(k==="home")NAVSTK=[];else if(!NAVBACK){NAVSTK.push(NAVKEY);if(NAVSTK.length>30)NAVSTK.shift()}NAVKEY=k}
+function goBack(){ // true = handled inside the app
+  if(TR.i>=0){tourStop();return true}
+  if(GSP){gsClose();return true}
+  if(document.documentElement.classList.contains("navopen")){navShut();return true}
+  if($("#sheetRoot").innerHTML){if(WF)return true;ACT.close();return true}
+  const l=$("#login");if(l&&!l.hidden)return false;
+  if(U.arrange){U.arrange=false;render();return true}
+  if(NAVKEY==="home")return false;
+  const prev=NAVSTK.pop()||"home",[pg,acc]=prev.split(":");NAVBACK=true;U.page=pg;U.ledAcc=acc||null;render();NAVBACK=false;scrollTo(0,0);return true}
+function backAtHome(){const now=Date.now();if(now-BACKAT<2000)return true;BACKAT=now;toast("Press back again to exit");return false}
+setTimeout(()=>{ // after the whole script has loaded (NATIVE and plugins are defined further down)
+  if(NATIVE){if(CP.App&&CP.App.addListener)CP.App.addListener("backButton",()=>{if(goBack())return;if(backAtHome())CP.App.exitApp()});return}
+  if(!(window.history&&history.pushState))return;
+  try{history.replaceState({ft:0},"");history.pushState({ft:1},"")}catch(e){}
+  addEventListener("popstate",()=>{if(goBack()||!backAtHome()){try{history.pushState({ft:1},"")}catch(e){}return}history.back()})},0);
+
+/* example-data reminder: shown when the app opens in example mode */
+function exReminder(force){if(!S.demo||(!force&&exReminder.done))return;exReminder.done=true;if($("#sheetRoot").innerHTML||TR.i>=0)return;
+  openSheet(`<div class="sh-head"><h2>You're looking at example data</h2><button class="btn ghost icon" data-act="exLater" aria-label="Close">✕</button></div>
+  <p style="margin-top:-4px">Nothing you change here is kept. When you're ready, start your own book. It only takes a minute.</p>
+  <div class="wstart"><button class="btn pri" data-act="fresh"><b>Start with my own data</b><small>A clean book, saved as you go.</small></button>
+  <button class="btn" data-act="keepExample"><b>Keep this example as my book</b><small>Continue from the sample entries.</small></button>
+  <button class="btn ghost" data-act="exLater"><b>Keep exploring</b></button></div>`)}
+
+/* ---------- Feedback & help: messages go to the owner's FinTrack users sheet (Feedback tab). Never any financial data. ---------- */
+const FB_TYPES=[["idea","💡 Idea"],["problem","🐞 Problem"],["complaint","😕 Complaint"],["praise","❤️ Praise"]];
+const FB_SCREENS=[["home","Home"],["ledgers","Ledgers"],["plans","Plans / Budgets"],["settings","Manage"],["entry","New entry"],["login","Sign-in screen"],["other","Something else"]];
+const TOUCH=(()=>{try{return matchMedia("(pointer:coarse)").matches}catch(e){return false}})();
+let FBF=null;
+function devId(){let d=ls.get("tapledger.dev");if(!d){d=Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls.set("tapledger.dev",d)}return d}
+function fbScreen(){const l=$("#login");if(l&&!l.hidden)return "login";if($("#eform"))return "entry";return U.page||"home"}
+function fbOpen(type){navShut();if(TR.i>=0)tourStop();const scr=fbScreen();FBF={type:FB_TYPES.some(t=>t[0]===type)?type:"idea",msg:"",screen:scr,reply:true,email:""};fbRender()}
+function fbUser(){try{return signedIn()?((GA.get().user||{}).email||""):""}catch(e){return ""}}
+function fbRender(keep){if(!FBF)return;if(keep){const m=$("#fbMsg");if(m)FBF.msg=m.value}const me=fbUser(),left=1000-FBF.msg.length;
+  openSheet(`<div class="sh-head"><h2>Feedback & help</h2><button class="btn ghost icon" data-act="close" aria-label="Close">✕</button></div>
+  <p class="lbl" style="margin-top:-4px">Tell us what to improve, what's not working, or what you like. We read every message.</p>
+  <div class="fl">What is it about?</div><div class="chips fbtypes">${FB_TYPES.map(([k,l])=>`<button type="button" class="${FBF.type===k?"on":""}" data-act="fbType" data-k="${k}">${l}</button>`).join("")}</div>
+  <div class="field" style="margin-top:12px"><label for="fbMsg">${FBF.type==="problem"?"What happened? What did you expect?":FBF.type==="idea"?"Your idea":FBF.type==="complaint"?"What went wrong?":"What do you like?"}</label><textarea class="inp" id="fbMsg" maxlength="1000" rows="5" data-fb="msg" placeholder="${FBF.type==="problem"?"e.g. The Save button didn't respond after I added an expense":"Write here…"}">${esc(FBF.msg)}</textarea><div class="lbl fbcount" id="fbCount">${left} characters left</div></div>
+  <div class="field"><label for="fbScr">Which screen?</label><select class="inp" id="fbScr" data-fb="screen">${FB_SCREENS.map(([k,l])=>`<option value="${k}"${FBF.screen===k?" selected":""}>${l}</option>`).join("")}</select></div>
+  ${me?`<div class="wl" style="border:0;padding:4px 0 0"><input type="checkbox" class="sw" id="fbReply" data-fb="reply" ${FBF.reply?"checked":""}><span>You may reply to me at <b>${esc(me)}</b></span></div>`
+     :`<div class="field"><label for="fbEmail">Your email <span class="muted" style="font-weight:400">(optional, so we can reply)</span></label><input class="inp" type="email" id="fbEmail" data-fb="email" autocomplete="email" value="${esc(FBF.email)}" placeholder="name@example.com"></div>`}
+  <p class="lbl">Only your message and basic app details are sent: app version, device type, country and Simple or Pro. Never your balances or entries.</p>
+  ${TOUCH&&shakeOn()?'<p class="lbl" style="margin-top:-4px">Tip: shake your phone any time to report a problem.</p>':""}
+  <div class="acts"><button class="btn ghost" data-act="close">Cancel</button><button class="btn pri" data-act="fbSend">Send</button></div>`);
+  const m=$("#fbMsg");if(m&&!keep&&!TOUCH)m.focus()}
+document.addEventListener("input",e=>{const t=e.target;if(!FBF||!t.dataset||t.dataset.fb==null)return;const k=t.dataset.fb;
+  if(k==="msg"){FBF.msg=t.value;const c=$("#fbCount");if(c)c.textContent=(1000-t.value.length)+" characters left"}else if(k==="email")FBF.email=t.value.trim()});
+document.addEventListener("change",e=>{const t=e.target;if(FBF&&t.dataset&&t.dataset.fb!=null){if(t.dataset.fb==="reply")FBF.reply=t.checked;else if(t.dataset.fb==="screen")FBF.screen=t.value}
+  if(t.dataset&&t.dataset.shake!=null)shakeSet(t.checked,t)});
+function fbSend(){if(!FBF)return;const m=$("#fbMsg");if(m)FBF.msg=m.value;const msg=FBF.msg.trim();
+  if(msg.length<3){toast("Please write a short message first.");m&&m.focus();return}
+  if(FBF.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(FBF.email)){toast("That email doesn't look right. Fix it or leave it empty.");return}
+  const d=today(),c=(ls.get("tapledger.fbday")||"").split("|"),n=c[0]===d?+c[1]||0:0;
+  if(n>=5){toast("You've sent 5 messages today. Please try again tomorrow.");return}
+  ls.set("tapledger.fbday",d+"|"+(n+1));
+  const me=fbUser(),item={kind:"feedback",type:FBF.type,message:msg.slice(0,1000),screen:(FB_SCREENS.find(x=>x[0]===FBF.screen)||["","Other"])[1],
+    replyOk:me?!!FBF.reply:!!FBF.email,email:me?(FBF.reply?me:""):FBF.email,signedIn:!!me,platform:platformName(),version:APP_VERSION,
+    country:countryName(S.country)||"",mode:isPro()?"Pro":"Simple",device:devId(),at:new Date().toISOString()};
+  let q=[];try{q=JSON.parse(ls.get("tapledger.fbq")||"[]")}catch(e){}q.push(item);ls.set("tapledger.fbq",JSON.stringify(q.slice(-20)));
+  FBF=null;closeSheet();const on=navigator.onLine;toast(on?"Thanks! We read every message.":"Thanks! It will be sent when you're back online.");fbFlush()}
+let fbBusy=false;
+async function fbFlush(){if(fbBusy||!REGISTER_URL||!navigator.onLine)return;let q=[];try{q=JSON.parse(ls.get("tapledger.fbq")||"[]")}catch(e){}if(!q.length)return;fbBusy=true;
+  try{while(q.length){const it=Object.assign({},q[0]);try{const g=GA.get();if(it.replyOk&&it.signedIn&&g.idt&&g.idExp>Date.now())it.idToken=g.idt}catch(e){}
+      try{await fetch(REGISTER_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(it)})}catch(e){break}
+      q.shift();ls.set("tapledger.fbq",JSON.stringify(q))}}
+  finally{fbBusy=false}}
+addEventListener("online",()=>fbFlush());setTimeout(fbFlush,4000);
+
+/* shake to report: on by default where the phone allows it without asking (Android); iPhone asks permission when switched on */
+const NEEDS_MOTION_OK=typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function";
+function shakeOn(){const v=ls.get("tapledger.shake");if(v==="1")return true;if(v==="0")return false;return TOUCH&&!NEEDS_MOTION_OK&&typeof DeviceMotionEvent!=="undefined"}
+async function shakeSet(on,el){if(on&&NEEDS_MOTION_OK){try{const r=await DeviceMotionEvent.requestPermission();if(r!=="granted"){ls.set("tapledger.shake","0");if(el)el.checked=false;toast("Motion access was not allowed, so shake can't be used.");return}}catch(e){ls.set("tapledger.shake","0");if(el)el.checked=false;toast("Couldn't turn on shake on this device.");return}}
+  ls.set("tapledger.shake",on?"1":"0");toast(on?"Shake to report is on.":"Shake to report is off.")}
+(()=>{if(typeof DeviceMotionEvent==="undefined")return;let last=null,hits=[],cool=0;
+  addEventListener("devicemotion",e=>{if(!shakeOn())return;const a=e.accelerationIncludingGravity||e.acceleration;if(!a||a.x==null)return;
+    const now=Date.now();if(last){const d=Math.abs(a.x-last.x)+Math.abs(a.y-last.y)+Math.abs(a.z-last.z);if(d>28){hits=hits.filter(t=>now-t<900);hits.push(now);
+      if(hits.length>=3&&now>cool){hits=[];cool=now+4000;if(!$("#sheetRoot").innerHTML&&TR.i<0){try{navigator.vibrate&&navigator.vibrate(30)}catch(x){}fbOpen("problem")}}}}
+    last={x:a.x,y:a.y,z:a.z}},{passive:true})})();
+
 /* ---------- first-run tour: a few spotlight tips over the real screen ---------- */
 const TR={i:-1};
 function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
@@ -960,7 +1074,7 @@ function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
   {t:"What you hold",b:"Your bank and cash together. Tap “Check balances” to match it with your real bank.",el:'#main section[data-w="hold"]'},
   {t:"Who owes whom",b:"Money you lent, borrowed or split with friends shows here.",el:'#main section[data-w="parties"]'},
   {t:"Want more?",b:pro?"You're in Pro: EMIs, cheques, savings pots and projections are all on.":"Turn on Pro mode at the bottom of the menu for EMIs, cheques, savings pots and projections. You can switch any time.",el:D?".nav .protog":".burger",last:true},
-  {t:"You're ready",b:"This is example data. Play with it, then tap “Start with my own data” when you're ready.",el:null,ico:"✨",end:true}
+  {t:"You're ready",b:S.demo?"This is example data. Play with it, then tap “Start with my own data” when you're ready.":"Add your bank accounts in Manage, then tap + for your first entry. Everything saves as you go.",el:null,ico:"✨",end:true}
 ].filter(x=>!x.el||document.querySelector(x.el))}
 function tourMaybe(){if(ls.get("tapledger.tour")==="1")return;setTimeout(()=>{if(!$("#sheetRoot").innerHTML)ACT.tourStart()},500)}
 function tourStop(){ls.set("tapledger.tour","1");TR.i=-1;const r=document.getElementById("tourRoot");if(r)r.remove();removeEventListener("resize",tourPlace)}
@@ -1295,15 +1409,15 @@ function pSettings(){
     body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.filter(d=>isPro()||LITE_W.has(d.id)).map((d,i,DL)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===DL.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
   }else if(U.setTab==="prefs"){body=settingsCard()
   }else{
-    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive every time you press Save. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button><button class="btn sm" data-act="tourStart">Show the tour</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive a few seconds after every change. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button><button class="btn sm" data-act="tourStart">Show the tour</button><button class="btn sm" data-act="fbOpen">Send feedback</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
-    <p class="lbl">Last Excel backup on this device: ${BK.get().last?dLong(BK.get().last):"never"}. ${NATIVE?"Saved automatically every time you press Save, into Documents/FinTrack/Backups. These files stay on the phone even if FinTrack is uninstalled. The last 30 days are kept.":(IOS?"Tap Save copy to Files and pick a folder, ideally iCloud Drive. That copy survives even if the app is deleted.":"Downloaded copies stay in your Downloads folder even if the app is removed.")}</p>
+    <p class="lbl">Last Excel backup on this device: ${BK.get().last?dLong(BK.get().last):"never"}. ${NATIVE?"Saved automatically after your changes, into Documents/FinTrack/Backups. These files stay on the phone even if FinTrack is uninstalled. The last 30 days are kept.":(IOS?"Tap Save copy to Files and pick a folder, ideally iCloud Drive. That copy survives even if the app is deleted.":"Downloaded copies stay in your Downloads folder even if the app is removed.")}</p>
     <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="xlBackup">${NATIVE?"Back up now":IOS?"Save copy to Files":"Download Excel backup"}</button><label class="btn" for="xlRestore" tabindex="0">Restore from Excel backup</label><input type="file" id="xlRestore" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div></div>
     <div class="card"><h3>Quick text backup</h3><p class="lbl" style="margin-top:-4px">Copies the whole book as text. Paste it into a note or email to keep a copy.</p><button class="btn" data-act="copyBackup">Copy backup</button></div>
     <div class="card"><h3>Restore from text</h3><textarea class="inp" id="restoreTxt" placeholder="Paste a backup here"></textarea><div class="acts"><button class="btn" data-act="restore">Restore from backup</button></div></div>
-    <div class="card"><h3>Start over</h3><p class="lbl" style="margin-top:-4px">Clears every entry and plan and keeps the default categories. Press Save afterwards to make it permanent.</p><button class="btn danger" data-act="wipe" id="wipeBtn">Clear everything</button></div></div>`;
+    <div class="card"><h3>Start over</h3><p class="lbl" style="margin-top:-4px">Clears every entry and plan and keeps the default categories.</p><button class="btn danger" data-act="wipe" id="wipeBtn">Clear everything</button></div></div>`;
   }
   const tm=document.documentElement.getAttribute("data-theme")||"auto";
   const themeSeg=`<span class="mseg" role="group" aria-label="Appearance">${[["light","Light"],["dark","Dark"],["auto","Auto"]].map(([k,l])=>`<button class="${tm===k?"on":""}" data-act="theme" data-t="${k}" aria-pressed="${tm===k}">${l}</button>`).join("")}</span>`;
@@ -1427,7 +1541,7 @@ function submitForm(){
   const t=F.type==="journal"?null:{type:F.type,cat:F.cat,from:F.from,to:F.to,party:F.party,pact:F.pact,sact:F.sact,pot:F.pot,split:splitOn()?JSON.parse(JSON.stringify(F.split)):null};
   const e={id:F.editId||uid(),date:F.date,memo:F.memo.trim(),lines,t};const old=F.editId&&S.entries.find(x=>x.id===F.editId);if(old&&old.src)e.src=old.src;if(F.oneoff&&(F.type==="expense"||F.type==="income"||F.type==="journal"))e.oneoff=true;else if(old&&old.oneoff&&F.type==="savings")e.oneoff=true;
   if(F.editId){const i=S.entries.findIndex(x=>x.id===F.editId);S.entries[i]=e}else S.entries.push(e);
-  const wasEdit=!!F.editId;closeSheet();markDirty();render();toast((wasEdit?"Entry updated.":"Recorded.")+splitMsg+" Press Save to keep it.");
+  const wasEdit=!!F.editId;closeSheet();markDirty();render();toast((wasEdit?"Entry updated.":"Recorded.")+splitMsg+"");
 }
 function editEntry(id){
   const e=S.entries.find(x=>x.id===id);if(!e)return;F=newForm();F.editId=id;F.date=e.date;F.memo=e.memo||"";F.oneoff=!!e.oneoff;
@@ -1496,7 +1610,7 @@ function submitSched(){
   delete s.err;delete s._custom;s.every=parseInt(s.every,10)||1;s.unit=s.unit||"month";s.aday=+s.next.slice(8,10);s.left=s.left===""||s.left==null?null:Math.max(0,parseInt(s.left,10)||0);
   if(s.left===0)s.active=false;else if(s.left>0)s.active=true;
   if(s.id){const i=S.schedules.findIndex(x=>x.id===s.id);S.schedules[i]=s}else{s.id=uid();S.schedules.push(s)}
-  closeSheet();SF=null;markDirty();render();toast("Plan saved. Press Save to keep it.");
+  closeSheet();SF=null;markDirty();render();toast("Plan saved.");
 }
 
 /* ---------- PDCs (post-dated cheques) ---------- */
@@ -1599,7 +1713,7 @@ function submitPdc(){
     if(c.status==="cleared"){c.eid=postChq(p,c)}}
   const rec={id:p.id||uid(),dir:p.dir,name:p.name,bank:p.bank,other:p.other,chqs:p.chqs};
   const i=S.pdcs.findIndex(x=>x.id===rec.id);if(i>=0)S.pdcs[i]=rec;else S.pdcs.push(rec);
-  closeSheet();PF=null;markDirty();render();toast("Cheques saved. Press Save to keep them.");
+  closeSheet();PF=null;markDirty();render();toast("Cheques saved.");
 }
 
 /* ---------- calendar ---------- */
@@ -1693,7 +1807,7 @@ function submitAcc(force){
   const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;
   if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec;if(changed){setOpening(rec,op,a.openDate);delete S.checks[rec.id]}}
   else{S.accounts.push(rec);if(canOpen&&op)setOpening(rec,op,a.openDate)}
-  closeSheet();AF=null;markDirty();render();if(changed)toast("Opening balance updated. Press Save to keep it.");
+  closeSheet();AF=null;markDirty();render();if(changed)toast("Opening balance updated.");
 }
 
 /* ---------- reconciliation ---------- */
@@ -1752,7 +1866,7 @@ async function autoBackupNative(){
     for(const n of names.slice(30))await CP.Filesystem.deleteFile({path:"FinTrack/Backups/"+n,directory:"DOCUMENTS"})}catch(e){}
   if(U.page==="home"||U.page==="settings")render()}
 function installUrl(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"install.html"}
-function afterSave(){bkSnooze=false;if(NATIVE)autoBackupNative();if(signedIn()&&!S.demo){GA.patch({pending:true,err:""});setTimeout(gSync,60)}}
+function afterSave(){bkSnooze=false;if(NATIVE)autoBackupNative();if(signedIn()&&!S.demo){GA.patch({pending:true,err:""});autoUpload()}}
 function accountStatementSheet(a,from,to){
   const sg=SIGN[a.kind];const open=bal(a.id,before(from));let run=open,td=0,tc=0;
   const list=S.entries.filter(e=>e.date>=from&&e.date<=to&&e.lines.some(l=>l.a===a.id)).sort(asc);
@@ -1856,7 +1970,7 @@ function bookFromWorkbook(wb){
 }
 async function restoreExcel(file){
   if(!file||!needXLSX())return;
-  try{const buf=await file.arrayBuffer();const B=bookFromWorkbook(XLSX.read(buf,{type:"array"}));S=B;S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"}. Press Save to keep them.`)}
+  try{const buf=await file.arrayBuffer();const B=bookFromWorkbook(XLSX.read(buf,{type:"array"}));S=B;S.demo=false;fixDash();markDirty();render();toast(`Restored ${S.entries.length} entr${S.entries.length===1?"y":"ies"}.`)}
   catch(e){toast("That file is not a FinTrack Excel backup.")}
 }
 
@@ -1998,7 +2112,7 @@ async function gCheck(){
     if(!f){maybeWelcome();if(!S.demo&&g.pending)gBackup();return}
     const ap=f.appProperties||{};
     if(ap.ftRev&&ap.ftRev!==g.rev&&ap.ftDevice!==deviceId()){
-      if(S.demo||(!g.pending&&!dirty)){const B=await dDownload(f);const first=S.demo;gApply(B,f);toast(first?"Welcome back. Your book was restored from Google Drive.":"Updated with changes from your other device.")}
+      const fresh=S.demo||(!ls.get("tapledger.v1")&&!S.entries.length);if(fresh||(!g.pending&&!dirty)){const B=await dDownload(f);const first=fresh;gApply(B,f);toast(first?"Welcome back. Your book was restored from Google Drive.":"Updated with changes from your other device.")}
       else gConflict(f)}
     else if(g.pending&&!dirty)gBackup();
   }catch(e){if(!e.auth&&!e.net)GA.patch({err:e.message});paintTop()}}
@@ -2041,16 +2155,16 @@ function gSync(){if(!signedIn()||S.demo)return;if(!navigator.onLine){paintTop();
   if(tokenOk()||NATIVE){gBackup();return}
   const g=GA.get();if(!(g.backoff>Date.now()))gBounce("backup");else paintTop()}
 function gStatus(){const g=GA.get();
-  if(mode==="loading")return["Opening…",""];if(!g.user)return["On this phone",""];if(gBusy)return["Backing up…",""];
-  if(g.conflictId)return["Choose version","warn"];
-  if(g.pending){if(!navigator.onLine)return["Offline","warn"];if(g.reconnect)return["Reconnect","warn"];if(g.err)return["Backup problem","warn"];return["Not backed up","warn"]}
-  if(g.lastSync)return["Backed up "+ago(g.lastSync),"ok"];return["Signed in",""]}
+  if(mode==="loading")return["Opening…",""];if(S&&S.demo)return["Example · not kept","demo"];if(saving)return["↻ Saving…",""];if(!g.user)return["✓ Saved on phone","ok"];if(gBusy)return["↻ Backing up…",""];
+  if(g.conflictId)return["⚠ Choose version","warn"];
+  if(g.pending){if(!navigator.onLine)return["☁ Offline · saved on phone","warn"];if(g.reconnect)return["⚠ Tap to reconnect","warn"];if(g.err)return["⚠ Backup problem","warn"];return["✓ Saved on phone","ok"]}
+  if(g.lastSync)return["✓ Backed up "+ago(g.lastSync),"ok"];return["✓ Saved","ok"]}
 function gStatusLong(){const g=GA.get();
   if(gBusy)return"Backing up to Google Drive…";
   if(g.conflictId)return"Waiting for you to choose between this phone's version and the one in Google Drive.";
   if(g.pending){if(!navigator.onLine)return"Offline. Your changes are saved on this phone and will back up when you're online.";
     if(g.reconnect)return"Google needs you to sign in again. Tap Back up now.";if(g.err)return"Last backup failed: "+g.err;return"Changes saved on this phone, waiting to back up."}
-  if(g.lastSync)return"Backed up "+ago(g.lastSync)+" ("+whenText(g.lastSync)+").";return"No backup yet. Press Save to make the first one."}
+  if(g.lastSync)return"Backed up "+ago(g.lastSync)+" ("+whenText(g.lastSync)+").";return"No backup yet. It's made automatically after your first change."}
 function gCard(){const g=GA.get(),u=g.user||{};if(!u.email)return"";const init=esc((u.name||u.email||"?").trim().charAt(0).toUpperCase());
   return `<div class="card"><h3>Google account</h3>
   <div class="acct"><span class="av">${init}${u.picture?`<img class="avimg" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:""}</span><span class="t"><b>${esc(u.name||u.email)}</b><small>${esc(u.email)}</small></span></div>
@@ -2130,14 +2244,16 @@ const curOpts=sel=>allCurrencies().map(c=>`<option value="${esc(c)}"${c===sel?" 
 const countryOpts=sel=>COUNTRIES.slice().sort((a,b)=>a[0]==="OT"?1:b[0]==="OT"?-1:a[1].localeCompare(b[1])).map(c=>`<option value="${c[0]}"${c[0]===sel?" selected":""}>${esc(c[1])}</option>`).join("");
 const LOC={get(){try{return JSON.parse(ls.get("tapledger.locale")||"{}")||{}}catch(e){return{}}},set(v){ls.set("tapledger.locale",JSON.stringify(v))}};
 let WF=null;
-function maybeWelcome(){if(ls.get("tapledger.welcomed")==="1"||!S.demo||$("#sheetRoot").innerHTML)return;showWelcome()}
+function maybeWelcome(){if($("#sheetRoot").innerHTML)return;if(ls.get("tapledger.welcomed")!=="1"&&!ls.get("tapledger.v1")&&!S.entries.length){showWelcome();return}if(S.demo)exReminder()}
 function showWelcome(){const g=guessCountry(),l=LOC.get();WF={cc:l.cc||g.cc,cur:l.cur||(countryOf(l.cc||g.cc)||[])[2]||"AED"};renderWelcome()}
 function renderWelcome(){
   openSheet(`<div class="sh-head"><h2>Welcome to FinTrack</h2></div><p style="margin-top:-4px">Two quick settings. You can change both later in Manage → Settings.</p>
   <div class="field"><label for="wf-cc">Country</label><select class="inp" id="wf-cc" data-wf="cc">${countryOpts(WF.cc)}</select></div>
   <div class="field" style="margin-top:10px"><label for="wf-cur">Currency</label><select class="inp" id="wf-cur" data-wf="cur">${curOpts(WF.cur)}</select></div>
   <p class="lbl">Amounts will show like <b class="num">${esc(WF.cur)} ${new Intl.NumberFormat("en-US",{minimumFractionDigits:curDecimals(WF.cur),maximumFractionDigits:curDecimals(WF.cur)}).format(1250.5)}</b>. Only your country is added to FinTrack's user list, never your exact location.</p>
-  <div class="acts"><button class="btn pri" data-act="welcomeOk">Continue</button></div>`)}
+  <div class="fl" style="margin-top:16px">How would you like to start?</div>
+  <div class="wstart"><button class="btn pri" data-act="welcomeOk" data-k="own"><b>Start with my own data</b><small>A clean book. Add your accounts and go.</small></button>
+  <button class="btn" data-act="welcomeOk" data-k="example"><b>Show me example data first</b><small>Look around with sample entries. Nothing is kept.</small></button></div>`)}
 function applyLocale(cc,cur){S.country=cc;S.currency=cur;setCurrency(cur);LOC.set({cc,cur})}
 
 /* ---------- smooth bar colour: green 0% → yellow 50% → red 80%+ ---------- */
@@ -2265,7 +2381,7 @@ function submitPot(force){const p=GF;const T=r2(p.target);
   let newId=null;if(p.id){const a=acc(p.id);const old=normGoal(a.goal);if(old.date!==goal.date||old.mode!==goal.mode||old.target!==goal.target)goal.start=today();Object.assign(a,{name:p.name.trim(),color:p.color,archived:!!p.archived,goal});if(opChanged){setOpening(a,r2(p.opening),p.openDate);delete S.checks[a.id]}}
   else{const id=uid();newId=id;S.accounts.push({id,name:p.name.trim(),kind:"asset",grp:"pot",color:p.color,budget:0,archived:false,ord:S.accounts.length,goal});
     const op=r2(p.opening);if(op>0)setOpening(acc(id),op,p.openDate||today())}
-  closeSheet();GF=null;markDirty();render();toast("Savings pot saved. Press Save to keep it.");
+  closeSheet();GF=null;markDirty();render();toast("Savings pot saved.");
   if(U.potFromForm&&newId){U.potFromForm=false;F=newForm("savings");F.pot=newId;F.from=p.bank;renderForm()}U.potFromForm=false}
 
 /* ---------- budget limit ---------- */
@@ -2468,7 +2584,7 @@ function settingsCard(){const ms=mStart(),k=curCycle();
   <div class="field" style="margin-top:10px"><label for="setCountry">Country</label><select class="inp" id="setCountry" data-setcountry>${countryOpts(S.country)}</select></div>
   <p class="lbl">Only your country is shared with FinTrack's owner in the user list, never your city or location.</p></div>
   <div class="card"><h3>My month</h3><div class="field" style="max-width:220px"><label for="setMs">My month starts on day</label><input class="inp num" id="setMs" inputmode="numeric" data-setms value="${ms}"></div>
-  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div></div>`}
+  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div>${TOUCH?`<div class="card"><h3>Feedback</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setShake" data-shake ${shakeOn()?"checked":""}><span>Shake the phone to report a problem</span></div><p class="lbl" style="margin-bottom:0">Opens the feedback form with “Problem” picked and the screen you were on filled in.</p></div>`:""}</div>`}
 
 /* ---------- "Say it": turn a spoken or typed sentence into a draft entry (on the phone, no AI) ---------- */
 const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
@@ -2683,10 +2799,12 @@ const ACT={
   async wnShow(){try{wnSheet(await wnFetch(),true)}catch(e){toast("Connect to the internet to see what's new.")}},
   gAccount(){U.page="settings";U.setTab="data";render();scrollTo(0,0)},
   save(){save()},
-  fresh(){const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);fixDash();markDirty();render();toast("Clean book ready. Add your accounts in Manage.");U.page="settings";U.setTab="accounts";render()},
+  fresh(){closeSheet();const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);ls.set("tapledger.example","0");fixDash();markDirty();toast("Clean book ready. Add your accounts in Manage.");U.page="settings";U.setTab="accounts";render()},
+  keepExample(){closeSheet();S.demo=false;ls.set("tapledger.example","0");markDirty();render();paintTop();toast("This is now your book. Changes are saved as you go.")},
+  exLater(){closeSheet()},
   mon(el){U.month=addMonths(U.month,+el.dataset.d);U.monthSet=true;render()},
   newEntry(){F=newForm();renderForm()},
-  close(){closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");WF=null;setTimeout(tourMaybe,0)}render()},
+  close(){FBF=null;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");ls.set("tapledger.example","0");applyLocale(WF.cc,WF.cur);WF=null;markDirty();setTimeout(tourMaybe,0)}render()},
   scrim(el,ev){if(ev.target===el){if(WF)return;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;render()}},
   ftype(el){F.type=el.dataset.k;F.cat=null;F.err="";if(F.type==="savings"){const ps=pots();if(!F.pot&&ps.length)F.pot=(U.lastPot&&ps.find(a=>a.id===U.lastPot)||ps[0]).id;const g=F.pot&&acc(F.pot).goal;if(g&&g.bank&&acc(g.bank))F.from=g.bank}renderForm()},
   sayGo(){const i=$("#f-say");const v=(i?i.value:F.sayDraft||"").trim();if(!v){toast("Say or type what happened first.");if(i)i.focus();return}sayApply(v)},
@@ -2703,7 +2821,7 @@ const ACT={
   jlAdd(){F.lines.push({a:"",dr:"",cr:""});renderForm()},
   jlDel(el){F.lines.splice(+el.dataset.i,1);renderForm()},
   editEntry(el){editEntry(el.dataset.id)},
-  delEntry(){if(!armed("delBtn"))return;S.entries=S.entries.filter(e=>e.id!==F.editId);closeSheet();markDirty();render();toast("Entry deleted. Press Save to keep the change.")},
+  delEntry(){if(!armed("delBtn"))return;S.entries=S.entries.filter(e=>e.id!==F.editId);closeSheet();markDirty();render();toast("Entry deleted.")},
   openLed(el){U.page="ledgers";U.ledAcc=el.dataset.id;U.ledMonth="all";render();scrollTo(0,0)},
   ledBack(){U.ledAcc=null;render()},
   ledTab(el){U.ledTab=el.dataset.t;render()},
@@ -2729,6 +2847,9 @@ const ACT={
   proTog(){const p=!isPro();ls.set("tapledger.pro",p?"1":"0");paintMode();render();toast(p?"Pro mode on. Everything is shown.":"Simple mode. Advanced tools are hidden, your data is unchanged.")},
   tourStart(){navShut();U.page="home";U.arrange=false;render();scrollTo(0,0);setTimeout(()=>tourGo(0),120)},
   tourNext(){tourGo(TR.i+1)},tourBack(){tourGo(TR.i-1)},tourEnd(){tourStop()},
+  fbOpen(el){fbOpen(el&&el.dataset&&el.dataset.k)},
+  fbType(el){FBF.type=el.dataset.k;fbRender(true)},
+  fbSend(){fbSend()},
   navOpen(){if(innerWidth>=960)return;document.documentElement.classList.add("navopen");const b=document.querySelector(".burger");if(b)b.setAttribute("aria-expanded","true");const on=document.querySelector(".nav button.on")||document.querySelector(".nav [data-p]");setTimeout(()=>on&&on.focus({preventScroll:true}),60)},
   navClose(){navShut(true)},
   navTog(){const m=!document.documentElement.classList.contains("navmini");document.documentElement.classList.toggle("navmini",m);ls.set("tapledger.navmini",m?"1":"0");const b=document.querySelector(".navtog");if(b){b.setAttribute("aria-label",m?"Expand menu":"Collapse menu");b.title=m?"Expand menu":"Collapse menu"}setTimeout(()=>{heroFix();if(U.page==="home"&&deskCols()!==U.lastCols)render()},260)},
@@ -2744,7 +2865,10 @@ const ACT={
   wiAdd(el){const w=S.whatifs=Object.assign(whatifs(),S.whatifs||{});const l=el.dataset.l;w[l]=Array.isArray(w[l])?w[l]:[];w[l].push(l==="events"?{id:uid(),label:"",k:addMonths(curCycle(),1),amount:""}:{id:uid(),cat:"",k:addMonths(curCycle(),1),amount:""});markDirty();render()},
   wiDel(el){const w=S.whatifs||{};const l=el.dataset.l;if(Array.isArray(w[l]))w[l].splice(+el.dataset.i,1);markDirty();render()},
   wiReset(){S.whatifs=null;markDirty();render();toast("What-if changes cleared.")},
-  welcomeOk(){applyLocale(WF.cc,WF.cur);ls.set("tapledger.welcomed","1");WF=null;closeSheet();render();paintTop();if(!S.demo)markDirty();gRegister(true);toast("All set. Amounts show in "+S.currency+".");tourMaybe()},
+  welcomeOk(el){const ex=el&&el.dataset.k==="example",cc=WF.cc,cur=WF.cur;ls.set("tapledger.welcomed","1");WF=null;closeSheet();
+    if(ex){ls.set("tapledger.example","1");S=exampleBook();fixDash();applyLocale(cc,cur);dirty=false}
+    else{ls.set("tapledger.example","0");const keep=S&&!S.demo&&S.entries.length?S:blankBook();S=keep;applyLocale(cc,cur);fixDash();markDirty()}
+    render();paintTop();gRegister(true);toast(ex?"Example data loaded. Nothing here is kept.":"All set. Amounts show in "+S.currency+".");tourMaybe()},
   curYes(el){const c=el.dataset.c;S.currency=c;setCurrency(c);LOC.set({cc:S.country,cur:c});closeSheet();markDirty();render();toast("Currency changed to "+c+".")},
   acol(el){AF.color=el.dataset.c;renderAcc()},
   delAcc(){if(!armed("delAccBtn"))return;S.accounts=S.accounts.filter(a=>a.id!==AF.id);closeSheet();AF=null;markDirty();render()},
@@ -2752,7 +2876,7 @@ const ACT={
   recon(){openRecon()},
   reconClear(){S.checks={};S.holdCheck=null;markDirty();openRecon();render()},
   copyBackup(){const txt=JSON.stringify(S);const done=()=>toast("Backup copied");try{navigator.clipboard.writeText(txt).then(done,()=>showText(txt))}catch(e){showText(txt)}},
-  restore(){const t=$("#restoreTxt").value.trim();try{const o=JSON.parse(t);if(!o||!Array.isArray(o.accounts)||!Array.isArray(o.entries))throw 0;S=Object.assign(blankBook(),o);S.demo=false;fixDash();markDirty();render();toast("Restored. Press Save to keep it.")}catch(e){toast("That text is not a FinTrack backup.")}},
+  restore(){const t=$("#restoreTxt").value.trim();try{const o=JSON.parse(t);if(!o||!Array.isArray(o.accounts)||!Array.isArray(o.entries))throw 0;S=Object.assign(blankBook(),o);S.demo=false;fixDash();markDirty();render();toast("Restored.")}catch(e){toast("That text is not a FinTrack backup.")}},
   editPdc(el){editPdc(el.dataset.id)},
   pdir(el){PF.dir=el.dataset.k;PF.other="";renderPdc()},
   pcGen(){genCheques()},
@@ -2779,9 +2903,10 @@ const ACT={
     loginMsg("Opening Google…");
     if(!NATIVE){gWebAuth(false,"login");return}
     try{const p=await gNativeLogin(false);await gAfterLogin(p)}catch(e){loginMsg(gNativeErrText(e),true)}},
-  gStatus(){const g=GA.get();if(!g.user)return;
+  gStatus(){const g=GA.get();if(S.demo){exReminder(true);return}if(!g.user)return;
     if(g.conflictId){gLastCheck=0;if(tokenOk()||NATIVE)gCheck();else gWebAuth(true,"check");return}
     if(g.pending&&g.reconnect&&!NATIVE){gWebAuth(false,"backup");return}
+    if(g.pending&&navigator.onLine&&(tokenOk()||NATIVE)){if(dirty)save(true);gBackup(true);toast("Backing up now…");return}
     U.page="settings";U.setTab="data";render();scrollTo(0,0)},
   async gBackupNow(){if(!navigator.onLine){toast("You're offline. It will back up when you're online.");return}
     const g=GA.patch({pending:true,err:""});
@@ -2793,14 +2918,14 @@ const ACT={
     catch(e){toast("Could not load it: "+e.message);if(b){b.disabled=false;b.textContent="Use Google Drive version"}}},
   gKeepPhone(){closeSheet();GA.patch({conflictId:"",pending:true});paintTop();if(tokenOk()||NATIVE)gBackup(true);else gWebAuth(true,"keep")},
   gSwitchYes(el){let user;try{user=JSON.parse(el.dataset.user)}catch(e){return}closeSheet();
-    try{localStorage.removeItem("tapledger.v1")}catch(e){}S=exampleBook();fixDash();dirty=false;
+    try{localStorage.removeItem("tapledger.v1")}catch(e){}S=blankBook();fixDash();dirty=false;
     const g=GA.get();GA.set({token:g.token,exp:g.exp});try{localStorage.removeItem("tapledger.owner")}catch(e){}
     gSetUser(user);gRegister(true);hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));gCheck()},
   gSwitchNo(){closeSheet();GA.patch({token:"",exp:0});if(NATIVE)slInit().then(SL=>SL.logout({provider:"google"})).catch(()=>{});showLogin("Sign in with the account that owns the book on this phone.")},
   gSignOut(){if(!armed("gSignOutBtn"))return;gSignOut()},
   bkLater(){bkSnooze=true;render()},
   copyInstall(){const u=installUrl();try{navigator.clipboard.writeText(u).then(()=>toast("Link copied"),()=>toast(u))}catch(e){toast(u)}},
-  wipe(){if(!armed("wipeBtn"))return;const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);fixDash();markDirty();render();toast("Cleared. Press Save to make it permanent.")}
+  wipe(){if(!armed("wipeBtn"))return;const keep={currency:S.currency,country:S.country,monthStart:S.monthStart};S=Object.assign(blankBook(),keep);fixDash();markDirty();render();toast("Cleared.")}
 };
 function showText(txt){openSheet(head("Copy backup")+`<p class="lbl">Select all and copy.</p><textarea class="inp" id="bk" readonly style="min-height:220px">${esc(txt)}</textarea>`);const t=$("#bk");t.focus();t.select()}
 document.addEventListener("click",ev=>{const el=ev.target.closest("[data-act]");if(!el)return;const f=ACT[el.dataset.act];if(!f)return;if(el.dataset.act!=="scrim")ev.preventDefault();f(el,ev)});
@@ -2873,19 +2998,21 @@ document.addEventListener("focusout",ev=>{const el=ttTarget(ev.target);if(el&&!t
 addEventListener("scroll",()=>document.querySelectorAll(".ttwrap").forEach(hideTT),{passive:true});
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Enter"&&ev.target&&ev.target.id==="f-say"){ev.preventDefault();ACT.sayGo();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML&&!WF){closeSheet();SF=null;AF=null;GF=null;render()}});
 addEventListener("scroll",()=>$("#top").classList.toggle("scrolled",scrollY>4),{passive:true});
-addEventListener("beforeunload",ev=>{if(dirty){ev.preventDefault();ev.returnValue=""}});
+addEventListener("beforeunload",()=>{if(dirty&&!S.demo){try{ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true})}catch(e){}}});
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
 
 /* ---------- phone lifecycle ---------- */
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="hidden"&&dirty&&!saving&&!S.demo){ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true});paintTop();backupPending=true;bkSnooze=false;if(NATIVE)autoBackupNative()}});
+  if(document.visibilityState==="hidden"&&!S.demo){if(dirty&&!saving){clearTimeout(ASV);ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true});paintTop();backupPending=true;bkSnooze=false;if(NATIVE)autoBackupNative()}if(signedIn()&&GA.get().pending&&(tokenOk()||NATIVE))autoUpload(true)}});
 try{localStorage.removeItem("tapledger.gsync")}catch(e){}
 if(!NATIVE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
 /* ---------- boot ---------- */
 gRedirect=NATIVE?null:gReadRedirect();
-S=exampleBook();fixDash();dirty=false;mode="loading";paintTop();render();
+/* example data: kept for people already looking at it (welcomed before, nothing saved yet); new users choose in the welcome step */
+if(ls.get("tapledger.example")==null&&ls.get("tapledger.welcomed")==="1"&&!ls.get("tapledger.v1"))ls.set("tapledger.example","1");
+S=ls.get("tapledger.example")==="1"?exampleBook():blankBook();fixDash();dirty=false;mode="loading";paintTop();render();
 initStore().then(gBoot).then(()=>{setTimeout(()=>updCheck(false),1500);setTimeout(wnCheck,2500)});
 })();
 </script>
