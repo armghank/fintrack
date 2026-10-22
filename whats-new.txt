@@ -1,3 +1,4 @@
-• New Simple and Pro modes: Simple keeps just the everyday things, and the Pro switch in the menu turns on EMIs, cheques, savings pots, projections and reports. Your data never changes when you switch
-• On phones, tap ☰ next to the logo to open the menu, and add entries with the round + button at the bottom right
-• New to FinTrack? A short tour shows you around. Replay it any time from Manage → Data → Show the tour
+• No more Save button: every change saves straight away and backs up to Google Drive on its own. The small chip at the top shows when you're backed up
+• New Feedback & help in the menu: send an idea, report a problem or tell us what you like. On Android, shake your phone to report a problem (iPhone: turn it on in Manage → Settings)
+• The phone's Back button now goes one step back. On Home, press it twice to close the app
+• Still exploring the example data? Start your own book any time from the banner or the pop-up
