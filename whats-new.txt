@@ -1,4 +1,1 @@
-• No more Save button: every change saves straight away and backs up to Google Drive on its own. The small chip at the top shows when you're backed up
-• New Feedback & help in the menu: send an idea, report a problem or tell us what you like. On Android, shake your phone to report a problem (iPhone: turn it on in Manage → Settings)
-• The phone's Back button now goes one step back. On Home, press it twice to close the app
-• Still exploring the example data? Start your own book any time from the banner or the pop-up
+• The bottom bar is back on phones: Home, Ledgers, Plans and Manage with + in the middle. The ☰ menu stays for Feedback & help and the Pro switch
