@@ -155,6 +155,30 @@ html.pro .probadge{display:inline}
 button.store{border:1px solid var(--edge);background:var(--surface2);border-radius:999px;padding:6px 12px;letter-spacing:.02em;text-transform:none;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
 button.store.ok{color:var(--pos)}button.store.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}button.store.demo{color:var(--accent2)}
 @media (max-width:959px){.top #store{margin-left:auto}}
+
+/* phones: bottom page bar is back (with + in the middle); the ☰ side menu stays */
+.bnav{display:none}
+@media (max-width:959px){
+  .bnav{display:block;position:fixed;z-index:35;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));
+    border-radius:26px;border:1px solid var(--edge);box-shadow:var(--shadow);
+    background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)),color-mix(in srgb,var(--bg) 62%,transparent);
+    backdrop-filter:blur(26px) saturate(1.8);-webkit-backdrop-filter:blur(26px) saturate(1.8)}
+  html.lite .bnav{background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .bnav .bin{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+  .bnav button{border:0;background:none;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;font-size:11px;font-weight:500;color:var(--muted);min-width:0}
+  .bnav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .bnav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .bnav button.on{color:var(--accent2);font-weight:600}
+  :root:not([data-theme="dark"]) .bnav button.on{color:var(--accent)}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bnav button.on{color:var(--accent2)}}
+  .bnav .bfab{width:54px;height:54px;padding:0;margin:-18px auto 0;border-radius:50%;justify-content:center;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:var(--glow),0 10px 24px rgba(60,60,200,.35)}
+  .bnav .bfab svg{width:26px;height:26px;stroke-width:2.4}
+  .bnav .bfab:active{transform:scale(.94)}
+  html body .fab2{display:none}
+  .shell{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}
+  .toast{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
+}
 </style>
 </head>
 <body>
@@ -702,6 +726,7 @@ table.led th{letter-spacing:.12em}
     <button data-act="go" data-p="settings" title="Manage"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Manage</button>
   </div>
 </nav>
+<nav class="bnav" aria-label="Pages"><div class="bin"><button data-act="go" data-p="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></button><button data-act="go" data-p="ledgers"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span>Ledgers</span></button><button class="bfab" data-act="newEntry" aria-label="New entry"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button data-act="go" data-p="plans"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><span class="pll">Plans</span></button><button data-act="go" data-p="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Manage</span></button></div></nav>
 <button class="fab2" data-act="newEntry" aria-label="New entry" title="New entry"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 <div class="login" id="login" hidden>
   <div class="lg-in">
@@ -768,7 +793,7 @@ const GL=Object.fromEntries(GROUPS.map(g=>[g.k,g]));
 const LITE_W=new Set(["hold","accounts","spend","budget","parties","recent"]),LITE_T=new Set(["expense","income","transfer","party"]),LITE_LED=new Set(["accounts","daybook"]),LITE_GRP=new Set(["pot","equity"]);
 function isPro(){const v=ls.get("tapledger.pro");if(v==="1")return true;if(v==="0")return false;try{return !S.demo&&S.entries.length>0}catch(e){return false}}
 function paintMode(){const p=isPro();document.documentElement.classList.toggle("pro",p);document.querySelectorAll(".protog").forEach(b=>{b.setAttribute("aria-checked",p?"true":"false")});
-  const pl=document.querySelector('.nav [data-p="plans"]');if(pl){const t=[...pl.childNodes].find(n=>n.nodeType===3);if(t)t.nodeValue=p?"Plans":"Budgets";pl.title=p?"Plans":"Budgets"}}
+  document.querySelectorAll('.bnav .pll').forEach(e=>e.textContent=p?"Plans":"Budgets");const pl=document.querySelector('.nav [data-p="plans"]');if(pl){const t=[...pl.childNodes].find(n=>n.nodeType===3);if(t)t.nodeValue=p?"Plans":"Budgets";pl.title=p?"Plans":"Budgets"}}
 const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",goals:"Savings goals",savtrend:"Savings trend",trend:"Financial position (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries"};
 
 /* ---------- state ---------- */
@@ -964,7 +989,7 @@ function daysLeftInMonth(k){const t=today();if(cycleOf(t)!==k)return 0;return da
 /* ---------- render ---------- */
 function render(){
   paintMode();navTrack();
-  document.querySelectorAll(".nav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
+  document.querySelectorAll(".nav [data-p],.bnav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
   const m=$("#main");
   m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing here is kept.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm" data-act="keepExample">Keep this as my book</button><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
     ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings}[U.page])();
@@ -1068,8 +1093,9 @@ async function shakeSet(on,el){if(on&&NEEDS_MOTION_OK){try{const r=await DeviceM
 const TR={i:-1};
 function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
   {t:"Welcome to FinTrack",b:"Your money in one place. A quick look around takes 30 seconds.",el:null,ico:"👋"},
-  {t:"Add an entry",b:"Tap + for every spend, income or transfer. Or just type “spent 45 on groceries” and FinTrack fills it in.",el:D?".nav .fab":".fab2"},
-  {t:"Your pages",b:D?"Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage live in this menu.":"Tap ☰ to open the menu: Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage.",el:D?".nav [data-p]":".burger",wide:D},
+  {t:"Add an entry",b:"Tap + for every spend, income or transfer. Or just type “spent 45 on groceries” and FinTrack fills it in.",el:D?".nav .fab":".bnav .bfab"},
+  {t:"Your pages",b:D?"Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage live in this menu.":"Move between Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage with the bar at the bottom.",el:D?".nav [data-p]":".bnav [data-p]",wide:true},
+  ...(D?[]:[{t:"The menu",b:"Tap ☰ for everything else: Feedback & help and the Pro switch.",el:".burger"}]),
   {t:"Pick a month",b:"Everything on Home follows the month you choose here.",el:D?".phhome .mnav":".phhome .mnav"},
   {t:"What you hold",b:"Your bank and cash together. Tap “Check balances” to match it with your real bank.",el:'#main section[data-w="hold"]'},
   {t:"Who owes whom",b:"Money you lent, borrowed or split with friends shows here.",el:'#main section[data-w="parties"]'},
@@ -1133,7 +1159,7 @@ function gsOpen(sel,btn){gsClose();if(sel.disabled)return;
   const big=items.length>12;
   pop.innerHTML=(big?'<div class="gq"><input type="search" placeholder="Search…" aria-label="Search"></div>':"")+'<div class="gl">'+html+'</div>';
   document.body.appendChild(pop);btn.setAttribute("aria-expanded","true");GSP={sel,btn,pop};
-  const place=()=>{const r=btn.getBoundingClientRect(),vw=innerWidth,vh=innerHeight;const w=Math.min(Math.max(r.width,180),vw-16);pop.style.width=w+"px";
+  const place=()=>{const r=btn.getBoundingClientRect(),vw=innerWidth,bn=vw<960&&document.querySelector(".bnav"),vh=bn&&bn.offsetParent!==null?Math.min(innerHeight,bn.getBoundingClientRect().top):innerHeight;const w=Math.min(Math.max(r.width,180),vw-16);pop.style.width=w+"px";
     let left=Math.min(Math.max(8,r.left),vw-w-8);pop.style.left=left+"px";
     const below=vh-r.bottom-10,above=r.top-10,up=below<220&&above>below;pop.classList.toggle("up",up);
     const mh=Math.max(140,Math.min(320,(up?above:below)-6));pop.style.maxHeight=mh+"px";
