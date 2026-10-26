@@ -153,7 +153,7 @@ html.pro .probadge{display:inline}
 .wstart .btn b{font-size:15.5px}.wstart .btn small{font-weight:400;opacity:.8;font-size:12.5px}
 .wstart .btn.ghost{align-items:center;padding:10px}
 button.store{border:1px solid var(--edge);background:var(--surface2);border-radius:999px;padding:6px 12px;letter-spacing:.02em;text-transform:none;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
-button.store.ok{color:var(--pos)}button.store.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}button.store.demo{color:var(--accent2)}
+button.store.ok{color:var(--pos)}button.store.bad{color:#fff;background:var(--neg);border-color:var(--neg)}button.store.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}button.store.demo{color:var(--accent2)}
 @media (max-width:959px){.top #store{margin-left:auto}}
 
 /* phones: bottom page bar is back (with + in the middle); the ☰ side menu stays */
@@ -179,6 +179,34 @@ button.store.ok{color:var(--pos)}button.store.warn{color:var(--warn);border-colo
   .shell{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))!important}
   .toast{bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
 }
+
+/* floating details box */
+#ttFloat{position:fixed;z-index:70;transition:left .12s ease,top .12s ease;
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04)),color-mix(in srgb,var(--bg) 82%,transparent)!important;
+  backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border:1px solid var(--edge)}
+#ttFloat[hidden]{display:none}
+tr.pgmore td{text-align:center;padding:14px 8px!important}
+#ttFloat.dock{max-width:none;min-width:0;border-radius:18px;padding:10px 14px;box-shadow:var(--shadow),0 0 0 1px var(--edge)}
+.ttwrap .tt.on:not(g){background:var(--accent-soft);border-radius:10px}
+
+/* Help page + ⓘ tips */
+.htopic,.hfaq{padding:0!important;overflow:hidden}
+.htopic summary,.hfaq summary{list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;gap:10px}
+.htopic summary::-webkit-details-marker,.hfaq summary::-webkit-details-marker{display:none}
+.htopic summary::after,.hfaq summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;flex:none}
+.htopic[open] summary::after,.hfaq[open] summary::after{transform:rotate(-135deg)}
+.htopic summary .chip{font-size:10.5px}
+.hsteps{margin:0 18px 12px 38px;padding:0;line-height:1.55;color:var(--fg)}.hsteps li{margin:4px 0}
+.htopic .btn{margin:0 18px 16px}
+.hfaq p{margin:0 18px 16px;color:var(--muted);line-height:1.55}
+.hmore{margin-top:14px}
+.ib{display:inline-grid;place-items:center;width:17px;height:17px;margin:0 2px 0 7px;padding:0;border-radius:50%;border:1.3px solid currentColor;background:none;color:var(--muted);
+  font:italic 600 11px/1 Georgia,serif;letter-spacing:0;text-transform:none;vertical-align:1px;cursor:pointer;opacity:.75;flex:none}
+.ib:hover{opacity:1;color:var(--accent2)}
+#tipPop{position:fixed;z-index:95;padding:12px 14px;border-radius:16px;color:var(--fg);font-size:13.5px;line-height:1.5;
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04)),color-mix(in srgb,var(--bg) 84%,transparent);
+  border:1px solid var(--edge);box-shadow:var(--shadow);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);animation:gpopIn .14s ease-out}
+#tipPop p{margin:4px 0 6px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -446,10 +474,10 @@ svg circle.tt:focus-visible{stroke-width:22}
 .ttg.hov .tt.on{opacity:1}
 .donut .legend .tt{border-radius:6px;padding:1px 4px;margin:0 -4px}
 .tip{position:absolute;z-index:15;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px;font-size:12.5px;pointer-events:none;min-width:180px;max-width:260px;display:flex;flex-direction:column;gap:3px}
-.tip div span:last-child{white-space:nowrap}
+.tip div>span:last-child{white-space:nowrap}
 .tip b{font-size:12px;letter-spacing:.04em}
 .tip div{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.tip div span:first-child{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.tip div>span:first-child{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .tip .tn{border-top:1px dashed var(--line);padding-top:4px;margin-top:2px}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .cal .h{font-size:10.5px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.06em;padding-bottom:2px}
@@ -716,7 +744,7 @@ table.led th{letter-spacing:.12em}
 <nav class="nav" aria-label="Main">
   <div class="in">
     <div class="dhead"><div class="brand"><i>FT</i>FinTrack<em class="probadge">Pro</em></div><button class="navx" data-act="navClose" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <button class="navfb" data-act="fbOpen" title="Feedback & help"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>Feedback & help</button>
+    <button class="navfb" data-act="helpOpen" title="Help & feedback"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>Help & feedback</button>
     <button class="protog" data-act="proTog" role="switch" aria-checked="false" title="Pro mode"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><span class="pl">Pro mode</span><i class="pk" aria-hidden="true"></i></button>
     <button class="navtog" data-act="navTog" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     <button data-act="go" data-p="home" title="Home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Home</button>
@@ -774,6 +802,23 @@ const ymLabel=k=>{const [y,m]=k.split("-");return MON[+m-1]+" "+y};
 const addMonths=(k,n)=>{let [y,m]=k.split("-").map(Number);m+=n;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return y+"-"+p2(m)};
 const daysBetween=(a,b)=>Math.round((new Date(b+"T00:00")-new Date(a+"T00:00"))/864e5);
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+/* ---------- the book on this phone: kept in the browser's database (hundreds of MB), not the 5 MB small storage ---------- */
+const BOOK="tapledger.v1";let IDBP=null,SAVEERR="";
+function idb(){if(IDBP)return IDBP;IDBP=new Promise((res,rej)=>{try{const r=indexedDB.open("fintrack",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error||new Error("db"));r.onblocked=()=>rej(new Error("db blocked"))}catch(e){rej(e)}});IDBP.catch(()=>{IDBP=null});return IDBP}
+function idbDo(mode,fn){return idb().then(db=>new Promise((res,rej)=>{const tx=db.transaction("kv",mode),st=tx.objectStore("kv");let out;const r=fn(st);if(r)r.onsuccess=()=>{out=r.result};tx.oncomplete=()=>res(out);tx.onerror=tx.onabort=()=>rej(tx.error||new Error("db write failed"))}))}
+const idbGet=k=>idbDo("readonly",st=>st.get(k)),idbPut=(k,v)=>idbDo("readwrite",st=>st.put(v,k)),idbDel=k=>idbDo("readwrite",st=>st.delete(k));
+function hasBook(){return !!ls.get(BOOK)||ls.get("tapledger.hasbook")==="1"}
+async function storeWrite(json){
+  try{await idbPut(BOOK,json);ls.set("tapledger.hasbook","1");try{localStorage.removeItem("tapledger.lsnewer");if(ls.get(BOOK))localStorage.removeItem(BOOK)}catch(e){}SAVEERR="";return true}
+  catch(e){try{localStorage.setItem(BOOK,json);ls.set("tapledger.lsnewer","1");SAVEERR="";return true}catch(e2){SAVEERR="full";throw new Error("This phone's storage for FinTrack is full")}}}
+function storeNow(){if(!S||S.demo)return;storeWrite(JSON.stringify(S)).catch(()=>{try{paintTop()}catch(e){}})}
+async function storeRead(){
+  if(ls.get("tapledger.lsnewer")==="1"&&ls.get(BOOK)){const n=ls.get(BOOK);try{await idbPut(BOOK,n);if(await idbGet(BOOK)===n){localStorage.removeItem("tapledger.lsnewer");localStorage.removeItem(BOOK)}}catch(e){}return n}
+  try{const v=await idbGet(BOOK);if(v)return v}catch(e){return ls.get(BOOK)}
+  const old=ls.get(BOOK);if(!old)return null;
+  try{await idbPut(BOOK,old);const back=await idbGet(BOOK);if(back===old){ls.set("tapledger.hasbook","1");try{localStorage.removeItem(BOOK)}catch(e){}}}catch(e){} // one-time move; the old copy is removed only after the new one checks out
+  return old}
+async function storeClear(){try{await idbDel(BOOK)}catch(e){}try{localStorage.removeItem(BOOK);localStorage.removeItem("tapledger.hasbook")}catch(e){}}
 const PAL=["#4c6ef5","#12b886","#f59f00","#e8590c","#be4bdb","#15aabf","#fa5252","#82c91e","#7950f2","#e64980","#20c997","#fd7e14","#5c7cfa","#94a3b8"];
 const SIGN={asset:1,expense:1,liability:-1,income:-1,equity:-1};
 const GROUPS=[
@@ -798,7 +843,7 @@ const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan"
 
 /* ---------- state ---------- */
 let S=null;            // the book
-let U={trend:ls.get("tapledger.trend")==="line"?"line":"bar",calDay:today(),calMode:"pl",pdcOpen:null,page:"home",month:today().slice(0,7),ledTab:"accounts",ledAcc:null,ledMonth:"all",stmtMode:"month",plansTab:"sched",setTab:"accounts",dbMonth:"all",q:""};
+let U={trend:ls.get("tapledger.trend")==="line"?"line":"bar",calDay:today(),calMode:"pl",pdcOpen:null,page:"home",month:today().slice(0,7),ledTab:"accounts",ledAcc:null,ledMonth:"",stmtMode:"month",plansTab:"sched",setTab:"accounts",dbMonth:"",q:""};
 let dirty=false, saving=false, mode="loading", DB=null, UID=null, savedMonths={}, savedSettings="";
 let F=null; // entry form state
 
@@ -908,9 +953,17 @@ function sumKind(t,kind){let s=0;for(const a of S.accounts)if(a.kind===kind&&t[a
 /* ---------- persistence ---------- */
 let ASV=null,AUP=null;
 function markDirty(){dirty=true;paintTop();clearTimeout(ASV);if(S&&!S.demo)ASV=setTimeout(()=>save(true),900)}
-/* upload to Drive ~20 s after the last change (one upload for a burst of entries); never jumps to Google mid-use */
-function autoUpload(now){clearTimeout(AUP);const go=()=>{if(!signedIn()||S.demo)return;if(!navigator.onLine){paintTop();return}
-  if(tokenOk()||NATIVE){gBackup();return}GA.patch({reconnect:true});paintTop()};if(now)go();else AUP=setTimeout(go,20000)}
+/* backup timing: never right after a change while you're using the app. It runs after 2 quiet minutes, when the app is
+   minimised or closed, or at the latest an hour after the first unsaved-to-Drive change; only if something changed. */
+let PEND_AT=0,LAST_ACT=Date.now();const QUIET=120000,MAXWAIT=3600000;
+["pointerdown","keydown","input","wheel","touchmove"].forEach(t=>addEventListener(t,()=>{LAST_ACT=Date.now()},{passive:true,capture:true}));
+function autoUpload(now){clearTimeout(AUP);if(!now){if(!PEND_AT)PEND_AT=Date.now();return}
+  if(S.demo)return;if(NATIVE&&backupPending&&!NBK_BUSY){NBK_BUSY=true;autoBackupNative().finally(()=>{NBK_BUSY=false})}
+  if(!signedIn()||!GA.get().pending)return;if(!navigator.onLine){paintTop();return}
+  if(tokenOk()||NATIVE){gBackup();return}GA.patch({reconnect:true});paintTop()}
+let NBK_BUSY=false;
+setInterval(()=>{const pend=(NATIVE&&backupPending)||(signedIn()&&GA.get().pending);if(!pend||S.demo||dirty||saving||gBusy){if(!pend)PEND_AT=0;return}
+  if(!PEND_AT)PEND_AT=Date.now();const now=Date.now();if(now-LAST_ACT>=QUIET||now-PEND_AT>=MAXWAIT){PEND_AT=now;autoUpload(true)}},15000);
 function storeLabel(){return gStatus()[0]}
 function paintTop(){const b=$("#saveBtn");b.classList.toggle("dirty",dirty);b.lastChild.textContent=saving?"Saving…":"Save";b.disabled=saving;{const st=gStatus(),el=$("#store");el.textContent=st[0];el.className="store "+st[1]}
   {const b=$("#avBtn"),u=(GA.get().user)||null;if(b){b.hidden=!u;if(u){const init=esc((u.name||u.email||"?").trim().charAt(0).toUpperCase());const key=(u.picture||"")+"|"+init;
@@ -932,7 +985,7 @@ async function initStore(){
     }catch(e){toast("Could not load your saved book. Working on example data.")}
   }else{
     mode="local";
-    const raw=ls.get("tapledger.v1");
+    const raw=await storeRead();
     if(raw){try{S=Object.assign(blankBook(),JSON.parse(raw));dirty=false}catch(e){}}
   }
   fixDash();paintTop();render();
@@ -954,9 +1007,9 @@ async function save(auto){
         if(list.length){await col.doc("j_"+k).set({type:"journal",m:k,entries:list});savedMonths[k]=js}
         else{await col.doc("j_"+k).delete();delete savedMonths[k]}
       }
-    }else{ls.set("tapledger.v1",JSON.stringify(S))}
+    }else{await storeWrite(JSON.stringify(S))}
     dirty=false;backupPending=true;if(!auto)toast("Saved on this phone");afterSave();
-  }catch(e){toast("Save failed: "+(e&&e.message?e.message:"try again in a moment"))}
+  }catch(e){if(!SAVEERR)SAVEERR="err";toast(SAVEERR==="full"?"Not saved: this phone's storage is full. Download a backup in Manage → Data now.":"Save failed: "+(e&&e.message?e.message:"try again in a moment"))}
   saving=false;paintTop();render();
 }
 function fixDash(){if(!Array.isArray(S.pdcs))S.pdcs=[];if(!Array.isArray(S.schedules))S.schedules=[];S.schedules.forEach(normSched);
@@ -988,16 +1041,16 @@ function daysLeftInMonth(k){const t=today();if(cycleOf(t)!==k)return 0;return da
 
 /* ---------- render ---------- */
 function render(){
-  paintMode();navTrack();
+  paintMode();navTrack();hideTT();tipClose();if(PG.obs){PG.obs.disconnect();PG.obs=null}
   document.querySelectorAll(".nav [data-p],.bnav [data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p===U.page));
   const m=$("#main");
   m.innerHTML=(backupDue()?`<div class="banner"><p><b>${backupPending?"Saved on this phone.":"Backup due."}</b> ${IOS?"Keep a copy in Files too, so it survives even if the app is deleted.":"Download a copy too, so it survives even if the app is deleted."}</p><button class="btn sm" data-act="bkLater">Later</button><button class="btn sm pri" data-act="xlBackup">${IOS?"Save copy to Files":"Download backup"}</button></div>`:"")+(S.demo?`<div class="banner"><p><b>Example data.</b> Play with it freely. Nothing here is kept.</p><label class="btn sm" for="xlRestore2" tabindex="0">Restore from backup</label><input type="file" id="xlRestore2" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><button class="btn sm" data-act="keepExample">Keep this as my book</button><button class="btn sm pri" data-act="fresh">Start with my own data</button></div>`:"")+
-    ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings}[U.page])();
+    ({home:pHome,ledgers:pLedgers,plans:pPlans,settings:pSettings,help:pHelp}[U.page]||pHome)();
   /* Home: the Overview row comes first; notices sit below it (and below the arrange bar) */
   const ph=m.querySelector(".phhome");
   if(ph&&ph!==m.firstElementChild){let at=ph.nextElementSibling&&ph.nextElementSibling.matches(".banner[style*='sticky']")?ph.nextElementSibling:ph;
     [...m.children].slice(0,[...m.children].indexOf(ph)).reverse().forEach(n=>at.after(n));m.prepend(ph);if(at!==ph)ph.after(at)}
-  heroFix();
+  heroFix();pgAttach();tipsPaint();
 }
 /* two big figures: side by side (second on the right) when they fit, else stacked and left-aligned */
 function heroFix(){document.querySelectorAll(".hero").forEach(h=>{const k=[...h.children];if(k.length<2)return;h.classList.remove("wrapped");const t=k[0].offsetTop;if(k.some(c=>c.offsetTop>t+2))h.classList.add("wrapped")})}
@@ -1011,6 +1064,7 @@ let NAVSTK=[],NAVKEY="home",NAVBACK=false,BACKAT=0;
 function navTrack(){const k=U.page+(U.page==="ledgers"&&U.ledAcc?":"+U.ledAcc:"");if(k===NAVKEY)return;
   if(k==="home")NAVSTK=[];else if(!NAVBACK){NAVSTK.push(NAVKEY);if(NAVSTK.length>30)NAVSTK.shift()}NAVKEY=k}
 function goBack(){ // true = handled inside the app
+  if(document.getElementById("tipPop")){tipClose();return true}
   if(TR.i>=0){tourStop();return true}
   if(GSP){gsClose();return true}
   if(document.documentElement.classList.contains("navopen")){navShut();return true}
@@ -1058,7 +1112,8 @@ function fbRender(keep){if(!FBF)return;if(keep){const m=$("#fbMsg");if(m)FBF.msg
 document.addEventListener("input",e=>{const t=e.target;if(!FBF||!t.dataset||t.dataset.fb==null)return;const k=t.dataset.fb;
   if(k==="msg"){FBF.msg=t.value;const c=$("#fbCount");if(c)c.textContent=(1000-t.value.length)+" characters left"}else if(k==="email")FBF.email=t.value.trim()});
 document.addEventListener("change",e=>{const t=e.target;if(FBF&&t.dataset&&t.dataset.fb!=null){if(t.dataset.fb==="reply")FBF.reply=t.checked;else if(t.dataset.fb==="screen")FBF.screen=t.value}
-  if(t.dataset&&t.dataset.shake!=null)shakeSet(t.checked,t)});
+  if(t.dataset&&t.dataset.shake!=null)shakeSet(t.checked,t);
+  if(t.dataset&&t.dataset.tips!=null){ls.set("tapledger.tips",t.checked?"1":"0");toast(t.checked?"Tips are on.":"Tips are off.")}});
 function fbSend(){if(!FBF)return;const m=$("#fbMsg");if(m)FBF.msg=m.value;const msg=FBF.msg.trim();
   if(msg.length<3){toast("Please write a short message first.");m&&m.focus();return}
   if(FBF.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(FBF.email)){toast("That email doesn't look right. Fix it or leave it empty.");return}
@@ -1095,7 +1150,7 @@ function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
   {t:"Welcome to FinTrack",b:"Your money in one place. A quick look around takes 30 seconds.",el:null,ico:"👋"},
   {t:"Add an entry",b:"Tap + for every spend, income or transfer. Or just type “spent 45 on groceries” and FinTrack fills it in.",el:D?".nav .fab":".bnav .bfab"},
   {t:"Your pages",b:D?"Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage live in this menu.":"Move between Home, Ledgers, "+(pro?"Plans":"Budgets")+" and Manage with the bar at the bottom.",el:D?".nav [data-p]":".bnav [data-p]",wide:true},
-  ...(D?[]:[{t:"The menu",b:"Tap ☰ for everything else: Feedback & help and the Pro switch.",el:".burger"}]),
+  ...(D?[]:[{t:"The menu",b:"Tap ☰ for everything else: Help & feedback and the Pro switch.",el:".burger"}]),
   {t:"Pick a month",b:"Everything on Home follows the month you choose here.",el:D?".phhome .mnav":".phhome .mnav"},
   {t:"What you hold",b:"Your bank and cash together. Tap “Check balances” to match it with your real bank.",el:'#main section[data-w="hold"]'},
   {t:"Who owes whom",b:"Money you lent, borrowed or split with friends shows here.",el:'#main section[data-w="parties"]'},
@@ -1103,16 +1158,21 @@ function tourSteps(){const D=innerWidth>=960,pro=isPro();return [
   {t:"You're ready",b:S.demo?"This is example data. Play with it, then tap “Start with my own data” when you're ready.":"Add your bank accounts in Manage, then tap + for your first entry. Everything saves as you go.",el:null,ico:"✨",end:true}
 ].filter(x=>!x.el||document.querySelector(x.el))}
 function tourMaybe(){if(ls.get("tapledger.tour")==="1")return;setTimeout(()=>{if(!$("#sheetRoot").innerHTML)ACT.tourStart()},500)}
-function tourStop(){ls.set("tapledger.tour","1");TR.i=-1;const r=document.getElementById("tourRoot");if(r)r.remove();removeEventListener("resize",tourPlace)}
-function tourGo(i){const st=tourSteps();if(i<0)i=0;if(i>=st.length)return tourStop();TR.i=i;TR.st=st;
+function tourStop(){ls.set("tapledger.tour","1");TR.i=-1;const r=document.getElementById("tourRoot");if(r)r.remove();removeEventListener("resize",tourPlace);
+  if(TR.custom){const back=TR.back;TR.custom=null;TR.back=null;if($("#sheetRoot").innerHTML)ACT.close();navShut();if(back){U.page="help";U.helpTab="guide";U.helpOpen=back;render();setTimeout(()=>{const d=document.getElementById("h-"+back);if(d)d.scrollIntoView({block:"center"})},60)}}}
+/* the spotlight can point at a selector, or at whatever a function returns (used by the guide's "Show me") */
+function tourEls(x){if(!x.el)return[];let a=typeof x.el==="function"?[].concat(x.el()||[]):[...document.querySelectorAll(x.el)];a=a.filter(e=>e&&e.getBoundingClientRect&&e.getClientRects().length);return x.wide?a:a.slice(0,1)}
+function tourGo(i){const st=TR.custom||tourSteps();if(i<0)i=0;if(i>=st.length)return tourStop();TR.i=i;TR.st=st;
   let r=document.getElementById("tourRoot");if(!r){r=document.createElement("div");r.id="tourRoot";r.innerHTML='<div class="tour-block"></div><div class="tour-hole"></div><div class="tour-tip" role="dialog" aria-live="polite"></div>';document.body.appendChild(r);addEventListener("resize",tourPlace)}
   const x=st[i],n=st.length;
-  r.querySelector(".tour-tip").innerHTML=`${x.ico?`<div class="tour-ico">${x.ico}</div>`:""}<h3>${x.t}</h3><p>${x.b}</p><div class="tour-foot"><span class="tour-dots">${st.map((_,k)=>`<i${k===i?' class="on"':""}></i>`).join("")}</span>${i>0?'<button class="btn sm ghost" data-act="tourBack">Back</button>':'<button class="btn sm ghost" data-act="tourEnd">Skip</button>'}<button class="btn sm pri" data-act="${i===n-1?"tourEnd":"tourNext"}">${i===n-1?"Let's go":i===0?"Show me":"Next"}</button></div>`;
-  const el=x.el&&document.querySelector(x.el);
-  if(el){const rr=el.getBoundingClientRect();if(rr.top<90||rr.bottom>innerHeight-40){const y=scrollY+rr.top-Math.max(110,(innerHeight-rr.height)/2.6);r.classList.add("moving");scrollTo({top:Math.max(0,y),behavior:"smooth"});clearTimeout(TR.tm);TR.tm=setTimeout(()=>{r.classList.remove("moving");tourPlace()},520)}}
+  r.querySelector(".tour-tip").innerHTML=`${x.ico?`<div class="tour-ico">${x.ico}</div>`:""}<h3>${x.t}</h3><p>${x.b}</p><div class="tour-foot"><span class="tour-dots">${st.map((_,k)=>`<i${k===i?' class="on"':""}></i>`).join("")}</span>${i>0?'<button class="btn sm ghost" data-act="tourBack">Back</button>':`<button class="btn sm ghost" data-act="tourEnd">${TR.custom?"Close":"Skip"}</button>`}<button class="btn sm pri" data-act="${i===n-1?"tourEnd":"tourNext"}">${TR.custom?(i===n-1?"Done":"Next"):i===n-1?"Let's go":i===0?"Show me":"Next"}</button></div>`;
+  if(x.go){r.classList.add("moving");try{x.go()}catch(e){}clearTimeout(TR.tm);TR.tm=setTimeout(()=>{r.classList.remove("moving");tourFocus(r,tourEls(x)[0])},320);return}
+  tourFocus(r,tourEls(x)[0])}
+function tourFocus(r,el){if(TR.i<0)return;
+  if(el){const sc=el.closest(".sheet");const rr=el.getBoundingClientRect();if(sc&&(rr.top<sc.getBoundingClientRect().top+40||rr.bottom>innerHeight-40)){el.scrollIntoView({block:"center"});setTimeout(tourPlace,250)}else if(rr.top<90||rr.bottom>innerHeight-40){const y=scrollY+rr.top-Math.max(110,(innerHeight-rr.height)/2.6);r.classList.add("moving");scrollTo({top:Math.max(0,y),behavior:"smooth"});clearTimeout(TR.tm);TR.tm=setTimeout(()=>{r.classList.remove("moving");tourPlace()},520)}}
   tourPlace();const b=r.querySelector(".tour-tip .btn.pri");if(b)b.focus({preventScroll:true})}
 function tourPlace(){if(TR.i<0)return;const r=document.getElementById("tourRoot");if(!r)return;const x=TR.st[TR.i],hole=r.querySelector(".tour-hole"),tip=r.querySelector(".tour-tip");
-  let els=x.el?[...document.querySelectorAll(x.el)]:[];if(!x.wide)els=els.slice(0,1);
+  let els=tourEls(x);
   if(!els.length){hole.style.cssText="left:50%;top:45%;width:0;height:0;";tip.classList.add("mid");tip.style.cssText="";return}
   tip.classList.remove("mid");const R=els.map(e=>e.getBoundingClientRect());let L=Math.min(...R.map(q=>q.left)),T=Math.min(...R.map(q=>q.top)),Rt=Math.max(...R.map(q=>q.right)),B=Math.max(...R.map(q=>q.bottom));
   const pad=8,round=els[0].matches(".fab2,.burger")?"50%":"20px";L-=pad;T-=pad;Rt+=pad;B+=pad;
@@ -1124,6 +1184,156 @@ function tourPlace(){if(TR.i<0)return;const r=document.getElementById("tourRoot"
   tip.style.left=left+"px";tip.style.top=top+"px"}
 document.addEventListener("keydown",e=>{if(TR.i<0)return;if(e.key==="Escape")tourStop();else if(e.key==="ArrowRight")tourGo(TR.i+1);else if(e.key==="ArrowLeft")tourGo(TR.i-1)});
 addEventListener("scroll",()=>{if(TR.i>=0)tourPlace()},{passive:true});
+
+/* ---------- Help: guide (with "Show me" walkthroughs), FAQ and ⓘ tips. Simple users see Simple topics; Pro adds the rest ---------- */
+const hD=()=>innerWidth>=960;
+const hFab=()=>document.querySelector(hD()?".nav .fab":".bnav .bfab");
+const hNavs=()=>[...document.querySelectorAll(hD()?".nav [data-p]":".bnav [data-p]")];
+const hQ=q=>document.querySelector(q);
+const hCard=w=>document.querySelector('#main section[data-w="'+w+'"]');
+const hAct=(a,txt)=>[...document.querySelectorAll('[data-act="'+a+'"]')].find(e=>e.getClientRects().length&&(!txt||e.textContent.includes(txt)));
+const hSave=()=>[...document.querySelectorAll(".sheet .acts .btn.pri,.sheet .btn.pri")].pop();
+const hFl=txt=>{const f=[...document.querySelectorAll(".sheet .fl")].find(e=>e.textContent.trim().toLowerCase().startsWith(txt.toLowerCase()));return f?[f,f.nextElementSibling].filter(Boolean):[]};
+const hLab=id=>{const l=document.querySelector('label[for="'+id+'"]'),i=document.getElementById(id);if(!l&&!i)return[];const g=i&&i.nextElementSibling&&i.nextElementSibling.classList.contains("gsel")?i.nextElementSibling:i;return[l,g].filter(Boolean)};
+function hGo(p,t){navShut();if($("#sheetRoot").innerHTML)ACT.close();U.page=p;U.ledAcc=null;U.arrange=false;
+  if(t){if(p==="settings")U.setTab=t;else if(p==="ledgers")U.ledTab=t;else if(p==="plans")U.plansTab=t}render();scrollTo(0,0)}
+function hEntry(type){if(!$("#eform")){if($("#sheetRoot").innerHTML)ACT.close();ACT.newEntry()}
+  if(type){const b=document.querySelector('.sheet [data-act="ftype"][data-k="'+type+'"]');if(b&&!b.classList.contains("on"))b.click()}}
+const hTap=q=>()=>{const e=typeof q==="function"?q():document.querySelector(q);if(e)e.click()};
+const S_ENTRY=(type,title,body)=>({go:()=>{hGo("home");hEntry(type)},el:()=>hQ('.sheet [data-act="ftype"][data-k="'+type+'"]'),t:title,b:body});
+
+const HELP=[
+ {id:"start",title:"Getting started",steps:["Open <b>Manage → Settings</b>.","Pick your <b>currency</b> and <b>country</b>.","Set <b>My month starts on day</b>. Paid on the 25th? Set 25, so each month runs from payday to payday.","Then add your accounts (next topic)."],
+  show:[{go:()=>hGo("settings","prefs"),el:()=>hLab("setCur"),t:"Currency",b:"Pick the currency your amounts are in. It only changes the label, never the numbers."},
+        {el:()=>hLab("setCountry"),t:"Country",b:"Only your country is shared with FinTrack's owner, never your location."},
+        {el:()=>hLab("setMs"),t:"Your month",b:"Paid on the 25th? Set 25 and every month in FinTrack runs payday to payday."}]},
+ {id:"accounts",title:"Add your accounts",steps:["Go to <b>Manage → Accounts & categories</b>.","Under Bank accounts, Cash or Credit cards, tap <b>+ Add</b>.","Type a name. If it already has money in it (or you owe on the card), enter the <b>opening balance</b> and its date.","Tap <b>Save</b>. It now shows on Home and in every form."],
+  show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('[data-act="editAcc"][data-g="bank"]'),t:"Add a bank account",b:"Tap + Add under Bank accounts. Cash and Credit cards work the same way."},
+        {go:hTap('[data-act="editAcc"][data-g="bank"]'),el:()=>hLab("a-name"),t:"Name it",b:"For example “Emirates NBD” or “Salary account”."},
+        {el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"What the account holds today (or what you owe on a card), and the date of that figure."},
+        {el:hSave,t:"Save",b:"Done. It appears on Home and in every form."}]},
+ {id:"expense",title:"Record an expense",steps:["Tap <b>+</b>.","Keep <b>Expense</b> selected and type the amount.","Pick the <b>category</b> (what it was for).","Pick <b>Paid from</b> (bank, cash or card) and tap <b>Record</b>."],
+  show:[{el:hFab,go:()=>hGo("home"),t:"Tap +",b:"Every entry starts here."},S_ENTRY("expense","Expense","Spending money. Income, Transfer and Person are next to it."),
+        {el:()=>hQ(".sheet .amt"),t:"Amount",b:"How much you spent."},{el:()=>hFl("category"),wide:true,t:"Category",b:"What it was for: groceries, rent, fuel…"},
+        {el:()=>hFl("paid from"),wide:true,t:"Paid from",b:"Which account the money left: bank, cash or credit card."},{el:hSave,t:"Record",b:"Saved instantly. You can edit it any time from Recent entries or the Day book."}]},
+ {id:"income",title:"Record income",steps:["Tap <b>+</b> and choose <b>Income</b>.","Type the amount and pick the <b>income type</b> (salary, other income…).","Pick <b>Received in</b> and tap <b>Record</b>."],
+  show:[S_ENTRY("income","Income","Money coming in: salary, refunds, gifts."),{el:()=>hFl("income type"),wide:true,t:"Income type",b:"Salary, other income, or any category you add in Manage."},{el:()=>hFl("received in"),wide:true,t:"Received in",b:"The account the money went into."}]},
+ {id:"transfer",title:"Move money between accounts",steps:["Tap <b>+</b> and choose <b>Transfer</b>.","Type the amount, pick <b>From</b> and <b>To</b>.","Use it for cash withdrawals, moving to savings, or paying your credit card bill."],
+  show:[S_ENTRY("transfer","Transfer","Moving your own money. It is not spending, so budgets don't change."),{el:()=>hFl("from"),wide:true,t:"From",b:"Where the money leaves."},{el:()=>hFl("to"),wide:true,t:"To",b:"Where it arrives. Paying your card bill? From: bank, To: credit card."}]},
+ {id:"say",title:"“Say it”: quick entries",steps:["Tap <b>+</b>.","In the box at the top, type or speak a sentence like <i>spent 45 on groceries from cash</i> or <i>salary 12000 into Emirates NBD</i>.","Tap <b>Fill</b>. FinTrack fills the form; check it and tap <b>Record</b>.","On your phone keyboard, tap the 🎤 to speak instead of typing."],
+  show:[{go:()=>{hGo("home");hEntry()},el:()=>hQ(".sheet .saybox"),t:"Say it",b:"Type or speak “spent 45 on groceries from cash”, then tap Fill. You check it before recording."}]},
+ {id:"people",title:"Money with people",steps:["Tap <b>+</b> and choose <b>Person</b>.","Pick <b>what happened</b>: you paid or lent them, they paid or lent you, you owe them a bill, or they owe you.","Pick the person (or add them in Manage under People) and the account.","See who owes what on Home in <b>Receivables & payables</b>."],
+  show:[S_ENTRY("party","Person","For lending, borrowing and paying each other back."),{el:()=>hFl("what happened"),wide:true,t:"What happened",b:"“I paid / lent them” makes them owe you. “They paid / lent me” settles it or makes you owe them."},{el:()=>hFl("person"),wide:true,t:"Who",b:"Pick the person. Add new people in Manage → Accounts & categories → People."}]},
+ {id:"split",title:"Split a bill",steps:["Record the bill as an <b>Expense</b> for the full amount, paid from your account.","Tap <b>➗ Split with others</b> and add the people who share it.","Your share stays your expense; the rest is added to what each person owes you."],
+  show:[S_ENTRY("expense","Start with an expense","Enter the full bill and where you paid it from."),{el:()=>hQ('.sheet [data-act="spToggle"]'),t:"Split with others",b:"Add who shares it. Your share stays your spending; theirs goes to what they owe you."}]},
+ {id:"edit",title:"Edit or delete an entry",steps:["Tap the entry on Home (<b>Recent entries</b>) or in <b>Ledgers → Day book</b>.","Change anything and tap <b>Save</b>.","To delete, tap <b>Delete</b>, then tap it again to confirm."],
+  show:[{go:()=>hGo("home"),el:()=>hCard("recent"),t:"Recent entries",b:"Tap any entry to change or delete it."},{go:()=>hGo("ledgers","daybook"),el:()=>hQ("#main .card .led"),t:"Day book",b:"Every entry, newest first. Tap a line to edit it."}]},
+ {id:"check",title:"Check balances",steps:["On Home, in <b>What I hold</b>, tap <b>Check balances</b>.","Type what your bank app and your wallet really show.","FinTrack shows the <b>difference</b>. Less than the app? A spend may be missing. More? An income or refund may be missing."],
+  show:[{go:()=>hGo("home"),el:()=>hCard("hold"),t:"What I hold",b:"Your bank and cash together, as FinTrack counts them."},{el:()=>hAct("recon"),t:"Check balances",b:"Enter what your bank and wallet really show, and FinTrack tells you what's missing."}]},
+ {id:"budget",title:"Budgets",steps:["Open <b>Budgets</b> (in Pro: <b>Plans → Budgets</b>).","Type a monthly amount next to each category you want to watch, and an overall limit if you like.","The bars turn from green to amber to red as you spend. Home shows the summary."],
+  show:[{go:()=>hGo("plans","budget"),el:()=>hQ("#main [data-limit]")||hQ("#main [data-budget]"),t:"Set a limit",b:"Type how much you want to spend this month."},{el:()=>hQ("#main [data-budget]"),t:"Per category",b:"Set limits only for the categories you want to watch."},{go:()=>hGo("home"),el:()=>hCard("budget"),t:"On Home",b:"The bars fill green → amber → red as the month goes on."}]},
+ {id:"daybook",title:"Day book and account history",steps:["Open <b>Ledgers</b>. Tap an account to see its history with a running balance.","<b>Day book</b> lists every entry, newest first.","Both open on this month. Pick another month or <b>All dates</b>; long lists load 50 lines at a time as you scroll.","Search looks through all dates."],
+  show:[{go:()=>hGo("ledgers","accounts"),el:()=>hQ('#main [data-act="openLed"]'),t:"Account history",b:"Tap an account to see every entry and its running balance."},{go:()=>hGo("ledgers","daybook"),el:()=>hLab("dbMonth"),t:"Pick the month",b:"Opens on this month. Choose another month or All dates."},{el:()=>hQ("#dbQ"),t:"Search",b:"Find any note or account, across all dates."}]},
+ {id:"cards",title:"Home cards",steps:["Tap ⌃ on a card to fold it, or use <b>Fold all</b> at the bottom of Home.","<b>Hold any card</b> and drag it to a new place (on a computer, drag its title).","<b>Show or hide cards</b> in Manage → Dashboard."],
+  show:[{go:()=>hGo("home"),el:()=>hQ("#main section[data-w] h3"),t:"Hold to move",b:"Hold a card for a moment, then drag it. The others move out of the way."},{el:()=>hAct("collapseAll")||hAct("arrange"),go:()=>scrollTo(0,document.body.scrollHeight),t:"More options",b:"Arrange cards, show or hide cards, or fold them all."}]},
+ {id:"backup",title:"Backups and your data",steps:["Everything saves on your phone the moment you change it. There's no Save button.","A copy goes to <b>your own Google Drive</b> after 2 quiet minutes, when you leave the app, or at least hourly.","The chip at the top shows it: ✓ Saved / ✓ Backed up, ☁ Offline, ⚠ Tap to reconnect, ⚠ Not saved. Tap it to back up now.","New phone? Sign in with the same Google account and your book comes back."],
+  show:[{go:()=>hGo("home"),el:()=>hQ("#store"),t:"Backup status",b:"✓ means you're safe. Tap it to back up straight away."},{go:()=>hGo("settings","data"),el:()=>hQ("#main .card"),t:"Your data",b:"Backup, restore and download options live here."}]},
+ {id:"pro",title:"Simple or Pro?",steps:["<b>Simple</b> keeps the everyday things: balances, spending, budgets, people and the Day book.","<b>Pro</b> adds EMIs & bills, cheques, savings pots, projections, journal entries, trial balance and statements.","Switch any time with the <b>Pro mode</b> switch at the bottom of the menu. Nothing is ever deleted when you switch."],
+  show:[{go:()=>{hGo("home");if(!hD())ACT.navOpen()},el:()=>hQ(".nav .protog"),t:"Pro mode",b:"Turn it on for the advanced tools. Turn it off to keep things simple. Your data never changes."}]},
+ /* Pro */
+ {id:"emi",pro:true,title:"EMIs & bills",steps:["Go to <b>Plans → EMIs & bills</b> and tap <b>+ Add EMI, cheque or bill</b>.","Choose the type, name it, enter the amount, the account it's paid from, how often it repeats and the next date.","For an EMI, pick the loan account; add the interest part if you know it, and how many payments are left.","When it's due, tap <b>Post</b> to record it (or <b>Skip once</b>). Upcoming ones show on Home and in the Calendar."],
+  show:[{go:()=>hGo("plans","sched"),el:()=>hAct("editSched","Add"),t:"Add a plan",b:"EMIs, rent, school fees, any regular payment."},{go:hTap(()=>hAct("editSched","Add")),el:()=>hQ('.sheet [data-act="skind"]')&&[...document.querySelectorAll('.sheet [data-act="skind"]')],wide:true,t:"What kind",b:"EMI, bill, or a cheque you give or receive."},{el:()=>hLab("s-left"),t:"Payments left",b:"FinTrack counts down and stops when it reaches zero."},{el:()=>hLab("s-next"),t:"Next due date",b:"When it's due, tap Post on the plan to record it."}]},
+ {id:"emiother",pro:true,title:"An EMI paid for someone else",steps:["Add the loan under <b>Loans</b> and the person under <b>People</b>, each with the same opening balance: the EMI × the payments left.","Make an EMI plan with that loan as the loan account, paid from the bank or card it comes out of, interest part empty.","Each month: <b>Post</b> the EMI, and record their payment with <b>Person → They paid / lent me</b>.","Extra bank or card charges? Record them with <b>Person → I paid / lent them</b> so they add to what the person owes you. Both balances reach zero together."],show:null},
+ {id:"pdc",pro:true,title:"PDCs (post-dated cheques)",steps:["Go to <b>Plans → PDCs</b> and tap <b>+ Add PDCs</b>.","Pick the bank, who it's for, the first cheque number, date, amount and how many cheques; FinTrack creates the whole set.","Mark each cheque as it clears or bounces. <b>Cheque savings</b> on Home tells you how much to keep aside each month."],
+  show:[{go:()=>hGo("plans","pdc"),el:()=>hAct("editPdc","Add"),t:"Add a cheque set",b:"Rent or school-fee cheques: enter the first one and FinTrack makes the rest."},{go:()=>hGo("home"),el:()=>hCard("chqsave"),t:"Cheque savings",b:"How much to set aside this month so every cheque clears."}]},
+ {id:"cal",pro:true,title:"Calendar",steps:["Go to <b>Plans → Calendar</b>.","Each day shows what came in and went out, plus what's due.","Tap a day to see its entries and planned payments."],
+  show:[{go:()=>hGo("plans","cal"),el:()=>hQ("#main .cal"),t:"Calendar",b:"Tap any day to see what happened or what's due."}]},
+ {id:"pots",pro:true,title:"Savings pots",steps:["Go to <b>Plans → Savings</b> and tap <b>+ New pot</b>.","Choose <b>fixed</b> (a set amount on a repeat, e.g. visa every 2 years) or <b>flexible</b> (save what you can toward a target).","Pick the bank where the money is kept, the target and date.","Put money aside with <b>+ → Savings</b>. Each pot shows catch-up amounts or when you'll reach the target at your current pace."],
+  show:[{go:()=>hGo("plans","savings"),el:()=>hAct("editPot"),t:"New pot",b:"A goal kept inside one of your bank accounts."},{go:()=>{hGo("home");hEntry("savings")},el:()=>hFl("savings pot"),wide:true,t:"Put money aside",b:"+ → Savings moves money into a pot (or takes it back)."}]},
+ {id:"proj",pro:true,title:"Projection & what-ifs",steps:["Go to <b>Plans → Projection</b>.","Pick how far ahead to look (6 months to 5 years) and which past months to learn your pattern from.","See <b>Where you'll stand</b> month by month, and set a warning if money falls below an amount.","Add <b>what-ifs</b>: a new salary, new rent or a one-time event, and watch the line change. They never change your real data."],
+  show:[{go:()=>hGo("plans","proj"),el:()=>hQ("#main .card"),t:"Look ahead",b:"Choose the period and the pattern to learn from."},{el:()=>hAct("wiAdd"),t:"What if…",b:"Try changes like a new salary or a big purchase. Your real data stays the same."}]},
+ {id:"journal",pro:true,title:"Journal entries",steps:["Tap <b>+</b> and choose <b>Journal</b>.","Add a line for each account with its <b>debit</b> or <b>credit</b>.","Debits must equal credits before you can save. Use it for anything the other types don't cover."],
+  show:[S_ENTRY("journal","Journal","Full double entry for unusual cases."),{el:()=>hQ(".sheet .grid3")||hQ(".sheet select[data-jl]"),t:"Lines",b:"Each line: an account and its debit or credit. Totals must match."}]},
+ {id:"opening",pro:true,title:"Opening balances",steps:["Open the account in <b>Manage → Accounts & categories</b>.","Set the <b>opening balance</b> and its <b>As of</b> date.","The date must be on or before the account's first entry, so it never falls between your entries. FinTrack shows how the balance will change before you confirm."],
+  show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. The date can't fall between existing entries."}]},
+ {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
+  show:[{go:()=>hGo("home"),el:()=>hCard("accounts"),t:"Accounts",b:"Cards and loans you owe on show in red as Payable."}]},
+ {id:"reports",pro:true,title:"Trial balance & statements",steps:["<b>Ledgers → Trial balance</b> checks that debits equal credits.","<b>Ledgers → Statements</b> shows the income statement and balance sheet for any period.","Tap <b>Download statement</b> (or <b>Excel ↓</b> on an account) for an Excel file."],
+  show:[{go:()=>hGo("ledgers","trial"),el:()=>hQ("#main .card"),t:"Trial balance",b:"Debits = Credits means your books balance."},{go:()=>hGo("ledgers","stmt"),el:()=>hAct("dlStmt"),t:"Download",b:"Get any statement as an Excel file."}]},
+ {id:"oneoff",pro:true,title:"One-off entries",steps:["In an Expense, Income or Journal entry, switch on <b>One-off</b>.","Use it for things that won't repeat (a new phone, a bonus).","One-off entries still count in your balances but are left out of projections, so they don't skew the future."],
+  show:[S_ENTRY("expense","Any expense","Open an expense, income or journal."),{el:()=>{const i=hQ("#f-oneoff");return i?i.closest(".wl"):null},t:"One-off",b:"Leaves this entry out of projections. Your balances still include it."}]},
+ {id:"hide",pro:true,title:"Hide old accounts",steps:["Open the account in <b>Manage → Accounts & categories</b>.","Switch on <b>Hide from forms and dashboard</b>.","Its history stays in Ledgers and reports; it just stops showing in forms and on Home."],
+  show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open the account",b:"Tap the account you no longer use."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>{const i=hQ("#a-arch");return i?i.closest(".wl"):null},t:"Hide it",b:"Keeps its history, removes it from forms and Home."}]}
+];
+const FAQ=[
+ ["Where is my data, and who can see it?","On your phone, and a backup copy in a FinTrack folder in <b>your own Google Drive</b>. Only you can see it. FinTrack's owner only sees your name, email and country, never your money."],
+ ["What if I lose or change my phone?","Install FinTrack (or open the website) and sign in with the same Google account. Your book comes back from Google Drive automatically."],
+ ["Why is there no Save button?","Every change saves on your phone straight away, and a copy goes to Google Drive after 2 quiet minutes, when you leave the app, or at least hourly."],
+ ["What do the signs at the top mean?","<b>✓ Saved / ✓ Backed up</b>: all good. <b>☁ Offline</b>: saved on the phone, it uploads when you're back online. <b>⚠ Tap to reconnect</b>: Google needs you to sign in again; tap it. <b>⚠ Not saved</b>: the phone couldn't save; tap it and download a backup."],
+ ["Why is the app's balance different from my bank?","Usually an entry is missing or recorded twice. Use <b>Check balances</b> on Home: enter what the bank shows and FinTrack tells you the difference. Also check pending card transactions."],
+ ["What is “Available to use”?","Your bank and cash minus the money set aside in savings pots. <b>App balance</b> is everything together."],
+ ["Simple or Pro: which should I use?","Start with Simple. Turn on Pro (bottom of the menu) when you need EMIs, cheques, savings pots, projections or accounting reports."],
+ ["Will switching between Simple and Pro delete anything?","No. Simple only hides tools. Everything comes back when you switch Pro on."],
+ ["How do I restore a backup?","Signing in restores from Google Drive automatically. To use a downloaded Excel backup: <b>Manage → Data → Restore from Excel backup</b>."],
+ ["Can I use FinTrack on my phone and my computer?","Yes, sign in with the same Google account on both. Leave one before using the other; if both changed at the same time, FinTrack asks which version to keep."],
+ ["How do I start again with a clean book?","<b>Manage → Data → Start over → Clear everything</b> (tap twice). Download a backup first if you might want it later."],
+ ["How do I report a problem or suggest something?","Menu → <b>Help & feedback</b> → Send feedback. On Android you can also shake your phone."]
+];
+const TIPS={
+ hold:["What I hold","Your bank and cash together. “Available to use” leaves out money set aside in savings pots. Tap Check balances to match it with your real bank.","check"],
+ accounts:["Accounts","Every bank, cash, card and loan account with its balance. Red means money you owe.","accounts"],
+ spend:["Spending","Where your money went this month, by category. Hover or tap a line for details.","expense"],
+ budget:["Budget","How much of each monthly limit you've used. Green is fine, amber is close, red is over.","budget"],
+ parties:["Receivables & payables","Who owes you, and who you owe. Record lending and paying back with + → Person.","people"],
+ recent:["Recent entries","Your latest entries. Tap one to edit or delete it.","edit"],
+ chqsave:["Cheque savings","How much to keep aside this month so every post-dated cheque clears.","pdc"],
+ goals:["Savings goals","Your savings pots and how close each is to its target.","pots"],
+ trend:["Financial position","How your money, savings and net worth changed over the last months.","proj"],
+ savtrend:["Savings trend","How much you've put into savings pots each month.","pots"],
+ upcoming:["Upcoming","EMIs, bills and cheques due in the next 45 days. Post them from Plans.","emi"],
+ "a-open":["Opening balance","What the account held (or what you owed) on the “As of” date, before your first entry.","opening"],
+ setMs:["My month","The day your month starts. Paid on the 25th? Set 25 and every month runs payday to payday.","start"],
+ "s-left":["Payments left","How many payments remain. FinTrack counts down and stops the plan at zero. Leave blank if it never ends.","emi"],
+ "s-int":["Interest part","The interest inside each EMI, recorded as your expense; the rest reduces the loan. Leave empty if someone else pays the interest.","emiother"],
+ "f-oneoff":["One-off","Leaves this entry out of projections so a one-time cost doesn't skew the future. It still counts in your balances.","oneoff"]
+};
+
+/* Help page */
+function helpTopics(){const pro=isPro();return HELP.filter(t=>pro||!t.pro)}
+function helpItems(q){q=(q||"").trim().toLowerCase();const strip=h=>h.replace(/<[^>]+>/g,"");const open=U.helpOpen;
+  const topics=helpTopics().filter(t=>!q||strip(t.title+" "+t.steps.join(" ")).toLowerCase().includes(q));
+  const faqs=FAQ.filter(([a,b])=>!q||strip(a+" "+b).toLowerCase().includes(q));
+  const tHtml=topics.map(t=>`<details class="card htopic" id="h-${t.id}"${open===t.id?" open":""}><summary><b>${esc(t.title)}</b>${t.pro?'<span class="chip">Pro</span>':""}</summary><ol class="hsteps">${t.steps.map(x=>`<li>${x}</li>`).join("")}</ol>${t.show?`<button class="btn sm pri" data-act="helpShow" data-id="${t.id}">▶ Show me</button>`:""}</details>`).join("");
+  const fHtml=faqs.map(([a,b],i)=>`<details class="card hfaq"><summary><b>${esc(a)}</b></summary><p>${b}</p></details>`).join("");
+  return {tHtml,fHtml,n:topics.length+faqs.length}}
+function pHelp(){const tab=U.helpTab||"guide",q=U.helpQ||"",pro=isPro();const it=helpItems(q);
+  const tabs=[["guide","Guide"],["faq","FAQ"],["feedback","Send feedback"]];
+  let body="";
+  if(q)body=(it.n?`<div class="grp"><span>Guide</span></div><div class="stack">${it.tHtml||'<p class="lbl">No guide topics match.</p>'}</div><div class="grp"><span>FAQ</span></div><div class="stack">${it.fHtml||'<p class="lbl">No questions match.</p>'}</div>`:`<div class="card empty">Nothing matches “${esc(q)}”. Try another word, or send us your question.</div>`);
+  else if(tab==="guide")body=`<div class="stack">${it.tHtml}</div>${pro?"":`<div class="card hmore"><h3>More in Pro</h3><p class="lbl" style="margin:0 0 10px">${HELP.filter(t=>t.pro).map(t=>esc(t.title)).join(" · ")}</p><button class="btn sm" data-act="proTog">Turn on Pro</button></div>`}`;
+  else if(tab==="faq")body=`<div class="stack">${it.fHtml}</div>`;
+  else body=`<div class="card"><h3>Tell us what you think</h3><p style="margin-top:0">Ideas, problems, complaints or praise. We read every message.</p>${TOUCH?'<p class="lbl">On Android you can also shake your phone to report a problem.</p>':""}<div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="fbOpen">Send feedback</button><button class="btn" data-act="tourStart">Show the tour</button><button class="btn" data-act="wnShow">What's new</button></div></div>`;
+  return `<div class="ph"><h1>Help</h1></div><div class="tabs">${tabs.map(([k,l])=>`<button class="${!q&&tab===k?"on":""}" data-act="helpTab" data-t="${k}">${l}</button>`).join("")}</div>
+  <div class="field" style="margin:0 0 12px"><input class="inp" id="helpQ" type="search" placeholder="Search help, e.g. split a bill" value="${esc(q)}" aria-label="Search help"></div><div id="helpBody">${body}</div>`}
+document.addEventListener("input",e=>{if(e.target.id!=="helpQ")return;U.helpQ=e.target.value;const b=$("#helpBody");if(!b)return;const tmp=document.createElement("div");tmp.innerHTML=pHelp();b.replaceWith(tmp.querySelector("#helpBody"));document.querySelectorAll('[data-act="helpTab"]').forEach(x=>x.classList.toggle("on",!U.helpQ&&x.dataset.t===(U.helpTab||"guide")))});
+function helpShow(id){const t=HELP.find(x=>x.id===id);if(!t||!t.show)return;TR.custom=t.show.map(x=>Object.assign({},x));TR.back=id;U.helpOpen=id;tourGo(0)}
+
+/* ⓘ tips: shown for the first 30 days, then hidden (switch them back on in Manage → Settings) */
+if(!ls.get("tapledger.since"))ls.set("tapledger.since",today());
+function tipsOn(){const v=ls.get("tapledger.tips");if(v==="1")return true;if(v==="0")return false;const s=ls.get("tapledger.since")||today();return (Date.parse(today())-Date.parse(s))/864e5<30}
+const IB=k=>`<button type="button" class="ib" data-act="tip" data-k="${k}" aria-label="What is this?">i</button>`;
+function tipsPaint(){if(!tipsOn())return;
+  document.querySelectorAll("#main section[data-w] > h3").forEach(h=>{const k=h.parentElement.dataset.w;if(!TIPS[k]||h.querySelector(".ib"))return;const t=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(t)t.after(document.createRange().createContextualFragment(IB(k)))});
+  for(const id of ["a-open","setMs","s-left","s-int"]){const l=document.querySelector('label[for="'+id+'"]');if(l&&!l.querySelector(".ib"))l.insertAdjacentHTML("beforeend",IB(id))}
+  const o=document.getElementById("f-oneoff");if(o){const sp=o.nextElementSibling;if(sp&&!sp.querySelector(".ib"))sp.insertAdjacentHTML("beforeend",IB("f-oneoff"))}}
+try{new MutationObserver(()=>{clearTimeout(tipsPaint.t);tipsPaint.t=setTimeout(tipsPaint,30)}).observe(document.getElementById("sheetRoot"),{childList:true,subtree:true})}catch(e){}
+function tipClose(){const p=document.getElementById("tipPop");if(p)p.remove()}
+function tipOpen(btn){tipClose();const k=btn.dataset.k,t=TIPS[k];if(!t)return;const p=document.createElement("div");p.id="tipPop";p.setAttribute("role","dialog");
+  const topic=HELP.find(x=>x.id===t[2]);const can=topic&&(isPro()||!topic.pro);
+  p.innerHTML=`<b>${esc(t[0])}</b><p>${esc(t[1])}</p>${can?`<button type="button" class="link" data-act="helpTopic" data-id="${t[2]}">Learn more →</button>`:""}`;document.body.appendChild(p);
+  const r=btn.getBoundingClientRect(),w=Math.min(300,innerWidth-24);p.style.width=w+"px";let x=Math.min(Math.max(12,r.left+r.width/2-w/2),innerWidth-w-12),y=r.bottom+8;const h=p.offsetHeight;if(y+h>innerHeight-12)y=Math.max(12,r.top-h-8);p.style.left=x+"px";p.style.top=y+"px"}
+document.addEventListener("pointerdown",e=>{const p=document.getElementById("tipPop");if(p&&!p.contains(e.target)&&!e.target.closest(".ib"))tipClose()},true);
+addEventListener("scroll",tipClose,{passive:true});
 
 /* phone menu: close on pick, Esc, swipe left, or when the window grows to desktop */
 function navShut(focus){const h=document.documentElement;if(!h.classList.contains("navopen"))return;h.classList.remove("navopen");const b=document.querySelector(".burger");if(b){b.setAttribute("aria-expanded","false");if(focus)b.focus({preventScroll:true})}}
@@ -1329,13 +1539,14 @@ function lAccounts(){
     const sum=r2(list.reduce((s,a)=>s+bal(a.id),0));
     return `<div class="grp"><span>${g.label}</span><span class="num">${f2(sum)}</span></div><div class="card" style="padding-block:2px"><div class="rows">${list.map(a=>{const b=bal(a.id);return `<button class="row" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.grp==="party"&&Math.abs(b)>0.004?`<small>${b>0?"Owes you":"You owe"}</small>`:a.kind==="liability"?`<small class="${liabTag(b)[0]}">${liabTag(b)[1]}</small>`:""}</span><span class="r">${a.kind==="liability"?money(Math.abs(b),liabTag(b)[0]):money(b,b<0?"neg":"")}</span><span class="muted">›</span></button>`}).join("")}</div></div>`}).join("");
 }
-function monthOptions(sel){const ks=[...new Set(S.entries.map(e=>cycleOf(e.date)))].sort().reverse();return `<option value="all"${sel==="all"?" selected":""}>All dates</option>`+ks.map(k=>`<option value="${k}"${sel===k?" selected":""}>${esc(cycLabel(k))}</option>`).join("")}
+function monthOptions(sel){const set=new Set(S.entries.map(e=>cycleOf(e.date)));if(sel&&sel!=="all")set.add(sel);set.add(curCycle());const ks=[...set].sort().reverse();return `<option value="all"${sel==="all"?" selected":""}>All dates</option>`+ks.map(k=>`<option value="${k}"${sel===k?" selected":""}>${esc(cycLabel(k))}</option>`).join("")}
 function pAccountLedger(a){
-  const k=U.ledMonth;const list=S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&(k==="all"||inMonth(k)(e))).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0);
+  const k=U.ledMonth||curCycle();const list=S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&(k==="all"||inMonth(k)(e))).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0);
   let run=k==="all"?0:bal(a.id,before(cyc(k)[0]));const sg=SIGN[a.kind];let tdr=0,tcr=0;
-  const rows=list.map(e=>{let dr=0,cr=0;for(const l of e.lines)if(l.a===a.id){dr+=+l.dr||0;cr+=+l.cr||0}tdr+=dr;tcr+=cr;run=r2(run+(dr-cr)*sg);
-    const other=e.lines.filter(l=>l.a!==a.id).map(l=>accName(l.a)).join(", ");
-    return `<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${dShort(e.date)}</td><td>${esc(other)}${e.memo?`<div class="muted" style="font-size:12px">${esc(e.memo)}</div>`:""}</td><td class="n">${dr?f2(dr):""}</td><td class="n">${cr?f2(cr):""}</td><td class="n ${run<0?"neg":""}">${f2(run)}</td></tr>`}).reverse().join("");
+  const items=list.map(e=>{let dr=0,cr=0;for(const l of e.lines)if(l.a===a.id){dr+=+l.dr||0;cr+=+l.cr||0}tdr+=dr;tcr+=cr;run=r2(run+(dr-cr)*sg);return {e,dr,cr,run}}).reverse();
+  const row=({e,dr,cr,run})=>{const other=e.lines.filter(l=>l.a!==a.id).map(l=>accName(l.a)).join(", ");
+    return `<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${dShort(e.date)}</td><td>${esc(other)}${e.memo?`<div class="muted" style="font-size:12px">${esc(e.memo)}</div>`:""}</td><td class="n">${dr?f2(dr):""}</td><td class="n">${cr?f2(cr):""}</td><td class="n ${run<0?"neg":""}">${f2(run)}</td></tr>`};
+  const rows=pgStart(items,row,5);
   const bf=k==="all"?"":`<tr class="bf"><td class="dt">${dShort(cyc(k)[0])}</td><td>Balance brought forward</td><td class="n"></td><td class="n"></td><td class="n">${f2(bal(a.id,before(cyc(k)[0])))}</td></tr>`;
   const b=bal(a.id);
   const LT=a.kind==="liability"?liabTag(b):null;const note=a.grp==="party"?(b>0?"Owes you":b<0?"You owe":"Settled"):LT?GL[a.grp].label+" · "+LT[1]:GL[a.grp].label;
@@ -1346,13 +1557,25 @@ function pAccountLedger(a){
   <p class="lbl" style="margin:10px 2px">Newest first. Tap a row to edit or delete that entry. Excel statements download oldest first.</p>`;
 }
 function lDaybook(){
-  const k=U.dbMonth,q=U.q.trim().toLowerCase();
-  const inK=k==="all"?null:inMonth(k);const list=S.entries.filter(e=>(!inK||inK(e))&&(!q||(e.memo||"").toLowerCase().includes(q)||e.lines.some(l=>accName(l.a).toLowerCase().includes(q)))).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
-  let td=0,tc=0;
-  const rows=list.map(e=>e.lines.map((l,i)=>{td+=+l.dr||0;tc+=+l.cr||0;return `<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${i===0?dShort(e.date):""}</td><td>${l.cr>0?"&nbsp;&nbsp;&nbsp;To ":""}${esc(accName(l.a))}${i===e.lines.length-1&&e.memo?`<div class="muted" style="font-size:12px">(${esc(e.memo)})</div>`:""}</td><td class="n">${l.dr?f2(l.dr):""}</td><td class="n">${l.cr?f2(l.cr):""}</td></tr>`}).join("")).join("");
-  return `<div class="grid2" style="margin-bottom:10px"><select class="inp" id="dbMonth" data-chg="dbMonth" aria-label="Month">${monthOptions(k)}</select><input class="inp" id="dbQ" data-inp="q" placeholder="Search note or account" value="${esc(U.q)}"></div>
-  <div class="card"><div class="tw"><table class="led"><thead><tr><th>Date</th><th>Account</th><th class="n">Dr</th><th class="n">Cr</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="empty">No entries found.</td></tr>'}${rows?`<tr class="tot"><td></td><td>${list.length} entries</td><td class="n">${f2(td)}</td><td class="n">${f2(tc)}</td></tr>`:""}</tbody></table></div></div>`;
+  const k=U.dbMonth||curCycle(),q=U.q.trim().toLowerCase();
+  const inK=k==="all"||q?null:inMonth(k);const list=S.entries.filter(e=>(!inK||inK(e))&&(!q||(e.memo||"").toLowerCase().includes(q)||e.lines.some(l=>accName(l.a).toLowerCase().includes(q)))).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  let td=0,tc=0;for(const e of list)for(const l of e.lines){td+=+l.dr||0;tc+=+l.cr||0}
+  const row=e=>e.lines.map((l,i)=>`<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${i===0?dShort(e.date):""}</td><td>${l.cr>0?"&nbsp;&nbsp;&nbsp;To ":""}${esc(accName(l.a))}${i===e.lines.length-1&&e.memo?`<div class="muted" style="font-size:12px">(${esc(e.memo)})</div>`:""}</td><td class="n">${l.dr?f2(l.dr):""}</td><td class="n">${l.cr?f2(l.cr):""}</td></tr>`).join("");
+  const first=pgStart(list,row,4);
+  return `<div class="grid2" style="margin-bottom:10px"><select class="inp" id="dbMonth" data-chg="dbMonth" aria-label="Month"${q?" disabled":""}>${monthOptions(k)}</select><input class="inp" id="dbQ" data-inp="q" placeholder="Search note or account (all dates)" value="${esc(U.q)}"></div>
+  <div class="card"><div class="tw"><table class="led"><thead><tr><th>Date</th><th>Account</th><th class="n">Dr</th><th class="n">Cr</th></tr></thead><tbody>${first||'<tr><td colspan="4" class="empty">No entries found.</td></tr>'}${first?`<tr class="tot"><td></td><td>${list.length} entries</td><td class="n">${f2(td)}</td><td class="n">${f2(tc)}</td></tr>`:""}</tbody></table></div></div>`;
 }
+/* long lists: draw 50 at a time; the next 50 are prepared in the background and added as you near the bottom */
+const PG={list:[],row:null,i:0,next:"",cols:4,obs:null};const PG_N=50;
+function pgStart(list,row,cols){PG.list=list;PG.row=row;PG.cols=cols;PG.i=Math.min(PG_N,list.length);PG.next="";
+  const html=list.slice(0,PG.i).map(row).join("");return html+(PG.i<list.length?pgMoreRow():"")}
+function pgMoreRow(){return `<tr class="pgmore"><td colspan="${PG.cols}"><button type="button" class="link" data-act="pgMore">Showing ${PG.i} of ${PG.list.length} · show more</button></td></tr>`}
+function pgPrep(){if(PG.next||PG.i>=PG.list.length)return;PG.next=PG.list.slice(PG.i,PG.i+PG_N).map(PG.row).join("")}
+function pgMore(){const m=document.querySelector("#main tr.pgmore");if(!m)return;pgPrep();const n=Math.min(PG_N,PG.list.length-PG.i);
+  m.insertAdjacentHTML("beforebegin",PG.next);PG.i+=n;PG.next="";
+  if(PG.i>=PG.list.length)m.remove();else{m.querySelector("button").textContent=`Showing ${PG.i} of ${PG.list.length} · show more`;(window.requestIdleCallback||setTimeout)(pgPrep)}}
+function pgAttach(){if(PG.obs){PG.obs.disconnect();PG.obs=null}const m=document.querySelector("#main tr.pgmore");if(!m)return;(window.requestIdleCallback||setTimeout)(pgPrep);
+  if("IntersectionObserver" in window){PG.obs=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){pgMore();const n=document.querySelector("#main tr.pgmore");PG.obs.disconnect();if(n)PG.obs.observe(n)}},{rootMargin:"700px 0px"});PG.obs.observe(m)}}
 function lTrial(){
   const t=totals();let D=0,C=0;
   const rows=GROUPS.map(g=>S.accounts.filter(a=>a.grp===g.k).map(a=>{const x=t[a.id];if(!x)return"";const n=r2(x.dr-x.cr);if(Math.abs(n)<0.005)return"";if(n>0)D+=n;else C-=n;return `<tr class="click" data-act="openLed" data-id="${a.id}"><td>${esc(a.name)}<div class="muted" style="font-size:11.5px">${g.label}</div></td><td class="n">${n>0?f2(n):""}</td><td class="n">${n<0?f2(-n):""}</td></tr>`}).join("")).join("");
@@ -1435,7 +1658,7 @@ function pSettings(){
     body=`<div class="card"><h3>Dashboard cards</h3><p class="lbl" style="margin-top:-4px">Turn cards on or off. Drag ≡ or use the arrows to change their order on Home.</p><div data-dlist="dash">${S.dash.filter(d=>isPro()||LITE_W.has(d.id)).map((d,i,DL)=>`<div class="wl" data-drow="${d.id}">${dragHandle}<input type="checkbox" class="sw" id="w_${d.id}" data-dash="${d.id}" ${d.on?"checked":""} aria-label="Show ${WIDGETS[d.id]}"><span>${WIDGETS[d.id]}</span>${moveBtns(d.id,i===0,i===DL.length-1,true).replace(/data-act="catMove"/g,'data-act="dashMoveId"')}</div>`).join("")}</div></div>`;
   }else if(U.setTab==="prefs"){body=settingsCard()
   }else{
-    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive a few seconds after every change. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button><button class="btn sm" data-act="tourStart">Show the tour</button><button class="btn sm" data-act="fbOpen">Send feedback</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
+    body=`<div class="stack">${gCard()}<div class="card"><h3>Where your data lives</h3><p style="margin:0">On this phone, so FinTrack works offline, and backed up to the FinTrack folder in your own Google Drive a few seconds after every change. Only you can see it. If you lose or change your phone, sign in with the same Google account and your book comes back.</p><p class="lbl">${S.entries.length} entries · ${S.accounts.length} accounts · ${S.schedules.length} plans · FinTrack ${APP_VERSION}</p><div class="acts" style="justify-content:flex-start"><button class="btn sm" data-act="wnShow">What's new</button><button class="btn sm" data-act="tourStart">Show the tour</button><button class="btn sm" data-act="helpOpen">Help & guide</button><button class="btn sm" data-act="fbOpen">Send feedback</button>${NATIVE?`<button class="btn sm" data-act="updCheckNow">Check for updates</button>`:""}</div></div>
     ${NATIVE?"":`<div class="card"><h3>Share with family</h3><p class="lbl" style="margin-top:-4px">Send this link. iPhone users add it to the Home Screen from Safari; Android users can download the app. Everyone keeps their own private data.</p><p class="num" style="word-break:break-all;margin:6px 0">${esc(installUrl())}</p><button class="btn" data-act="copyInstall">Copy link</button></div>`}
     <div class="card"><h3>Excel backup</h3><p class="lbl" style="margin-top:-4px">A full copy of your book as an Excel file: accounts, every journal line, plans and settings. Open it in Excel any time, and restore from it on any device.</p>
     ${NATIVE?"":`<div class="field" style="max-width:280px"><label for="bkFreq">Ask me to save a copy</label><select class="inp" id="bkFreq" data-bk>${[["save","After every save"],["daily","Once a day"],["weekly","Once a week"],["off","Never"]].map(([k,l])=>`<option value="${k}"${BK.get().freq===k?" selected":""}>${l}</option>`).join("")}</select></div>`}
@@ -1871,7 +2094,7 @@ function sheet(aoa,opt){opt=opt||{};const ws=XLSX.utils.aoa_to_sheet(aoa);const 
 function sheetName(n,used){let s=String(n).replace(/[\[\]:*?\/\\]/g," ").slice(0,28).trim()||"Sheet";let k=s,i=2;while(used.has(k.toLowerCase()))k=s.slice(0,25)+" "+(i++);used.add(k.toLowerCase());return k}
 function needXLSX(){if(window.XLSX)return true;toast("The Excel tool did not load. Check your connection and reload the page.");return false}
 async function offerWorkbook(wb,filename,opt){opt=opt||{};const folder=opt.folder||"Statements";
-  let buf;try{buf=XLSX.write(wb,{bookType:"xlsx",type:"array"})}catch(e){toast("Could not build the Excel file.");return false}
+  let buf=opt.buf;if(!buf)try{buf=XLSX.write(wb,{bookType:"xlsx",type:"array",compression:true})}catch(e){toast("Could not build the Excel file.");return false}
   if(NATIVE){
     try{const uri=await nativeWrite(folder,filename,buf);
       if(!opt.silent){toast("Saved to Documents/FinTrack/"+folder);if(CP.Share)try{await CP.Share.share({title:filename,files:[uri],dialogTitle:"Share or open "+filename})}catch(e){}}
@@ -1885,14 +2108,14 @@ async function offerWorkbook(wb,filename,opt){opt=opt||{};const folder=opt.folde
 /* Android app: silent automatic Excel backups into Documents/FinTrack/Backups, keep the last 10 */
 async function autoBackupNative(){
   if(!NATIVE||!window.XLSX||S.demo||!S.entries.length)return;const b=BK.get();
-  const ok=await offerWorkbook(backupWorkbook(),"FinTrack-backup-"+today()+".xlsx",{folder:"Backups",silent:true});
+  const ok=await offerWorkbook(null,"FinTrack-backup-"+today()+".xlsx",{folder:"Backups",silent:true,buf:await backupBytes()});
   if(!ok)return;b.last=today();BK.set(b);backupPending=false;
   try{const r=await CP.Filesystem.readdir({path:"FinTrack/Backups",directory:"DOCUMENTS"});
     const names=(r.files||[]).map(f=>typeof f==="string"?f:f.name).filter(n=>/^FinTrack-backup-\d{4}-\d\d-\d\d\.xlsx$/.test(n)).sort().reverse();
     for(const n of names.slice(30))await CP.Filesystem.deleteFile({path:"FinTrack/Backups/"+n,directory:"DOCUMENTS"})}catch(e){}
   if(U.page==="home"||U.page==="settings")render()}
 function installUrl(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"install.html"}
-function afterSave(){bkSnooze=false;if(NATIVE)autoBackupNative();if(signedIn()&&!S.demo){GA.patch({pending:true,err:""});autoUpload()}}
+function afterSave(){bkSnooze=false;if(S.demo)return;if(signedIn())GA.patch({pending:true,err:""});if(document.visibilityState==="hidden"){PEND_AT=Date.now();autoUpload(true)}else autoUpload()}
 function accountStatementSheet(a,from,to){
   const sg=SIGN[a.kind];const open=bal(a.id,before(from));let run=open,td=0,tc=0;
   const list=S.entries.filter(e=>e.date>=from&&e.date<=to&&e.lines.some(l=>l.a===a.id)).sort(asc);
@@ -1950,29 +2173,45 @@ const BK={get(){try{return Object.assign({freq:"save",last:null},JSON.parse(ls.g
 let bkSnooze=false;
 let backupPending=false;
 function backupDue(){if(NATIVE||bkSnooze||S.demo||!S.entries.length)return false;if(signedIn()){const g=GA.get();return !!g.pending&&!!g.lastSync&&Date.now()-g.lastSync>864e5}const b=BK.get();if(b.freq==="off")return false;if(b.freq==="save")return backupPending;if(!b.last)return true;const d=daysBetween(b.last,today());return b.freq==="daily"?d>=1:d>=7}
-function backupWorkbook(){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,sheet([["FinTrack backup"],["Created",dLong(today())],["Entries",S.entries.length],["Accounts",S.accounts.length],["Plans",S.schedules.length],[],
-    ["Restore it from Manage → Data → Restore from Excel backup."],["You can read, filter and sort it, but keep sheet names and column headers unchanged."]],{widths:[26,40]}),"About");
+function backupSpec(){
+  const out=[];const add=(aoa,opt,name,raw)=>out.push({aoa,opt:opt||{},name,raw:!!raw});
+  add([["FinTrack backup"],["Created",dLong(today())],["Entries",S.entries.length],["Accounts",S.accounts.length],["Plans",S.schedules.length],[],
+    ["Restore it from Manage → Data → Restore from Excel backup."],["You can read, filter and sort it, but keep sheet names and column headers unchanged."]],{widths:[26,40]},"About");
   const A=[["ID","Name","Kind","Group","Colour","Monthly budget","Hidden","Balance","Order","Goal"]].concat(S.accounts.map(a=>[a.id,a.name,a.kind,a.grp,a.color,r2(a.budget),a.archived?"Yes":"No",bal(a.id),a.ord||0,a.goal?JSON.stringify(a.goal):""]));
-  XLSX.utils.book_append_sheet(wb,sheet(A,{from:1,nums:[5,7],widths:[12,30,10,10,10,15,8,15,7,20]}),"Accounts");
+  add(A,{from:1,nums:[5,7],widths:[12,30,10,10,10,15,8,15,7,20]},"Accounts");
   const J=[["Entry ID","Date","Note","Account ID","Account","Debit","Credit","Meta","Flags"]];
   S.entries.slice().sort(asc).forEach(e=>e.lines.forEach((l,i)=>J.push([e.id,e.date,e.memo||"",l.a,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",i===0&&e.t?JSON.stringify(e.t):"",i===0&&(e.oneoff||e.src)?JSON.stringify({oneoff:!!e.oneoff,src:e.src||""}):""])));
-  XLSX.utils.book_append_sheet(wb,sheet(J,{from:1,dates:[1],nums:[5,6],widths:[12,13,30,12,28,14,14,20,12]}),"Journal");
+  add(J,{from:1,dates:[1],nums:[5,6],widths:[12,13,30,12,28,14,14,20,12]},"Journal");
   const P=[["ID","Name","Type","Amount","Repeats","Next due","Left","Cheque no","Active","Data"]].concat(S.schedules.map(s=>[s.id,s.name,KIND[s.kind],r2(s.amount),freqLabel(s),s.next,s.left==null?"":s.left,s.chq||"",s.active?"Yes":"No",JSON.stringify(s)]));
-  XLSX.utils.book_append_sheet(wb,sheet(P,{from:1,dates:[5],nums:[3],widths:[12,26,12,14,14,13,6,11,7,20]}),"Plans");
+  add(P,{from:1,dates:[5],nums:[3],widths:[12,26,12,14,14,13,6,11,7,20]},"Plans");
   const PD=[["Set ID","Name","Direction","Bank","For","Cheque no","Date","Amount","Status","Data"]];
   S.pdcs.forEach(p=>p.chqs.forEach((c,i)=>PD.push([p.id,p.name,p.dir==="out"?"Given":"Received",accName(p.bank),accName(p.other),c.no,c.date,r2(c.amount),c.status,i===0?JSON.stringify(p):""])));
-  XLSX.utils.book_append_sheet(wb,sheet(PD,{from:1,dates:[6],nums:[7],widths:[12,26,10,22,22,11,13,14,10,20]}),"PDCs");
+  add(PD,{from:1,dates:[6],nums:[7],widths:[12,26,10,22,22,11,13,14,10,20]},"PDCs");
   const St=[["Key","Value"],["currency",JSON.stringify(S.currency)],["dash",JSON.stringify(S.dash)],["checks",JSON.stringify(S.checks)],["holdCheck",JSON.stringify(S.holdCheck)],["reserve",JSON.stringify(S.reserve||{})],["country",JSON.stringify(S.country||"")],["monthStart",JSON.stringify(S.monthStart||1)],["limits",JSON.stringify(S.limits||{})],["prefs",JSON.stringify(S.prefs||{})],["whatifs",JSON.stringify(S.whatifs||null)]];
-  XLSX.utils.book_append_sheet(wb,sheet(St,{widths:[14,60]}),"Settings");
+  add(St,{widths:[14,60]},"Settings");
   const js=JSON.stringify(Object.assign({},S,{demo:false})),DR=[["FinTrack data, used to restore your book exactly. Do not edit."]];
   for(let i=0;i<js.length;i+=30000)DR.push([js.slice(i,i+30000)]);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(DR),"_data");
-  wb.Workbook={Sheets:wb.SheetNames.map(n=>({Hidden:n==="_data"?1:0}))};
-  return wb;
+  add(DR,null,"_data",true);
+  return out;
 }
-async function doBackup(){if(!needXLSX())return;const ok=await offerWorkbook(backupWorkbook(),"FinTrack-backup-"+today()+".xlsx",{folder:"Backups"});
+/* builds the .xlsx from the plain spec; the same code runs in the background worker */
+function specToXlsx(spec){const wb=XLSX.utils.book_new();
+  for(const sh of spec)XLSX.utils.book_append_sheet(wb,sh.raw?XLSX.utils.aoa_to_sheet(sh.aoa):sheet(sh.aoa,sh.opt),sh.name);
+  wb.Workbook={Sheets:wb.SheetNames.map(n=>({Hidden:n==="_data"?1:0}))};
+  return XLSX.write(wb,{bookType:"xlsx",type:"array",compression:true})}
+let XW=null,XWfail=false,XWid=0;const XWcb={};
+function xWorker(){if(XW||XWfail)return XW;try{const src=document.querySelector('script[src*="xlsx"]');if(!src||typeof Worker==="undefined")throw 0;
+    const code=`importScripts(${JSON.stringify(src.src)});const ISO_RE=${ISO_RE};const xSerial=${xSerial};${sheet};${specToXlsx};onmessage=e=>{try{const b=specToXlsx(e.data.spec);postMessage({id:e.data.id,buf:b},[b.buffer||b])}catch(x){postMessage({id:e.data.id,err:String(x)})}}`;
+    XW=new Worker(URL.createObjectURL(new Blob([code],{type:"text/javascript"})));
+    XW.onmessage=e=>{const c=XWcb[e.data.id];if(c){delete XWcb[e.data.id];c(e.data)}};XW.onerror=()=>{XWfail=true;XW=null;Object.keys(XWcb).forEach(k=>{const c=XWcb[k];delete XWcb[k];c({err:"worker"})})}}
+  catch(e){XWfail=true;XW=null}return XW}
+/* the backup file as bytes: built in the background so the screen never freezes (falls back to building here) */
+function backupBytes(){const spec=backupSpec();const w=xWorker();
+  if(!w)return Promise.resolve(specToXlsx(spec));
+  return new Promise(res=>{const id=++XWid;const t=setTimeout(()=>{if(XWcb[id]){delete XWcb[id];res(specToXlsx(spec))}},90000);
+    XWcb[id]=d=>{clearTimeout(t);if(d.err){XWfail=true;res(specToXlsx(spec))}else res(d.buf)};
+    try{w.postMessage({id,spec})}catch(e){clearTimeout(t);delete XWcb[id];res(specToXlsx(spec))}})}
+async function doBackup(){if(!needXLSX())return;const ok=await offerWorkbook(null,"FinTrack-backup-"+today()+".xlsx",{folder:"Backups",buf:await backupBytes()});
   if(ok){const b=BK.get();b.last=today();BK.set(b);backupPending=false;toast("Excel backup saved");render()}}
 function bookFromWorkbook(wb){
   if(wb.Sheets._data){try{const R=XLSX.utils.sheet_to_json(wb.Sheets._data,{header:1,defval:""});const o=JSON.parse(R.slice(1).map(r=>String(r[0]||"")).join(""));
@@ -2112,11 +2351,14 @@ async function gBackup(force){
     const folder=await dFolder(),latest=await dLatest(folder),g=GA.get(),ap0=(latest&&latest.appProperties)||{};
     if(!force&&latest&&ap0.ftRev&&ap0.ftRev!==g.rev&&ap0.ftDevice!==deviceId())return latest;
     const rev=uid()+uid(),ap={ftRev:rev,ftDevice:deviceId(),ftEntries:String(S.entries.length)};
-    const blob=new Blob([XLSX.write(backupWorkbook(),{bookType:"xlsx",type:"array"})],{type:XMIME});
+    const blob=new Blob([await backupBytes()],{type:XMIME});
     const up=await dPut(latest?latest.id:null,latest?{appProperties:ap}:{name:LATEST,parents:[folder],mimeType:XMIME,appProperties:ap},blob);
     const dn="FinTrack-backup-"+today()+".xlsx";let did=g.daily&&g.daily.name===dn?g.daily.id:"";
     if(!did){const f=(await dList(`name=${dq(dn)} and ${dq(folder)} in parents and trashed=false`))[0];did=f?f.id:""}
-    const du=await dPut(did||null,did?{appProperties:ap}:{name:dn,parents:[folder],mimeType:XMIME,appProperties:ap},blob);
+    let du=null;try{ // today's copy is made inside Drive from the file just uploaded: no second upload
+      du=await(await dfetch(`${DRV}/files/${up.id}/copy?fields=id`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:dn,parents:[folder],appProperties:ap})})).json();
+      if(did)try{await dfetch(`${DRV}/files/${did}`,{method:"DELETE"})}catch(e){}}
+    catch(e){if(e.auth||e.net)throw e;du=await dPut(did||null,did?{appProperties:ap}:{name:dn,parents:[folder],mimeType:XMIME,appProperties:ap},blob)}
     GA.patch({latest:up.id,daily:{name:dn,id:du.id},rev,pending:false,lastSync:Date.now(),err:"",conflictId:""});
     if(!did)dPrune(folder);
     return null};
@@ -2138,15 +2380,16 @@ async function gCheck(){
     if(!f){maybeWelcome();if(!S.demo&&g.pending)gBackup();return}
     const ap=f.appProperties||{};
     if(ap.ftRev&&ap.ftRev!==g.rev&&ap.ftDevice!==deviceId()){
-      const fresh=S.demo||(!ls.get("tapledger.v1")&&!S.entries.length);if(fresh||(!g.pending&&!dirty)){const B=await dDownload(f);const first=fresh;gApply(B,f);toast(first?"Welcome back. Your book was restored from Google Drive.":"Updated with changes from your other device.")}
+      const fresh=S.demo||(!hasBook()&&!S.entries.length);if(fresh||(!g.pending&&!dirty)){const B=await dDownload(f);const first=fresh;gApply(B,f);toast(first?"Welcome back. Your book was restored from Google Drive.":"Updated with changes from your other device.")}
       else gConflict(f)}
     else if(g.pending&&!dirty)gBackup();
   }catch(e){if(!e.auth&&!e.net)GA.patch({err:e.message});paintTop()}}
 function gApply(B,f){
-  ls.set("tapledger.welcomed","1");S=Object.assign(blankBook(),B);S.demo=false;fixDash();ls.set("tapledger.v1",JSON.stringify(S));dirty=false;
+  ls.set("tapledger.welcomed","1");S=Object.assign(blankBook(),B);S.demo=false;fixDash();storeNow();dirty=false;
   GA.patch({latest:f.id,rev:(f.appProperties||{}).ftRev||"",pending:false,lastSync:Date.now(),conflictId:"",err:""});paintTop();render()}
 function gConflict(remote){
   const ap=remote.appProperties||{};GA.patch({conflictId:remote.id});paintTop();
+  if($("#sheetRoot").innerHTML&&!$("#gUseDriveBtn")){clearTimeout(gConflict.t);gConflict.t=setTimeout(()=>{if(GA.get().conflictId===remote.id)gConflict(remote)},1500);return} // wait until any open form is closed
   openSheet(head("Two versions of your book")+`<p style="margin-top:0">Your Google Drive has a version saved ${remote.modifiedTime?"on "+esc(whenText(Date.parse(remote.modifiedTime))):""} from another device${ap.ftEntries?` (${esc(ap.ftEntries)} entries)`:""}. This phone has ${S.entries.length} entries${GA.get().pending?", including changes that are not backed up yet":""}.</p>
   <p class="lbl">Whichever you choose, the daily copies of earlier days stay in the FinTrack folder in your Google Drive.</p>
   <div class="acts"><button class="btn" data-act="gUseDrive" id="gUseDriveBtn">Use Google Drive version</button><button class="btn pri" data-act="gKeepPhone">Keep this phone's version</button></div>`)}
@@ -2181,7 +2424,7 @@ function gSync(){if(!signedIn()||S.demo)return;if(!navigator.onLine){paintTop();
   if(tokenOk()||NATIVE){gBackup();return}
   const g=GA.get();if(!(g.backoff>Date.now()))gBounce("backup");else paintTop()}
 function gStatus(){const g=GA.get();
-  if(mode==="loading")return["Opening…",""];if(S&&S.demo)return["Example · not kept","demo"];if(saving)return["↻ Saving…",""];if(!g.user)return["✓ Saved on phone","ok"];if(gBusy)return["↻ Backing up…",""];
+  if(mode==="loading")return["Opening…",""];if(SAVEERR)return["⚠ Not saved · tap","bad"];if(S&&S.demo)return["Example · not kept","demo"];if(saving)return["↻ Saving…",""];if(!g.user)return["✓ Saved on phone","ok"];if(gBusy)return["↻ Backing up…",""];
   if(g.conflictId)return["⚠ Choose version","warn"];
   if(g.pending){if(!navigator.onLine)return["☁ Offline · saved on phone","warn"];if(g.reconnect)return["⚠ Tap to reconnect","warn"];if(g.err)return["⚠ Backup problem","warn"];return["✓ Saved on phone","ok"]}
   if(g.lastSync)return["✓ Backed up "+ago(g.lastSync),"ok"];return["✓ Saved","ok"]}
@@ -2212,7 +2455,7 @@ async function gBoot(){
 }
 document.addEventListener("error",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("avimg"))t.remove()},true);
 setInterval(()=>{if(mode!=="loading")paintTop()},60000);
-addEventListener("online",()=>{paintTop();if(signedIn()&&GA.get().pending&&(tokenOk()||NATIVE)&&!dirty)gBackup()});
+addEventListener("online",()=>{paintTop()});
 addEventListener("offline",()=>paintTop());
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState!=="visible"||!signedIn()||!navigator.onLine||dirty||Date.now()-gLastCheck<120000)return;
@@ -2270,7 +2513,7 @@ const curOpts=sel=>allCurrencies().map(c=>`<option value="${esc(c)}"${c===sel?" 
 const countryOpts=sel=>COUNTRIES.slice().sort((a,b)=>a[0]==="OT"?1:b[0]==="OT"?-1:a[1].localeCompare(b[1])).map(c=>`<option value="${c[0]}"${c[0]===sel?" selected":""}>${esc(c[1])}</option>`).join("");
 const LOC={get(){try{return JSON.parse(ls.get("tapledger.locale")||"{}")||{}}catch(e){return{}}},set(v){ls.set("tapledger.locale",JSON.stringify(v))}};
 let WF=null;
-function maybeWelcome(){if($("#sheetRoot").innerHTML)return;if(ls.get("tapledger.welcomed")!=="1"&&!ls.get("tapledger.v1")&&!S.entries.length){showWelcome();return}if(S.demo)exReminder()}
+function maybeWelcome(){if($("#sheetRoot").innerHTML)return;if(ls.get("tapledger.welcomed")!=="1"&&!hasBook()&&!S.entries.length){showWelcome();return}if(S.demo)exReminder()}
 function showWelcome(){const g=guessCountry(),l=LOC.get();WF={cc:l.cc||g.cc,cur:l.cur||(countryOf(l.cc||g.cc)||[])[2]||"AED"};renderWelcome()}
 function renderWelcome(){
   openSheet(`<div class="sh-head"><h2>Welcome to FinTrack</h2></div><p style="margin-top:-4px">Two quick settings. You can change both later in Manage → Settings.</p>
@@ -2610,7 +2853,7 @@ function settingsCard(){const ms=mStart(),k=curCycle();
   <div class="field" style="margin-top:10px"><label for="setCountry">Country</label><select class="inp" id="setCountry" data-setcountry>${countryOpts(S.country)}</select></div>
   <p class="lbl">Only your country is shared with FinTrack's owner in the user list, never your city or location.</p></div>
   <div class="card"><h3>My month</h3><div class="field" style="max-width:220px"><label for="setMs">My month starts on day</label><input class="inp num" id="setMs" inputmode="numeric" data-setms value="${ms}"></div>
-  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div>${TOUCH?`<div class="card"><h3>Feedback</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setShake" data-shake ${shakeOn()?"checked":""}><span>Shake the phone to report a problem</span></div><p class="lbl" style="margin-bottom:0">Opens the feedback form with “Problem” picked and the screen you were on filled in.</p></div>`:""}</div>`}
+  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div><div class="card"><h3>Help</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setTips" data-tips ${tipsOn()?"checked":""}><span>Show ⓘ tips on cards and fields</span></div><p class="lbl" style="margin-bottom:0">They show for your first 30 days, then hide. Turn them back on here any time.</p></div>${TOUCH?`<div class="card"><h3>Feedback</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setShake" data-shake ${shakeOn()?"checked":""}><span>Shake the phone to report a problem</span></div><p class="lbl" style="margin-bottom:0">Opens the feedback form with “Problem” picked and the screen you were on filled in.</p></div>`:""}</div>`}
 
 /* ---------- "Say it": turn a spoken or typed sentence into a draft entry (on the phone, no AI) ---------- */
 const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
@@ -2753,7 +2996,7 @@ function wnSheet(j,manual){const notes=notesList(j);
   ${notes.length?`<ul class="updnotes">${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:`<p class="lbl">Small fixes and improvements.</p>`}
   <div class="acts"><button class="btn pri" data-act="wnOk">Got it</button></div>`)}
 async function wnCheck(){const b=myBuild();if(!b)return;
-  if(!ls.get("tapledger.v1")&&!ls.get(WN_KEY)){ls.set(WN_KEY,APP_VERSION);return}
+  if(!hasBook()&&!ls.get(WN_KEY)){ls.set(WN_KEY,APP_VERSION);return}
   if(ls.get(WN_KEY)===APP_VERSION)return;
   if($("#sheetRoot").innerHTML||!$("#login").hidden){if(++wnTries<20)setTimeout(wnCheck,4000);return}
   let j;try{j=await wnFetch()}catch(e){return}
@@ -2848,7 +3091,7 @@ const ACT={
   jlDel(el){F.lines.splice(+el.dataset.i,1);renderForm()},
   editEntry(el){editEntry(el.dataset.id)},
   delEntry(){if(!armed("delBtn"))return;S.entries=S.entries.filter(e=>e.id!==F.editId);closeSheet();markDirty();render();toast("Entry deleted.")},
-  openLed(el){U.page="ledgers";U.ledAcc=el.dataset.id;U.ledMonth="all";render();scrollTo(0,0)},
+  openLed(el){U.page="ledgers";U.ledAcc=el.dataset.id;U.ledMonth="";render();scrollTo(0,0)},
   ledBack(){U.ledAcc=null;render()},
   ledTab(el){U.ledTab=el.dataset.t;render()},
   stmtMode(el){U.stmtMode=el.dataset.t;render()},
@@ -2876,6 +3119,13 @@ const ACT={
   fbOpen(el){fbOpen(el&&el.dataset&&el.dataset.k)},
   fbType(el){FBF.type=el.dataset.k;fbRender(true)},
   fbSend(){fbSend()},
+  saveRetry(){closeSheet();SAVEERR="";save()},
+  pgMore(){pgMore()},
+  helpOpen(){tipClose();navShut();if($("#sheetRoot").innerHTML)ACT.close();U.page="help";U.helpTab="guide";U.helpQ="";U.helpOpen=null;render();scrollTo(0,0)},
+  helpTab(el){U.helpTab=el.dataset.t;U.helpQ="";render()},
+  helpShow(el){helpShow(el.dataset.id)},
+  helpTopic(el){tipClose();const id=el.dataset.id;navShut();if($("#sheetRoot").innerHTML)ACT.close();U.page="help";U.helpTab="guide";U.helpQ="";U.helpOpen=id;render();setTimeout(()=>{const d=document.getElementById("h-"+id);if(d)d.scrollIntoView({block:"center"})},60)},
+  tip(el){tipOpen(el)},
   navOpen(){if(innerWidth>=960)return;document.documentElement.classList.add("navopen");const b=document.querySelector(".burger");if(b)b.setAttribute("aria-expanded","true");const on=document.querySelector(".nav button.on")||document.querySelector(".nav [data-p]");setTimeout(()=>on&&on.focus({preventScroll:true}),60)},
   navClose(){navShut(true)},
   navTog(){const m=!document.documentElement.classList.contains("navmini");document.documentElement.classList.toggle("navmini",m);ls.set("tapledger.navmini",m?"1":"0");const b=document.querySelector(".navtog");if(b){b.setAttribute("aria-label",m?"Expand menu":"Collapse menu");b.title=m?"Expand menu":"Collapse menu"}setTimeout(()=>{heroFix();if(U.page==="home"&&deskCols()!==U.lastCols)render()},260)},
@@ -2929,7 +3179,7 @@ const ACT={
     loginMsg("Opening Google…");
     if(!NATIVE){gWebAuth(false,"login");return}
     try{const p=await gNativeLogin(false);await gAfterLogin(p)}catch(e){loginMsg(gNativeErrText(e),true)}},
-  gStatus(){const g=GA.get();if(S.demo){exReminder(true);return}if(!g.user)return;
+  gStatus(){const g=GA.get();if(SAVEERR){openSheet(`<div class="sh-head"><h2>Changes not saved</h2><button class="btn ghost icon" data-act="close" aria-label="Close">✕</button></div><p style="margin-top:-4px">${SAVEERR==="full"?"This phone has no space left for FinTrack, so your latest changes are only in the open app.":"FinTrack couldn't save your latest changes on this phone."}</p><p class="lbl">Keep the app open, download a backup now, then free up some space on the phone and try again.</p><div class="acts"><button class="btn" data-act="saveRetry">Try again</button><button class="btn pri" data-act="xlBackup">Download backup</button></div>`);return}if(S.demo){exReminder(true);return}if(!g.user)return;
     if(g.conflictId){gLastCheck=0;if(tokenOk()||NATIVE)gCheck();else gWebAuth(true,"check");return}
     if(g.pending&&g.reconnect&&!NATIVE){gWebAuth(false,"backup");return}
     if(g.pending&&navigator.onLine&&(tokenOk()||NATIVE)){if(dirty)save(true);gBackup(true);toast("Backing up now…");return}
@@ -2944,7 +3194,7 @@ const ACT={
     catch(e){toast("Could not load it: "+e.message);if(b){b.disabled=false;b.textContent="Use Google Drive version"}}},
   gKeepPhone(){closeSheet();GA.patch({conflictId:"",pending:true});paintTop();if(tokenOk()||NATIVE)gBackup(true);else gWebAuth(true,"keep")},
   gSwitchYes(el){let user;try{user=JSON.parse(el.dataset.user)}catch(e){return}closeSheet();
-    try{localStorage.removeItem("tapledger.v1")}catch(e){}S=blankBook();fixDash();dirty=false;
+    storeClear();S=blankBook();fixDash();dirty=false;
     const g=GA.get();GA.set({token:g.token,exp:g.exp});try{localStorage.removeItem("tapledger.owner")}catch(e){}
     gSetUser(user);gRegister(true);hideLogin();render();paintTop();toast("Signed in as "+(user.name||user.email));gCheck()},
   gSwitchNo(){closeSheet();GA.patch({token:"",exp:0});if(NATIVE)slInit().then(SL=>SL.logout({provider:"google"})).catch(()=>{});showLogin("Sign in with the account that owns the book on this phone.")},
@@ -3004,18 +3254,34 @@ document.addEventListener("change",ev=>{const t=ev.target;
 });
 /* chart tooltip: hover on desktop, tap on phone, focus by keyboard */
 function ttTarget(n){return n&&n.closest?n.closest(".ttwrap .tt"):null}
+/* the details box floats above every card (never hidden underneath one) and sits beside the list, not over the other lines */
+let TTW=null;
+function ttBox(){let t=document.getElementById("ttFloat");if(!t){t=document.createElement("div");t.id="ttFloat";t.className="tip";t.setAttribute("role","tooltip");t.hidden=true;document.body.appendChild(t)}return t}
 function showTT(el){const wrap=el.closest(".ttwrap");let o;try{o=JSON.parse(el.dataset.tt)}catch(e){return}
-  let tip=[...wrap.children].find(c=>c.classList.contains("tip"));if(!tip){tip=document.createElement("div");tip.className="tip";tip.setAttribute("role","tooltip");wrap.appendChild(tip)}
+  const tip=ttBox();TTW=wrap;
   const isAmt=v=>/^[−+\-]?[\d,]*\d[.,]\d+$/.test(String(v))||(DEC===0&&/^[−+\-]?[\d,]+$/.test(String(v))&&String(v).length>3);
   tip.innerHTML=`<b>${esc(o.t)}</b>`+o.r.map(([l,v,c,cls,sep])=>`<div${sep?' class="tn"':""}><span>${c?dot(c):""}${esc(l)}</span><span class="num ${cls||""}">${isAmt(v)?`<span class="cur">${esc(S.currency)}</span>`:""}${esc(v)}</span></div>`).join("");
   tip.hidden=false;
-  const grp=el.closest(".ttg");if(grp){grp.classList.add("hov");grp.querySelectorAll(".tt").forEach(t=>t.classList.toggle("on",t===el||(!!el.dataset.k&&t.dataset.k===el.dataset.k)))}
-  const wr=wrap.getBoundingClientRect(),er=el.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
-  let left=er.right-wr.left+8,top=er.top-wr.top;
-  if(left+tw>wr.width){left=er.left-wr.left-tw-8}
-  if(left<0){left=Math.max(0,Math.min(wr.width-tw,er.left-wr.left+er.width/2-tw/2));top=er.bottom-wr.top+6}
-  tip.style.left=left+"px";tip.style.top=Math.max(0,top)+"px"}
-function hideTT(wrap){const tip=[...wrap.children].find(c=>c.classList.contains("tip"));if(tip)tip.hidden=true;wrap.querySelectorAll(".ttg.hov").forEach(g=>g.classList.remove("hov"));if(wrap.classList.contains("ttg"))wrap.classList.remove("hov");wrap.querySelectorAll(".tt.on").forEach(t=>t.classList.remove("on"))}
+  wrap.querySelectorAll(".tt.on").forEach(t=>t.classList.remove("on"));
+  const grp=el.closest(".ttg");if(grp){grp.classList.add("hov");grp.querySelectorAll(".tt").forEach(t=>t.classList.toggle("on",t===el||(!!el.dataset.k&&t.dataset.k===el.dataset.k)))}else el.classList.add("on");
+  const er=el.getBoundingClientRect(),card=el.closest(".card")||wrap,cr=card.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight,gap=10;
+  const tb=$("#top"),ph=document.querySelector(".phhome"),bn=document.querySelector(".bnav"),side=innerWidth>=960&&document.querySelector(".nav");
+  let topMin=8;if(tb)topMin=Math.max(topMin,tb.getBoundingClientRect().bottom+6);if(ph&&getComputedStyle(ph).position==="sticky"){const r=ph.getBoundingClientRect();if(r.top<=topMin+2)topMin=Math.max(topMin,r.bottom+6)}
+  const botMax=(bn&&bn.offsetParent!==null?bn.getBoundingClientRect().top:innerHeight)-8,leftMin=side?side.getBoundingClientRect().right+8:8,rightMax=innerWidth-8;
+  const clampY=y=>Math.min(Math.max(topMin,y),botMax-th),fitsX=x=>x>=leftMin&&x+tw<=rightMax,fitsY=y=>y>=topMin&&y+th<=botMax;
+  const inChart=!!el.closest("svg");let x,y,ok=false;
+  const tries=inChart
+    ?[[er.right+gap,er.top+er.height/2-th/2],[er.left-tw-gap,er.top+er.height/2-th/2],[er.left+er.width/2-tw/2,er.top-th-gap],[er.left+er.width/2-tw/2,er.bottom+gap]]
+    :[[cr.right+gap,er.top+er.height/2-th/2],[cr.left-tw-gap,er.top+er.height/2-th/2],[er.left,cr.top-th-gap],[er.left,cr.bottom+gap]];
+  for(const [tx,ty] of tries){const yy=(tx===er.left||Math.abs(tx-(er.left+er.width/2-tw/2))<1)?ty:clampY(ty);if(fitsX(tx)&&fitsY(yy)){x=tx;y=yy;ok=true;break}}
+  tip.classList.toggle("dock",!ok&&!inChart);
+  if(!ok&&!inChart){ // phones: no room beside the card, so dock it in the half of the screen away from the line you tapped
+    const w2=Math.min(420,innerWidth-24);tip.style.width=w2+"px";const h2=tip.offsetHeight;x=(innerWidth-w2)/2;
+    y=(er.top+er.height/2>(topMin+botMax)/2)?topMin:botMax-h2;ok=true}
+  else{tip.style.width="";if(!ok){x=Math.min(Math.max(leftMin,er.left+er.width/2-tw/2),rightMax-tw);y=(er.top-topMin>botMax-er.bottom)?er.top-th-6:er.bottom+6;y=Math.min(Math.max(topMin,y),botMax-th)}}
+  tip.style.left=Math.round(x)+"px";tip.style.top=Math.round(y)+"px"}
+function hideTT(wrap){const tip=document.getElementById("ttFloat");if(tip&&(!wrap||wrap===TTW||!TTW||!TTW.isConnected)){tip.hidden=true;TTW=null}
+  if(wrap){wrap.querySelectorAll(".ttg.hov").forEach(g=>g.classList.remove("hov"));if(wrap.classList.contains("ttg"))wrap.classList.remove("hov");wrap.querySelectorAll(".tt.on").forEach(t=>t.classList.remove("on"))}}
 document.addEventListener("pointerover",ev=>{const el=ttTarget(ev.target);if(el)showTT(el)});
 document.addEventListener("pointerout",ev=>{if(ev.pointerType==="touch")return;const el=ttTarget(ev.target);if(!el)return;const to=ttTarget(ev.relatedTarget);if(to===el)return;if(!to||to.closest(".ttwrap")!==el.closest(".ttwrap"))hideTT(el.closest(".ttwrap"))});
 document.addEventListener("pointerdown",ev=>{const el=ttTarget(ev.target);document.querySelectorAll(".ttwrap").forEach(w=>{if(!el||!w.contains(el))hideTT(w)})});
@@ -3024,12 +3290,12 @@ document.addEventListener("focusout",ev=>{const el=ttTarget(ev.target);if(el&&!t
 addEventListener("scroll",()=>document.querySelectorAll(".ttwrap").forEach(hideTT),{passive:true});
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Enter"&&ev.target&&ev.target.id==="f-say"){ev.preventDefault();ACT.sayGo();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML&&!WF){closeSheet();SF=null;AF=null;GF=null;render()}});
 addEventListener("scroll",()=>$("#top").classList.toggle("scrolled",scrollY>4),{passive:true});
-addEventListener("beforeunload",()=>{if(dirty&&!S.demo){try{ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true})}catch(e){}}});
+addEventListener("beforeunload",()=>{if(dirty&&!S.demo){storeNow();dirty=false;if(signedIn())GA.patch({pending:true})}});
 if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
 
 /* ---------- phone lifecycle ---------- */
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="hidden"&&!S.demo){if(dirty&&!saving){clearTimeout(ASV);ls.set("tapledger.v1",JSON.stringify(S));dirty=false;if(signedIn())GA.patch({pending:true});paintTop();backupPending=true;bkSnooze=false;if(NATIVE)autoBackupNative()}if(signedIn()&&GA.get().pending&&(tokenOk()||NATIVE))autoUpload(true)}});
+  if(document.visibilityState==="hidden"&&!S.demo){if(dirty&&!saving){clearTimeout(ASV);storeNow();dirty=false;if(signedIn())GA.patch({pending:true});paintTop();backupPending=true;bkSnooze=false}if((signedIn()&&GA.get().pending)||(NATIVE&&backupPending)){PEND_AT=Date.now();autoUpload(true)}}});
 try{localStorage.removeItem("tapledger.gsync")}catch(e){}
 if(!NATIVE&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -3037,7 +3303,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
 /* ---------- boot ---------- */
 gRedirect=NATIVE?null:gReadRedirect();
 /* example data: kept for people already looking at it (welcomed before, nothing saved yet); new users choose in the welcome step */
-if(ls.get("tapledger.example")==null&&ls.get("tapledger.welcomed")==="1"&&!ls.get("tapledger.v1"))ls.set("tapledger.example","1");
+if(ls.get("tapledger.example")==null&&ls.get("tapledger.welcomed")==="1"&&!hasBook())ls.set("tapledger.example","1");
 S=ls.get("tapledger.example")==="1"?exampleBook():blankBook();fixDash();dirty=false;mode="loading";paintTop();render();
 initStore().then(gBoot).then(()=>{setTimeout(()=>updCheck(false),1500);setTimeout(wnCheck,2500)});
 })();
