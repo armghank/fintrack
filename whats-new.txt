@@ -1,1 +1,6 @@
-• The bottom bar is back on phones: Home, Ledgers, Plans and Manage with + in the middle. The ☰ menu stays for Feedback & help and the Pro switch
+• New Help & feedback in the menu: step-by-step guides with “Show me” walkthroughs, FAQs and search. Look for the small ⓘ on cards and fields for quick tips
+• Faster: Day book and account pages open on this month and load 50 lines at a time, even with years of entries
+• Lighter backups: about 10 times smaller, built in the background so the app never freezes, and uploaded only once
+• Smarter backup timing: after 2 quiet minutes, when you leave the app, or at least once an hour, and only if something changed
+• Safer storage on your phone with much more room, plus a clear red warning if a change ever can't be saved
+• Card details now float in front of other cards and no longer cover the list you're reading
