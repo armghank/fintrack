@@ -553,6 +553,9 @@ html.lockcover .lk-in{visibility:hidden}
 .lk-in::before{content:"";position:absolute;inset:-70px -90px;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--bg) 80%,transparent),color-mix(in srgb,var(--bg) 45%,transparent) 65%,transparent)}
 .lk-in h1{margin:6px 0 0;font-size:26px;letter-spacing:-.02em}
 .lkbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:200px;min-height:48px;font-size:16px;margin-top:6px}
+.lkbtn[aria-busy="true"]{opacity:.75;pointer-events:none}.lkbtn[aria-busy="true"] svg{animation:lkp 1.1s ease-in-out infinite}
+@keyframes lkp{50%{opacity:.35;transform:scale(.9)}}
+@media (prefers-reduced-motion:reduce){.lkbtn[aria-busy="true"] svg{animation:none}}
 .lkhelp{display:flex;flex-direction:column;gap:8px;align-items:center}.lkhelp p{margin:0}
 html.native #lockHelpBtn{display:none}
 /* sharp strings: glass that sits straight on the background drops its blur but keeps its tint and colour boost.
@@ -1393,7 +1396,7 @@ const HELP=[
   show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. The date can't fall between existing entries."}]},
  {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
   show:[{go:()=>hGo("home"),el:()=>hCard("accounts"),t:"Accounts",b:"Cards and loans you owe on show in red as Payable."}]},
- {id:"lock",title:"Lock the app",steps:["Open <b>Manage → Settings</b>.","Under <b>Security</b>, switch on <b>Lock FinTrack</b> and confirm with your fingerprint, face or PIN.","Choose when it asks again: every time you open it, or after 1 or 5 minutes away.","Can't unlock? The same prompt accepts your device PIN. On iPhone or a computer you can also sign in with Google again, which turns the lock off."],
+ {id:"lock",title:"Lock the app",steps:["Open <b>Manage → Settings</b>.","Under <b>Security</b>, switch on <b>Lock FinTrack</b> and confirm with your fingerprint, face or PIN.","Choose when it asks again: every time you open it, or after 1 or 5 minutes away. The fingerprint or face check pops up by itself when you open FinTrack.","Can't unlock? The same prompt accepts your device PIN. On iPhone or a computer you can also sign in with Google again, which turns the lock off."],
   show:[{go:()=>hGo("settings","prefs"),el:()=>{const i=hQ("#setLock")||hQ("#lockCard");return i?i.closest(".card"):hQ("#main .card")},t:"Security",b:"Turn the app lock on or off and choose when it asks again."}]},
  {id:"reports",pro:true,title:"Trial balance & statements",steps:["<b>Ledgers → Trial balance</b> checks that debits equal credits.","<b>Ledgers → Statements</b> shows the income statement and balance sheet for any period.","Tap <b>Download statement</b> (or <b>Excel ↓</b> on an account) for an Excel file."],
   show:[{go:()=>hGo("ledgers","trial"),el:()=>hQ("#main .card"),t:"Trial balance",b:"Debits = Credits means your books balance."},{go:()=>hGo("ledgers","stmt"),el:()=>hAct("dlStmt"),t:"Download",b:"Get any statement as an Excel file."}]},
@@ -2587,7 +2590,7 @@ function gCard(){const g=GA.get(),u=g.user||{};if(!u.email)return"";const init=e
 const LOCK=(()=>{const root=document.documentElement,KEY="tapledger.lock",LOCK_SIM=false;
   const cfg=()=>{try{return Object.assign({on:false,after:60},JSON.parse(ls.get(KEY)||"null")||{})}catch(e){return {on:false,after:60}}};
   const put=v=>ls.set(KEY,JSON.stringify(v));
-  let avail=null,busy=false,grace=0,awayAt=0;
+  let avail=null,busy=false,grace=0,awayAt=0,autoT=0,autoWait=false;
   const NB=()=>NATIVE&&CP.NativeBiometric;
   const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
   const unb64=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
@@ -2596,10 +2599,10 @@ const LOCK=(()=>{const root=document.documentElement,KEY="tapledger.lock",LOCK_S
     try{if(NATIVE){const p=NB();if(!p)return false;const r=await p.isAvailable({useFallback:true});return !!(r&&r.isAvailable)}
       return !!(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
   /* ask the device to confirm it's you; enrol = first time on the web (creates FinTrack's key on this device) */
-  async function verify(enrol){
-    if(LOCK_SIM){await new Promise(r=>setTimeout(r,450));toast("Preview: your device would ask for Face ID or your fingerprint here.");return {ok:true,id:"preview"}}
+  async function verify(enrol,auto){
     busy=true;
     try{
+      if(LOCK_SIM){await new Promise(r=>setTimeout(r,auto?1500:450));toast(auto?"Preview: on your phone, the fingerprint or Face ID check pops up by itself here. No tap needed.":"Preview: your device would ask for Face ID or your fingerprint here.");return {ok:true,id:"preview"}}
       if(NATIVE){await NB().verifyIdentity({reason:"Unlock FinTrack",title:"Unlock FinTrack",subtitle:"Use your fingerprint, face or screen lock",negativeButtonText:"Cancel",useFallback:true,maxAttempts:5});return {ok:true}}
       if(enrol){const g=GA.get(),em=(g.user&&g.user.email)||"FinTrack";
         const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:"FinTrack"},user:{id:rnd(16),name:em,displayName:"FinTrack app lock"},
@@ -2609,17 +2612,26 @@ const LOCK=(()=>{const root=document.documentElement,KEY="tapledger.lock",LOCK_S
       const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:"public-key",id:unb64(c.id),transports:["internal"]}],userVerification:"required",timeout:60000}});
       const uv=a&&a.response&&a.response.authenticatorData&&(new Uint8Array(a.response.authenticatorData)[32]&4)===4;return uv?{ok:true}:{ok:false}
     }catch(e){return {ok:false,err:(e&&e.name)||"error"}}finally{busy=false;grace=Date.now()}}
-  function show(){root.classList.add("locked");root.classList.remove("lockcover");const m=$("#lockMsg");if(m)m.textContent="";const h=$("#lockHelp");if(h)h.hidden=true;
+  function show(noAuto){root.classList.add("locked");root.classList.remove("lockcover");const m=$("#lockMsg");if(m)m.textContent="";const h=$("#lockHelp");if(h)h.hidden=true;
     const sub=$("#lockSub");if(sub)sub.textContent=NATIVE?"Use your fingerprint, face or phone PIN to open it.":"Use Face ID, Touch ID, Windows Hello or your device PIN to open it.";
-    if(NATIVE)setTimeout(()=>{if(root.classList.contains("locked")&&!busy)unlock()},300);else setTimeout(()=>{const b=$("#lockBtn");if(b&&!TOUCH)b.focus()},50)}
+    if(!NATIVE&&!TOUCH)setTimeout(()=>{const b=$("#lockBtn");if(b)b.focus()},50);
+    if(!noAuto)auto()}
+  /* ask by itself as soon as the lock screen is in front (no tap needed). If that's cancelled, it waits for the Unlock button,
+     and asks by itself again the next time you come back to the app. */
+  function auto(){clearTimeout(autoT);
+    const h=$("#lockHelp"),can=()=>root.classList.contains("locked")&&!busy&&!document.hidden&&Date.now()-grace>=1500&&!(h&&!h.hidden);
+    if(!can())return;
+    if(!NATIVE&&!document.hasFocus()){if(!autoWait){autoWait=true;addEventListener("focus",()=>{autoWait=false;auto()},{once:true})}return}
+    autoT=setTimeout(()=>{if(can())unlock(true)},NATIVE?350:250)}
   function open_(){root.classList.remove("locked","lockcover");awayAt=0;try{sessionStorage.removeItem("ft.awayAt")}catch(e){}grace=Date.now();try{paintTop();FX.theme()}catch(e){}}
-  async function unlock(){if(busy)return;const m=$("#lockMsg");if(m)m.textContent="";const r=await verify(false);
+  async function unlock(isAuto){if(busy)return;clearTimeout(autoT);isAuto=isAuto===true;const m=$("#lockMsg"),b=$("#lockBtn");if(m)m.textContent="";if(b)b.setAttribute("aria-busy","true");
+    const r=await verify(false,isAuto);if(b)b.removeAttribute("aria-busy");
     if(r.ok){open_();return}
-    if(m)m.textContent=r.err==="nokey"?"This device doesn't have FinTrack's key any more. Tap “Can't unlock?” below.":NATIVE?"Not unlocked. Tap Unlock to try again.":"Not unlocked. Tap Unlock to try again, or “Can't unlock?” below."}
+    if(m)m.textContent=r.err==="nokey"?"This device doesn't have FinTrack's key any more. Tap “Can't unlock?” below.":isAuto?"Tap Unlock to try again.":NATIVE?"Not unlocked. Tap Unlock to try again.":"Not unlocked. Tap Unlock to try again, or “Can't unlock?” below."}
   /* leaving the app: cover it at once (so the app switcher shows the lock screen); coming back: ask again if it was away long enough */
   function away(){const c=cfg();if(!c.on||busy||Date.now()-grace<1500||root.classList.contains("locked")||root.classList.contains("lockcover"))return;
     awayAt=Date.now();try{sessionStorage.setItem("ft.awayAt",String(awayAt))}catch(e){}root.classList.add("lockcover")}
-  function back(){const c=cfg();if(!c.on){root.classList.remove("lockcover");return}if(root.classList.contains("locked"))return;
+  function back(){const c=cfg();if(!c.on){root.classList.remove("lockcover");return}if(root.classList.contains("locked")){auto();return}
     if(busy||Date.now()-grace<1500||!awayAt){root.classList.remove("lockcover");return}
     const gone=Date.now()-awayAt;awayAt=0;if(gone>=(+c.after||0)*1000)show();else root.classList.remove("lockcover")}
   /* "Can't unlock?" on the web: sign in with the same Google account, then the lock turns off */
@@ -2632,7 +2644,7 @@ const LOCK=(()=>{const root=document.documentElement,KEY="tapledger.lock",LOCK_S
   function init(){
     if(NATIVE)root.classList.add("native");
     const c=cfg();if(!c.on){root.classList.remove("locked","lockcover")}
-    else if(root.classList.contains("locked")){show();const r=gRedirect;if(r&&r.purpose==="unlock")afterGoogle(r)}
+    else if(root.classList.contains("locked")){const r=gRedirect,g=!!(r&&r.purpose==="unlock");show(g);if(g)afterGoogle(r)}
     check().then(v=>{avail=v;if(U.page==="settings"&&U.setTab==="prefs"&&!$("#sheetRoot").innerHTML){const el=$("#lockCard");if(el)el.outerHTML=lockCard()}});
     document.addEventListener("visibilitychange",()=>document.hidden?away():back());
     if(NATIVE&&CP.App&&CP.App.addListener)CP.App.addListener("appStateChange",s=>s&&s.isActive?back():away())}
