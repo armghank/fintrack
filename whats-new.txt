@@ -1,6 +1,4 @@
-• New Help & feedback in the menu: step-by-step guides with “Show me” walkthroughs, FAQs and search. Look for the small ⓘ on cards and fields for quick tips
-• Faster: Day book and account pages open on this month and load 50 lines at a time, even with years of entries
-• Lighter backups: about 10 times smaller, built in the background so the app never freezes, and uploaded only once
-• Smarter backup timing: after 2 quiet minutes, when you leave the app, or at least once an hour, and only if something changed
-• Safer storage on your phone with much more room, plus a clear red warning if a change ever can't be saved
-• Card details now float in front of other cards and no longer cover the list you're reading
+• App lock: open FinTrack with your fingerprint, face or PIN. Turn it on in Manage → Settings → Security. Screenshots still work
+• Savings calculator on Home and in Plans: type your income, expenses and target, and see how many months it takes, with a graph and a month-by-month list
+• The budget bar now shows how much of your monthly limit you've spent and how much is left to spend
+• A livelier look: soft colours drift and faint strings float behind the cards and follow your finger or pointer. Turn it off in Manage → Settings → Look
