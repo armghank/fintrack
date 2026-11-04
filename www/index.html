@@ -16,7 +16,10 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
-<script>try{if((navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4))document.documentElement.classList.add("lite")}catch(e){}</script>
+<script>try{if((navigator.deviceMemory&&navigator.deviceMemory<=4)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4))document.documentElement.classList.add("lite")}catch(e){}
+/* app lock: start locked unless the app was away for less than the chosen time, or is coming back from Google sign-in */
+try{const L=JSON.parse(localStorage.getItem("tapledger.lock")||"null");if(L&&L.on){const n=Date.now(),a=+sessionStorage.getItem("ft.awayAt")||0,ps=+sessionStorage.getItem("ft.pass")||0;let skip=false;
+  if(ps&&n-ps<180000){skip=true;sessionStorage.removeItem("ft.pass")}else if(a&&n-a<(+L.after||0)*1000)skip=true;if(!skip)document.documentElement.classList.add("locked")}}catch(e){}</script>
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
@@ -210,6 +213,7 @@ tr.pgmore td{text-align:center;padding:14px 8px!important}
 </style>
 </head>
 <body>
+<canvas id="fxAur" aria-hidden="true"></canvas><canvas id="fxNet" aria-hidden="true"></canvas>
 <style>
 /* Layout: phone-width app shell, sticky top bar, fixed bottom nav with a centre "+" button; ruled ledger tables in mono figures */
 :root{
@@ -527,6 +531,38 @@ body::after{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;
 @keyframes drift{to{transform:translate3d(3%,-4%,0) scale(1.08)}}
 @media (prefers-reduced-motion:reduce){body::after{animation:none}}
 #app{position:relative;z-index:0}
+.calc .grid2{grid-template-columns:1fr 1fr}.calc table.led th,.calc table.led td{white-space:nowrap}.calc .field label{white-space:nowrap}.calchero{align-items:center}
+/* lively background: colour light that drifts, plus faded strings that float and follow the pointer */
+#fxAur,#fxNet{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
+html.fx #fxAur,html.fx #fxNet{display:block}
+html.fx body::after{display:none}
+html.nofx body::after{animation:none}
+html.fx:has(#login:not([hidden])) .login{background:color-mix(in srgb,var(--bg) 18%,transparent)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.fx:has(#login:not([hidden])) :is(#app,.navscrim,.nav,.bnav,.fab2,.top .brand){visibility:hidden!important}
+html.fx:has(#login:not([hidden])) body::before{display:none}
+html.fx .lg-in{position:relative}
+html.fx .lg-in::before{content:"";position:absolute;inset:-70px -90px;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--bg) 80%,transparent),color-mix(in srgb,var(--bg) 45%,transparent) 65%,transparent)}
+@media print{#fxAur,#fxNet{display:none!important}}
+/* app lock screen: covers everything; the app underneath is hidden so nothing can be read or tapped */
+.lockscr{position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;overflow-y:auto}
+html.locked .lockscr,html.lockcover .lockscr{display:flex}
+html:is(.locked,.lockcover) :is(#app,.navscrim,.nav,.bnav,.fab2,.top .brand,#sheetRoot,#login,#ttFloat,#tipPop,.gpop,.tour-tip){visibility:hidden!important}
+html:is(.locked,.lockcover) body::before{display:none}
+html.lockcover .lk-in{visibility:hidden}
+.lk-in{position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.lk-in::before{content:"";position:absolute;inset:-70px -90px;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--bg) 80%,transparent),color-mix(in srgb,var(--bg) 45%,transparent) 65%,transparent)}
+.lk-in h1{margin:6px 0 0;font-size:26px;letter-spacing:-.02em}
+.lkbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:200px;min-height:48px;font-size:16px;margin-top:6px}
+.lkhelp{display:flex;flex-direction:column;gap:8px;align-items:center}.lkhelp p{margin:0}
+html.native #lockHelpBtn{display:none}
+/* sharp strings: glass that sits straight on the background drops its blur but keeps its tint and colour boost.
+   The light behind it is smooth, so the cards look the same, and the strings show crisp through them. */
+html.fx :is(.card,.banner,.tabs,.btn,.chip,.miles div,.gbtn){backdrop-filter:saturate(1.6)!important;-webkit-backdrop-filter:saturate(1.6)!important}
+@media (min-width:960px){html.fx .nav{backdrop-filter:saturate(1.8)!important;-webkit-backdrop-filter:saturate(1.8)!important}}
+/* where glass has to blur (forms, the phone menu), the strings fade away instead of showing blurred */
+#fxNet{transition:opacity .25s}
+html.fx:has(#sheetRoot .scrim) #fxNet,html.fx.navopen #fxNet{opacity:0}
+html.fx.locked #fxNet{opacity:1!important}
 
 .num,.cur{font-family:var(--f-num);font-variant-numeric:tabular-nums}
 .cur{font-size:.58em;font-weight:500;letter-spacing:.08em;margin-right:.35em;vertical-align:.2em;color:var(--muted)}
@@ -772,6 +808,17 @@ table.led th{letter-spacing:.12em}
     <p class="lg-legal"><a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a> · <button type="button" class="lg-fb" data-act="fbOpen">Send feedback</button></p>
   </div>
 </div>
+<div class="lockscr" id="lock" role="dialog" aria-modal="true" aria-labelledby="lockT">
+  <div class="lk-in">
+    <div class="lg-mark" aria-hidden="true">FT</div>
+    <h1 id="lockT">FinTrack is locked</h1>
+    <p class="lg-sub" id="lockSub">Use your fingerprint, face or device PIN to open it.</p>
+    <button class="btn pri lkbtn" id="lockBtn" data-act="lockUnlock"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 11v4M7.5 8.5a6 6 0 0 1 9 0M5 12a7 7 0 0 1 1-3.6M19 12c0 3.2-.6 5.4-1.6 7M9 21c1-1.6 1.5-3.6 1.5-6a1.5 1.5 0 0 1 3 0c0 1-.1 2-.3 3"/></svg>Unlock</button>
+    <p class="lg-msg" id="lockMsg" role="status" aria-live="polite"></p>
+    <button type="button" class="link" id="lockHelpBtn" data-act="lockHelp">Can't unlock?</button>
+    <div class="lkhelp" id="lockHelp" hidden><p class="lbl">If your face or fingerprint isn't recognised, the same prompt lets you use your device PIN or passcode.</p><p class="lbl">If this device no longer has FinTrack's key, sign in again with the Google account this book belongs to. The lock then turns off, and you can turn it on again in Manage → Settings. Nothing is deleted.</p><button class="gbtn" data-act="lockGoogle">Sign in with Google</button></div>
+  </div>
+</div>
 <div id="sheetRoot"></div>
 <div id="toastRoot"></div>
 
@@ -835,11 +882,11 @@ const GROUPS=[
   {k:"equity",kind:"equity",label:"Equity"}];
 const GL=Object.fromEntries(GROUPS.map(g=>[g.k,g]));
 /* ---------- Simple (default) and Pro mode: Pro only shows more, data is never changed ---------- */
-const LITE_W=new Set(["hold","accounts","spend","budget","parties","recent"]),LITE_T=new Set(["expense","income","transfer","party"]),LITE_LED=new Set(["accounts","daybook"]),LITE_GRP=new Set(["pot","equity"]);
+const LITE_W=new Set(["hold","accounts","spend","budget","calc","parties","recent"]),LITE_T=new Set(["expense","income","transfer","party"]),LITE_LED=new Set(["accounts","daybook"]),LITE_GRP=new Set(["pot","equity"]);
 function isPro(){const v=ls.get("tapledger.pro");if(v==="1")return true;if(v==="0")return false;try{return !S.demo&&S.entries.length>0}catch(e){return false}}
 function paintMode(){const p=isPro();document.documentElement.classList.toggle("pro",p);document.querySelectorAll(".protog").forEach(b=>{b.setAttribute("aria-checked",p?"true":"false")});
   document.querySelectorAll('.bnav .pll').forEach(e=>e.textContent=p?"Plans":"Budgets");const pl=document.querySelector('.nav [data-p="plans"]');if(pl){const t=[...pl.childNodes].find(n=>n.nodeType===3);if(t)t.nodeValue=p?"Plans":"Budgets";pl.title=p?"Plans":"Budgets"}}
-const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",goals:"Savings goals",savtrend:"Savings trend",trend:"Financial position (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries"};
+const WIDGETS={hold:"Balance check & cash in hand",chqsave:"Cheque savings plan",accounts:"Account balances",spend:"Spending by category",budget:"Budget progress",goals:"Savings goals",savtrend:"Savings trend",trend:"Financial position (6 months)",parties:"Receivables & payables",upcoming:"Upcoming EMIs & cheques",recent:"Recent entries",calc:"Savings calculator"};
 
 /* ---------- state ---------- */
 let S=null;            // the book
@@ -1018,7 +1065,7 @@ function fixDash(){if(!Array.isArray(S.pdcs))S.pdcs=[];if(!Array.isArray(S.sched
   if(!S.currency)S.currency="AED";if(!S.country)S.country=guessCountry().cc;
   S.accounts.forEach((a,i)=>{if(typeof a.ord!=="number")a.ord=i;if(a.grp==="pot")a.goal=normGoal(a.goal)});
   setCurrency(S.currency);
-  const after={goals:"budget",savtrend:"goals"};
+  const after={goals:"budget",savtrend:"goals",calc:"budget"};
   const have=new Set(S.dash.map(d=>d.id));for(const id of Object.keys(WIDGETS))if(!have.has(id)){const i=S.dash.findIndex(d=>d.id===after[id]);if(i>=0)S.dash.splice(i+1,0,{id,on:true});else S.dash.push({id,on:true});have.add(id)}
   S.dash=S.dash.filter(d=>WIDGETS[d.id]);U.month=U.monthSet?U.month:curCycle()}
 
@@ -1064,6 +1111,7 @@ let NAVSTK=[],NAVKEY="home",NAVBACK=false,BACKAT=0;
 function navTrack(){const k=U.page+(U.page==="ledgers"&&U.ledAcc?":"+U.ledAcc:"");if(k===NAVKEY)return;
   if(k==="home")NAVSTK=[];else if(!NAVBACK){NAVSTK.push(NAVKEY);if(NAVSTK.length>30)NAVSTK.shift()}NAVKEY=k}
 function goBack(){ // true = handled inside the app
+  if(document.documentElement.classList.contains("locked"))return false;
   if(document.getElementById("tipPop")){tipClose();return true}
   if(TR.i>=0){tourStop();return true}
   if(GSP){gsClose();return true}
@@ -1113,7 +1161,94 @@ document.addEventListener("input",e=>{const t=e.target;if(!FBF||!t.dataset||t.da
   if(k==="msg"){FBF.msg=t.value;const c=$("#fbCount");if(c)c.textContent=(1000-t.value.length)+" characters left"}else if(k==="email")FBF.email=t.value.trim()});
 document.addEventListener("change",e=>{const t=e.target;if(FBF&&t.dataset&&t.dataset.fb!=null){if(t.dataset.fb==="reply")FBF.reply=t.checked;else if(t.dataset.fb==="screen")FBF.screen=t.value}
   if(t.dataset&&t.dataset.shake!=null)shakeSet(t.checked,t);
-  if(t.dataset&&t.dataset.tips!=null){ls.set("tapledger.tips",t.checked?"1":"0");toast(t.checked?"Tips are on.":"Tips are off.")}});
+  if(t.dataset&&t.dataset.tips!=null){ls.set("tapledger.tips",t.checked?"1":"0");toast(t.checked?"Tips are on.":"Tips are off.")}
+  if(t.dataset&&t.dataset.lock!=null)LOCK.toggle(t.checked,t);
+  if(t.dataset&&t.dataset.lockafter!=null)LOCK.setAfter(+t.value);
+  if(t.dataset&&t.dataset.fx!=null){FX.set(t.checked);toast(t.checked?"Moving background is on.":"Moving background is off.")}});
+
+/* ---------- lively background: colour light that drifts, plus faded strings that float and follow the pointer ---------- */
+const FX=(()=>{
+  const A=document.getElementById("fxAur"),Nc=document.getElementById("fxNet"),root=document.documentElement,SR=document.getElementById("sheetRoot");
+  const ok=!!(A&&Nc&&A.getContext&&Nc.getContext),ca=ok&&A.getContext("2d"),cn=ok&&Nc.getContext("2d");
+  const RM=window.matchMedia?matchMedia("(prefers-reduced-motion: reduce)"):{matches:false};
+  const LITE=root.classList.contains("lite"),FPS=LITE?20:TOUCH?30:60;
+  let W=0,H=0,aw=0,ah=0,dpr=1,P=[],D=120,raf=0,last=0,t0=performance.now(),dark=null,live=false,tick=0;
+  let C=[],MAXA=.3,NODEA=.5,LW=1,PAL=[];
+  const ptr={x:-9999,y:-9999,on:0,pull:0};
+  /* colour lights: the same three as before (plus a soft blue one), now drifting, breathing and slowly shifting hue.
+     They stay near the edges like the old fixed lights, so the middle stays dark and the cards stay easy to read. */
+  const BL=[{c:2,cx:.22,cy:1.03,rx:.50,ry:.36,ax:.13,ay:.06,fx:.12,fy:.09,p:3.1},{c:1,cx:1.13,cy:.39,rx:.43,ry:.33,ax:.08,ay:.12,fx:.09,fy:.13,p:1.7},
+    {c:3,cx:.96,cy:1.04,rx:.36,ry:.26,ax:.10,ay:.05,fx:.10,fy:.08,p:4.4},{c:0,cx:-.03,cy:-.06,rx:.47,ry:.33,ax:.10,ay:.08,fx:.13,fy:.11,p:0}];
+  const want=()=>ls.get("tapledger.fx")!=="0",still=()=>!!RM.matches,isOn=()=>root.classList.contains("fx");
+  const SG=[],EDGE={t:0,b:0};
+  function theme(){dark=isDark();const cs=getComputedStyle(root),v=k=>cs.getPropertyValue(k).trim();
+    PAL=dark?[[255,100,66,.85],[193,100,50,.6],[326,100,62,.5],[222,100,62,.35]]:[[252,100,68,.45],[193,100,50,.38],[324,100,74,.28],[215,100,70,.22]];
+    C=[v("--accent")||(dark?"#8b7bff":"#5b4bff"),v("--accent2")||(dark?"#4fe3ff":"#00a9d6"),dark?"#ff6ec4":"#d6409a"];
+    MAXA=TOUCH?(dark?.62:.58):.5;NODEA=dark?.8:.66;LW=TOUCH?(dark?1.15:1.25):(dark?.9:1.1)}
+  const mk=()=>({x:Math.random()*W,y:Math.random()*H,h:Math.random()*6.283,s:.12+Math.random()*.26,vx:0,vy:0,r:(TOUCH?1.1:.9)+Math.random()*1.1});
+  function fit(){const w=Nc.clientWidth||innerWidth,h=Nc.clientHeight||innerHeight;
+    if(P.length&&Math.abs(w-W)<2&&h<=H+1&&h>H*.8)return false;/* ignore the phone's address bar sliding in and out */
+    const sx=W?w/W:1,sy=H?h/H:1;W=w;H=h;dpr=Math.min(window.devicePixelRatio||1,TOUCH?1.5:2);
+    Nc.width=Math.round(W*dpr);Nc.height=Math.round(H*dpr);aw=Math.max(32,Math.round(W/4));ah=Math.max(32,Math.round(H/4));A.width=aw;A.height=ah;
+    const n=Math.round(Math.min(TOUCH?46:88,Math.max(18,W*H/(TOUCH?11000:15000)))*(LITE?.6:1));
+    for(const p of P){p.x*=sx;p.y*=sy}while(P.length<n)P.push(mk());P.length=n;
+    D=Math.max(90,Math.min(150,Math.sqrt(3*W*H/(Math.PI*n))));return true}
+  /* strings: each knot wanders; near the pointer they are pulled in and circle around it */
+  function step(dt){const R=TOUCH?150:190,R2=R*R,r0=TOUCH?26:34,pl=ptr.pull,m=40,damp=Math.pow(.95,dt);
+    for(const p of P){p.h+=(Math.random()-.5)*.16*dt;
+      if(pl>.01){const dx=ptr.x-p.x,dy=ptr.y-p.y,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=1-d/R,k=(d>r0?1:-1.6)*f*pl*.14*dt,sw=f*pl*.03*dt;p.vx+=dx/d*k-dy/d*sw;p.vy+=dy/d*k+dx/d*sw}}
+      p.vx*=damp;p.vy*=damp;const sp=Math.hypot(p.vx,p.vy);if(sp>3){p.vx*=3/sp;p.vy*=3/sp}
+      p.x+=(Math.cos(p.h)*p.s+p.vx)*dt;p.y+=(Math.sin(p.h)*p.s+p.vy)*dt;
+      if(p.x<-m)p.x=W+m;else if(p.x>W+m)p.x=-m;if(p.y<-m)p.y=H+m;else if(p.y>H+m)p.y=-m}}
+  /* which knots are tied together this frame: gently curved, swaying threads; brighter near the pointer */
+  function links(t){SG.length=0;const n=P.length,D2=D*D,R=TOUCH?150:190,pl=ptr.pull,px=ptr.x,py=ptr.y;
+    for(let i=0;i<n;i++){const a=P[i];for(let j=i+1;j<n;j++){const b=P[j],dx=b.x-a.x,dy=b.y-a.y;if(dx>D||dx<-D||dy>D||dy<-D)continue;const d2=dx*dx+dy*dy;if(d2>D2)continue;
+      const d=Math.sqrt(d2)||1,mx=(a.x+b.x)/2,my=(a.y+b.y)/2;let al=1-d/D;al*=.4+.6*al;
+      if(pl>.01){const qx=mx-px,qy=my-py,q=Math.sqrt(qx*qx+qy*qy);if(q<R)al*=1+1.6*pl*(1-q/R)}
+      const sw=Math.sin(t*.9+i*.7+j*1.3)*Math.min(14,d*.14);SG.push(a.x,a.y,mx-dy/d*sw,my+dx/d*sw,b.x,b.y,al)}}
+    if(pl>.01)for(const a of P){const dx=a.x-px,dy=a.y-py,d=Math.sqrt(dx*dx+dy*dy)||1;if(d>=R)continue;const f=1-d/R,sw=Math.sin(t*1.1+a.h)*Math.min(12,d*.12);
+      SG.push(px,py,(px+a.x)/2-dy/d*sw,(py+a.y)/2+dx/d*sw,a.x,a.y,f*f*1.7*pl)}}
+  function strokeAll(c,mul,cap){for(let k=0;k<SG.length;k+=7){const al=SG[k+6]*mul;c.globalAlpha=al>cap?cap:al;c.beginPath();c.moveTo(SG[k],SG[k+1]);c.quadraticCurveTo(SG[k+2],SG[k+3],SG[k+4],SG[k+5]);c.stroke()}c.globalAlpha=1}
+  function grad(c,t){const an=t*.06,hd=Math.hypot(W,H)/2,ux=Math.cos(an)*hd,uy=Math.sin(an)*hd,g=c.createLinearGradient(W/2-ux,H/2-uy,W/2+ux,H/2+uy);g.addColorStop(0,C[0]);g.addColorStop(.5,C[1]);g.addColorStop(1,C[2]);return g}
+  /* colour light: drawn small and stretched by the browser, so it costs almost nothing */
+  function aur(t){ca.setTransform(1,0,0,1,0,0);ca.clearRect(0,0,aw,ah);
+    for(const b of BL){const c=PAL[b.c],k=1+.1*Math.sin(t*.15+b.p),x=(b.cx+b.ax*Math.sin(t*b.fx+b.p))*aw,y=(b.cy+b.ay*Math.cos(t*b.fy+b.p*1.3))*ah,rx=b.rx*aw*k,ry=b.ry*ah*k,
+      hs=`hsla(${(c[0]+20*Math.sin(t*.05+b.p)).toFixed(1)},${c[1]}%,${c[2]}%,`;
+      ca.setTransform(1,0,0,ry/rx,x,y);const g=ca.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,hs+c[3]+")");g.addColorStop(1,hs+"0)");ca.fillStyle=g;ca.fillRect(-x,-y*rx/ry,aw,ah*rx/ry)}
+    ca.setTransform(1,0,0,1,0,0)}
+  /* the header, the phone's Overview strip and bottom bar keep their frosted blur (pages scroll under them),
+     so the strings fade out there rather than show blurred */
+  function edges(){let t=0,b=0;const tp=document.querySelector(".top"),ph=document.querySelector("#main .phhome"),bn=document.querySelector(".bnav");
+    if(innerWidth>=960)t=64;else{if(tp)t=tp.getBoundingClientRect().bottom;if(ph&&getComputedStyle(ph).position==="sticky"){const r=ph.getBoundingClientRect();if(r.top<=t+24)t=Math.max(t,r.bottom)}}
+    if(bn&&bn.offsetHeight){const r=bn.getBoundingClientRect();if(r.top<H)b=Math.max(0,H-r.top)}EDGE.t=t;EDGE.b=b}
+  function net(t){cn.setTransform(dpr,0,0,dpr,0,0);cn.clearRect(0,0,W,H);const g=grad(cn,t);cn.strokeStyle=g;cn.fillStyle=g;cn.lineWidth=LW;cn.lineCap="round";strokeAll(cn,MAXA,.9);
+    cn.globalAlpha=NODEA;cn.beginPath();for(const a of P){cn.moveTo(a.x+a.r,a.y);cn.arc(a.x,a.y,a.r,0,6.283)}cn.fill();cn.globalAlpha=1;
+    if(EDGE.t>0||EDGE.b>0){cn.globalCompositeOperation="destination-out";
+      if(EDGE.t>0){const y=EDGE.t,e=cn.createLinearGradient(0,y-4,0,y+24);e.addColorStop(0,"#000");e.addColorStop(1,"rgba(0,0,0,0)");cn.fillStyle="#000";cn.fillRect(0,0,W,y-4);cn.fillStyle=e;cn.fillRect(0,y-4,W,28)}
+      if(EDGE.b>0){const y=H-EDGE.b,e=cn.createLinearGradient(0,y-24,0,y+4);e.addColorStop(0,"rgba(0,0,0,0)");e.addColorStop(1,"#000");cn.fillStyle=e;cn.fillRect(0,y-24,W,28);cn.fillStyle="#000";cn.fillRect(0,y+4,W,EDGE.b)}
+      cn.globalCompositeOperation="source-over"}}
+  function frame(now){raf=requestAnimationFrame(frame);const fps=SR&&SR.firstElementChild?Math.min(FPS,24):FPS;if(now-last<1000/fps-2)return;
+    const dt=last?Math.min(3,(now-last)/16.667):1;last=now;if(++tick%30===0&&isDark()!==dark)theme();if(tick%10===1)edges();
+    ptr.pull+=((ptr.on?1:0)-ptr.pull)*Math.min(1,.07*dt);const t=(now-t0)/1000;step(dt);aur(t);
+    if((!(SR&&SR.firstElementChild)&&!root.classList.contains("navopen"))||root.classList.contains("locked")){links(t);net(t)}}
+  const paintStill=()=>{edges();links(0);aur(0);net(0)};
+  function go(){if(!live||raf||document.hidden)return;last=0;raf=requestAnimationFrame(frame)}
+  function halt(){if(raf){cancelAnimationFrame(raf);raf=0}}
+  function apply(){const on=ok&&want();root.classList.toggle("fx",on);root.classList.toggle("nofx",!on);halt();live=false;if(!on)return;
+    theme();fit();if(still()){paintStill();return}live=true;go()}
+  if(ok){const pt=(x,y)=>{ptr.x=x;ptr.y=y;ptr.on=1};
+    addEventListener("pointermove",e=>pt(e.clientX,e.clientY),{passive:true});
+    addEventListener("pointerdown",e=>pt(e.clientX,e.clientY),{passive:true});
+    addEventListener("pointerup",e=>{if(e.pointerType!=="mouse")ptr.on=0},{passive:true});
+    addEventListener("touchmove",e=>{const k=e.touches&&e.touches[0];if(k)pt(k.clientX,k.clientY)},{passive:true});
+    addEventListener("touchend",()=>{ptr.on=0},{passive:true});addEventListener("touchcancel",()=>{ptr.on=0},{passive:true});
+    addEventListener("mouseout",e=>{if(!e.relatedTarget)ptr.on=0});addEventListener("blur",()=>{ptr.on=0});
+    document.addEventListener("visibilitychange",()=>{if(document.hidden)halt();else go()});
+    let rz=0;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(isOn()&&fit()&&!live)paintStill()},150)});
+    if(RM.addEventListener)RM.addEventListener("change",apply)}
+  apply();
+  return {on:()=>ok&&want(),still,set(v){ls.set("tapledger.fx",v?"1":"0");apply()},theme(){if(isOn()){theme();if(!live)paintStill()}}};
+})();
 function fbSend(){if(!FBF)return;const m=$("#fbMsg");if(m)FBF.msg=m.value;const msg=FBF.msg.trim();
   if(msg.length<3){toast("Please write a short message first.");m&&m.focus();return}
   if(FBF.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(FBF.email)){toast("That email doesn't look right. Fix it or leave it empty.");return}
@@ -1258,6 +1393,8 @@ const HELP=[
   show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. The date can't fall between existing entries."}]},
  {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
   show:[{go:()=>hGo("home"),el:()=>hCard("accounts"),t:"Accounts",b:"Cards and loans you owe on show in red as Payable."}]},
+ {id:"lock",title:"Lock the app",steps:["Open <b>Manage → Settings</b>.","Under <b>Security</b>, switch on <b>Lock FinTrack</b> and confirm with your fingerprint, face or PIN.","Choose when it asks again: every time you open it, or after 1 or 5 minutes away.","Can't unlock? The same prompt accepts your device PIN. On iPhone or a computer you can also sign in with Google again, which turns the lock off."],
+  show:[{go:()=>hGo("settings","prefs"),el:()=>{const i=hQ("#setLock")||hQ("#lockCard");return i?i.closest(".card"):hQ("#main .card")},t:"Security",b:"Turn the app lock on or off and choose when it asks again."}]},
  {id:"reports",pro:true,title:"Trial balance & statements",steps:["<b>Ledgers → Trial balance</b> checks that debits equal credits.","<b>Ledgers → Statements</b> shows the income statement and balance sheet for any period.","Tap <b>Download statement</b> (or <b>Excel ↓</b> on an account) for an Excel file."],
   show:[{go:()=>hGo("ledgers","trial"),el:()=>hQ("#main .card"),t:"Trial balance",b:"Debits = Credits means your books balance."},{go:()=>hGo("ledgers","stmt"),el:()=>hAct("dlStmt"),t:"Download",b:"Get any statement as an Excel file."}]},
  {id:"oneoff",pro:true,title:"One-off entries",steps:["In an Expense, Income or Journal entry, switch on <b>One-off</b>.","Use it for things that won't repeat (a new phone, a bonus).","One-off entries still count in your balances but are left out of projections, so they don't skew the future."],
@@ -1277,6 +1414,7 @@ const FAQ=[
  ["How do I restore a backup?","Signing in restores from Google Drive automatically. To use a downloaded Excel backup: <b>Manage → Data → Restore from Excel backup</b>."],
  ["Can I use FinTrack on my phone and my computer?","Yes, sign in with the same Google account on both. Leave one before using the other; if both changed at the same time, FinTrack asks which version to keep."],
  ["How do I start again with a clean book?","<b>Manage → Data → Start over → Clear everything</b> (tap twice). Download a backup first if you might want it later."],
+ ["Can I lock FinTrack with my fingerprint or face?","Yes. <b>Manage → Settings → Security</b> → switch on <b>Lock FinTrack</b>. It uses your phone's fingerprint, face or PIN (Face ID, Touch ID or Windows Hello on iPhone and computers). Screenshots still work."],
  ["How do I report a problem or suggest something?","Menu → <b>Help & feedback</b> → Send feedback. On Android you can also shake your phone."]
 ];
 const TIPS={
@@ -1463,9 +1601,10 @@ const W={
     const rows=cats.map(a=>{const s=spent[a.id];tb+=a.budget;ts+=s;const p=s/a.budget;
       return `<div class="bud tt" tabindex="0" data-k="${a.id}"${budTip(a,s)}><div class="top2"><span>${esc(a.name)}</span><span class="num ${p>1?"neg":""}">${f2(s)} <span class="muted">/ ${f2(a.budget)}</span></span></div>${barHtml(p)}${p>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(s-a.budget)}</div>`:""}</div>`}).join("");
     tb=r2(tb);ts=r2(ts);const tp=tb?ts/tb:0;
-    const total=tb?`<div class="bud tt budtot" tabindex="0"${ttAttr("All budgets · "+ymLabel(k),[["Spent",f2(ts),null,""],["Budgets",f2(tb),null,""],["Used",pct(ts,tb),null,ts>tb?"neg":""],[ts>tb?"Over":"Left",f2(Math.abs(tb-ts)),null,ts>tb?"neg":"pos",true]])}><div class="top2"><span><b>Total spent</b></span><span class="num ${tp>1?"neg":""}"><b>${f2(ts)}</b> <span class="muted">/ ${f2(tb)}</span></span></div>${barHtml(tp)}${tp>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(ts-tb)}</div>`:""}</div>`:"";
+    const total=tb?`<div class="bud tt budtot" tabindex="0"${ttAttr("All budgets · "+ymLabel(k),[["Spent",f2(ts),null,""],["Budgets",f2(tb),null,""],["Used",pct(ts,tb),null,ts>tb?"neg":""],[ts>tb?"Over":"Left",f2(Math.abs(tb-ts)),null,ts>tb?"neg":"pos",true]])}><div class="top2"><span><b>${L.v>0?"Budgeted categories":"Total spent"}</b></span><span class="num ${tp>1?"neg":""}"><b>${f2(ts)}</b> <span class="muted">/ ${f2(tb)}</span></span></div>${barHtml(tp)}${tp>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(ts-tb)}</div>`:""}</div>`:"";
     const lim=L.v>0?`<div class="limbox">${limitBox(k,false)}</div>`:"";
-    return `<section class="card ttg ttwrap"><h3>Budget · ${ymLabel(k)}<span class="sp">${money(r2(tb-ts),tb-ts<0?"neg":"")} left</span></h3>${lim}${total}${rows}</section>`;
+    const hl=L.v>0?r2(L.v-limitUse(k).used):r2(tb-ts);
+    return `<section class="card ttg ttwrap"><h3>Budget · ${ymLabel(k)}<span class="sp">${money(hl,hl<0?"neg":"")} left</span></h3>${lim}${total}${rows}</section>`;
   },
   goals(){const ps=pots();const h=`<h3>Savings goals<span class="sp"><button class="link" data-act="goSavings">All goals</button></span></h3>`;
     if(!ps.length)return `<section class="card">${h}<p class="empty">Set money aside for a visa, a car or a trip. Make a pot in Plans → Savings.</p></section>`;
@@ -1505,6 +1644,7 @@ const W={
     const list=S.schedules.filter(s=>s.active&&s.next<=lim).map(s=>({d:s.next,h:schedRow(s)})).concat(S.pdcs.flatMap(p=>p.chqs.filter(c=>c.status==="pending"&&c.date<=lim).map(c=>({d:c.date,h:chqRow(p,c)})))).sort((a,b)=>a.d<b.d?-1:1).slice(0,7).map(x=>x.h);
     return `<section class="card"><h3>Upcoming · next 45 days<span class="sp"><button class="link" data-act="go" data-p="plans">All plans</button></span></h3><div class="rows">${list.join("")||'<p class="empty">Nothing due in the next 45 days.</p>'}</div></section>`;
   },
+  calc(){return calcCard()},
   recent(){
     const list=S.entries.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0).slice(0,6);
     return `<section class="card"><h3>Recent entries<span class="sp"><button class="link" data-act="go" data-p="ledgers" data-t="daybook">Day book</button></span></h3><div class="rows">${list.map(entryRow).join("")||'<p class="empty">Tap + to record your first entry.</p>'}</div></section>`;
@@ -1609,8 +1749,8 @@ function lastDay(k){const [y,m]=k.split("-").map(Number);return k+"-"+p2(new Dat
 
 /* Plans */
 function pPlans(){
-  const tabs=[["sched","EMIs & bills"],["pdc","PDCs"],["cal","Calendar"],["budget","Budgets"],["savings","Savings"],["proj","Projection"]];
-  if(!isPro())U.plansTab="budget";
+  const tabs=[["sched","EMIs & bills"],["pdc","PDCs"],["cal","Calendar"],["budget","Budgets"],["savings","Savings"],["proj","Projection"],["calc","Calculator"]];
+  if(!isPro()&&U.plansTab!=="calc")U.plansTab="budget";
   let body="";
   if(U.plansTab==="sched"){
     const act=S.schedules.filter(s=>s.active).sort((a,b)=>a.next<b.next?-1:1);const done=S.schedules.filter(s=>!s.active);
@@ -1624,6 +1764,7 @@ function pPlans(){
   else if(U.plansTab==="cal"){body=calTab()}
   else if(U.plansTab==="savings"){body=savingsTab()}
   else if(U.plansTab==="proj"){body=projTab()}
+  else if(U.plansTab==="calc"){body=calcCard()}
   else{
     const k=U.month,t=totals(budFilter(k)),spent={};for(const a of S.accounts)if(a.kind==="expense"){const x=t[a.id];spent[a.id]=x?r2(x.dr-x.cr):0}
     const mode=budSortMode(),mine=mode==="mine",cats=sortCats(S.accounts.filter(a=>a.kind==="expense"&&!a.archived),mode,spent);
@@ -1639,7 +1780,7 @@ function pPlans(){
     <div data-dlist>${rows}</div></div>
     <p class="lbl" style="margin:10px 2px">Spending paid from a savings pot (like your visa) is not counted here, because you already saved for it.</p>`;
   }
-  if(!isPro())return `<div class="ph"><h1>Budgets</h1></div>${body}`;
+  if(!isPro())return `<div class="ph"><h1>Budgets</h1></div><div class="tabs">${[["budget","Budgets"],["calc","Savings calculator"]].map(([k,l])=>`<button class="${U.plansTab===k?"on":""}" data-act="plansTab" data-t="${k}">${l}</button>`).join("")}</div>${body}`;
   return `<div class="ph"><h1>Plans</h1></div><div class="tabs">${tabs.map(([k,l])=>`<button class="${U.plansTab===k?"on":""}" data-act="plansTab" data-t="${k}">${l}</button>`).join("")}</div>${body}`;
 }
 
@@ -2264,6 +2405,7 @@ function whenText(t){const d=new Date(t);return dLong(iso(d))+", "+p2(d.getHours
 function redirectUri(){return location.origin+location.pathname.replace(/[^/]*$/,"")+"index.html"}
 function gWebAuth(silent,purpose){
   const st=uid()+uid()+uid(),g=GA.get();
+  try{if(!document.documentElement.classList.contains("locked"))sessionStorage.setItem("ft.pass",String(Date.now()))}catch(e){}
   ls.set("tapledger.gstate",JSON.stringify({st,purpose,silent:!!silent,page:U.page,setTab:U.setTab,plansTab:U.plansTab,ledTab:U.ledTab}));
   const p=new URLSearchParams({client_id:GOOGLE_WEB_ID,redirect_uri:redirectUri(),response_type:"token id_token",nonce:uid()+uid(),scope:G_SCOPES.join(" "),include_granted_scopes:"true",state:st});
   if(g.user&&g.user.email)p.set("login_hint",g.user.email);
@@ -2440,6 +2582,77 @@ function gCard(){const g=GA.get(),u=g.user||{};if(!u.email)return"";const init=e
   <div class="kv"><span class="muted">Backup</span><span class="${g.pending||g.conflictId?"warn":""}" style="text-align:right;max-width:70%">${esc(gStatusLong())}</span></div>
   <p class="lbl">Every Save goes to the <b>FinTrack</b> folder in your Google Drive: "${esc(LATEST)}" plus one copy per day for 30 days. FinTrack can only see the files it creates there. Your name, email and country are shared with FinTrack's owner; your financial data is not.</p>
   <div class="acts" style="justify-content:flex-start"><button class="btn pri" data-act="gBackupNow">Back up now</button>${g.folder?`<a class="btn" href="https://drive.google.com/drive/folders/${esc(g.folder)}" target="_blank" rel="noopener">Open in Google Drive</a>`:""}<button class="btn danger" data-act="gSignOut" id="gSignOutBtn">Sign out</button></div></div>`}
+/* ---------- app lock: fingerprint, face or PIN (Android app); Face ID, Touch ID, Windows Hello or PIN (web) ----------
+   A lock on the door, not a safe: it stops someone opening the app on your unlocked phone. Screenshots stay allowed. */
+const LOCK=(()=>{const root=document.documentElement,KEY="tapledger.lock",LOCK_SIM=false;
+  const cfg=()=>{try{return Object.assign({on:false,after:60},JSON.parse(ls.get(KEY)||"null")||{})}catch(e){return {on:false,after:60}}};
+  const put=v=>ls.set(KEY,JSON.stringify(v));
+  let avail=null,busy=false,grace=0,awayAt=0;
+  const NB=()=>NATIVE&&CP.NativeBiometric;
+  const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  const unb64=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+  const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+  async function check(){if(LOCK_SIM)return true;
+    try{if(NATIVE){const p=NB();if(!p)return false;const r=await p.isAvailable({useFallback:true});return !!(r&&r.isAvailable)}
+      return !!(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){return false}}
+  /* ask the device to confirm it's you; enrol = first time on the web (creates FinTrack's key on this device) */
+  async function verify(enrol){
+    if(LOCK_SIM){await new Promise(r=>setTimeout(r,450));toast("Preview: your device would ask for Face ID or your fingerprint here.");return {ok:true,id:"preview"}}
+    busy=true;
+    try{
+      if(NATIVE){await NB().verifyIdentity({reason:"Unlock FinTrack",title:"Unlock FinTrack",subtitle:"Use your fingerprint, face or screen lock",negativeButtonText:"Cancel",useFallback:true,maxAttempts:5});return {ok:true}}
+      if(enrol){const g=GA.get(),em=(g.user&&g.user.email)||"FinTrack";
+        const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:"FinTrack"},user:{id:rnd(16),name:em,displayName:"FinTrack app lock"},
+          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000,attestation:"none"}});
+        return c?{ok:true,id:b64(c.rawId)}:{ok:false}}
+      const c=cfg();if(!c.id)return {ok:false,err:"nokey"};
+      const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:"public-key",id:unb64(c.id),transports:["internal"]}],userVerification:"required",timeout:60000}});
+      const uv=a&&a.response&&a.response.authenticatorData&&(new Uint8Array(a.response.authenticatorData)[32]&4)===4;return uv?{ok:true}:{ok:false}
+    }catch(e){return {ok:false,err:(e&&e.name)||"error"}}finally{busy=false;grace=Date.now()}}
+  function show(){root.classList.add("locked");root.classList.remove("lockcover");const m=$("#lockMsg");if(m)m.textContent="";const h=$("#lockHelp");if(h)h.hidden=true;
+    const sub=$("#lockSub");if(sub)sub.textContent=NATIVE?"Use your fingerprint, face or phone PIN to open it.":"Use Face ID, Touch ID, Windows Hello or your device PIN to open it.";
+    if(NATIVE)setTimeout(()=>{if(root.classList.contains("locked")&&!busy)unlock()},300);else setTimeout(()=>{const b=$("#lockBtn");if(b&&!TOUCH)b.focus()},50)}
+  function open_(){root.classList.remove("locked","lockcover");awayAt=0;try{sessionStorage.removeItem("ft.awayAt")}catch(e){}grace=Date.now();try{paintTop();FX.theme()}catch(e){}}
+  async function unlock(){if(busy)return;const m=$("#lockMsg");if(m)m.textContent="";const r=await verify(false);
+    if(r.ok){open_();return}
+    if(m)m.textContent=r.err==="nokey"?"This device doesn't have FinTrack's key any more. Tap “Can't unlock?” below.":NATIVE?"Not unlocked. Tap Unlock to try again.":"Not unlocked. Tap Unlock to try again, or “Can't unlock?” below."}
+  /* leaving the app: cover it at once (so the app switcher shows the lock screen); coming back: ask again if it was away long enough */
+  function away(){const c=cfg();if(!c.on||busy||Date.now()-grace<1500||root.classList.contains("locked")||root.classList.contains("lockcover"))return;
+    awayAt=Date.now();try{sessionStorage.setItem("ft.awayAt",String(awayAt))}catch(e){}root.classList.add("lockcover")}
+  function back(){const c=cfg();if(!c.on){root.classList.remove("lockcover");return}if(root.classList.contains("locked"))return;
+    if(busy||Date.now()-grace<1500||!awayAt){root.classList.remove("lockcover");return}
+    const gone=Date.now()-awayAt;awayAt=0;if(gone>=(+c.after||0)*1000)show();else root.classList.remove("lockcover")}
+  /* "Can't unlock?" on the web: sign in with the same Google account, then the lock turns off */
+  async function afterGoogle(r){const m=$("#lockMsg");
+    if(r.error){if(m)m.textContent="Google sign-in didn't finish. Try again.";return}
+    let em="";try{const u=await(await dfetch("https://www.googleapis.com/oauth2/v3/userinfo")).json();em=(u.email||"").toLowerCase()}catch(e){if(m)m.textContent="Couldn't reach Google. Check your connection and try again.";return}
+    const mine=((GA.get().user||{}).email||"").toLowerCase();
+    if(em&&mine&&em===mine){put({on:false,after:cfg().after||60});open_();toast("Signed in. App lock is off; turn it on again in Manage → Settings.");try{render()}catch(e){}}
+    else{GA.patch({token:"",exp:0});if(m)m.textContent="That's a different Google account. Use the account this book belongs to."}}
+  function init(){
+    if(NATIVE)root.classList.add("native");
+    const c=cfg();if(!c.on){root.classList.remove("locked","lockcover")}
+    else if(root.classList.contains("locked")){show();const r=gRedirect;if(r&&r.purpose==="unlock")afterGoogle(r)}
+    check().then(v=>{avail=v;if(U.page==="settings"&&U.setTab==="prefs"&&!$("#sheetRoot").innerHTML){const el=$("#lockCard");if(el)el.outerHTML=lockCard()}});
+    document.addEventListener("visibilitychange",()=>document.hidden?away():back());
+    if(NATIVE&&CP.App&&CP.App.addListener)CP.App.addListener("appStateChange",s=>s&&s.isActive?back():away())}
+  async function toggle(on,el){
+    if(on){const r=await verify(true);
+      if(r.ok){put({on:true,after:cfg().after||60,id:r.id||"",kind:NATIVE?"native":"web"});toast("App lock is on.");render()}
+      else{el.checked=false;toast(r.err==="NotAllowedError"||r.err==="error"?"Not turned on: the device check was cancelled or didn't pass.":"Couldn't turn on the app lock on this device.")}}
+    else{const r=await verify(false);
+      if(r.ok){put({on:false,after:cfg().after||60});toast("App lock is off.");render()}
+      else{el.checked=true;toast("App lock stays on: the device check didn't pass.")}}}
+  function setAfter(v){const c=cfg();c.after=[0,60,300].includes(v)?v:60;put(c);toast(c.after?"Asks again after "+(c.after/60)+" minute"+(c.after>60?"s":"")+" away.":"Asks every time you open FinTrack.")}
+  return {init,unlock,toggle,setAfter,cfg,avail:()=>avail,google(){try{sessionStorage.removeItem("ft.pass")}catch(e){}gWebAuth(false,"unlock")}};
+})();
+function lockCard(){const c=LOCK.cfg(),av=LOCK.avail();const h=`<div class="card" id="lockCard"><h3>Security</h3>`;
+  if(av===null&&!c.on)return h+`<p class="lbl" style="margin:0">Checking this device…</p></div>`;
+  if(!av&&!c.on)return h+`<p class="lbl" style="margin:0">${NATIVE?"The app lock needs a screen lock on this phone. Set a PIN, fingerprint or face unlock in your phone's settings, then come back here.":"This browser can't use Face ID, Touch ID or Windows Hello. Try Safari on iPhone, or Chrome or Edge on a computer."}</p></div>`;
+  return h+`<div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setLock" data-lock ${c.on?"checked":""}><span>Lock FinTrack with ${NATIVE?"fingerprint, face or PIN":"Face ID, fingerprint or PIN"}</span></div>
+  ${c.on?`<div class="field" style="margin-top:10px;max-width:280px"><label for="lockAfter">Ask again</label><select class="inp" id="lockAfter" data-lockafter>${[[0,"Every time I open it"],[60,"After 1 minute away"],[300,"After 5 minutes away"]].map(([v,l])=>`<option value="${v}"${(+c.after)===v?" selected":""}>${l}</option>`).join("")}</select></div>`:""}
+  <p class="lbl" style="margin-bottom:0">${c.on?"FinTrack asks for it when you open the app. Screenshots still work, so you can share a balance with someone.":"When it's on, FinTrack asks for your "+(NATIVE?"fingerprint, face or phone PIN":"Face ID, Touch ID, Windows Hello or device PIN")+" when you open it. Screenshots still work."}</p></div>`}
+
 async function gBoot(){
   if(NATIVE)slInit().catch(()=>{});
   const r=gRedirect;
@@ -2653,15 +2866,45 @@ function submitPot(force){const p=GF;const T=r2(p.target);
   closeSheet();GF=null;markDirty();render();toast("Savings pot saved.");
   if(U.potFromForm&&newId){U.potFromForm=false;F=newForm("savings");F.pot=newId;F.from=p.bank;renderForm()}U.potFromForm=false}
 
+/* ---------- savings calculator: a stand-alone what-if, not linked to the books ---------- */
+const CALC={inc:"",exp:"",target:"",have:""};
+const calcNum=v=>{const x=parseFloat(String(v||"").replace(/[^\d.\-]/g,""));return isFinite(x)?x:0};
+function calcCard(){const f=(k,l,ph,hint)=>`<div class="field"><label for="calc_${k}">${l}${hint?` <span class="muted" style="font-weight:400">${hint}</span>`:""}</label><input class="inp num" id="calc_${k}" data-calc="${k}" inputmode="decimal" autocomplete="off" placeholder="${ph}" value="${esc(CALC[k])}"></div>`;
+  return `<section class="card calc ttwrap"><h3>Savings calculator</h3><p class="lbl" style="margin:-6px 0 10px">A quick what-if. Not linked to your books.</p>
+  <div class="grid2">${f("inc","Monthly income","0.00")}${f("exp","Monthly expenses","0.00")}</div>
+  <div class="grid2" style="margin-top:8px">${f("target","I want to save","0.00")}${f("have","Already saved","0.00","(optional)")}</div>
+  <div class="calcOut">${calcOut()}</div></section>`}
+function calcOut(){const inc=calcNum(CALC.inc),exp=calcNum(CALC.exp),T=calcNum(CALC.target),have=Math.max(0,calcNum(CALC.have)),save=r2(inc-exp);
+  const note=(t,cls)=>`<p class="${cls||"lbl"}" style="margin:12px 0 0">${t}</p>`;
+  if(!(T>0)||!(inc>0||exp>0))return note("Type your monthly income, monthly expenses and how much you want to save. You'll see how many months it takes.");
+  if(have>=T)return note(`You already have ${f2(have)}, which covers your target of ${f2(T)}. 🎉`,"pos");
+  if(save<=0)return note(save<0?`Your expenses are ${f2(-save)} more than your income each month, so savings can't grow. Spend less than you earn to start saving.`:`Your income and expenses are equal, so nothing is left to save. Spend less than you earn to start saving.`,"neg");
+  const need=r2(T-have),months=Math.ceil(need/save-1e-9);
+  if(months>600)return note(`At ${f2(save)} a month this would take more than 50 years. Try saving more each month.`,"neg");
+  const k0=curCycle(),keys=[],vals=[];for(let i=0;i<=months;i++){keys.push(addMonths(k0,i));vals.push(r2(Math.min(have+save*i,have+save*months)))}
+  const y=Math.floor(months/12),m=months%12,dur=(y?y+(y>1?" years":" year"):"")+(y&&m?" ":"")+(m?m+(m>1?" months":" month"):"");
+  const last=vals[months],over=r2(last-T);
+  const chart=lineChart({keys,label:"Savings over time",split:keys.length-1,series:[{name:"Saved",color:"var(--accent2)",vals},{name:"Target",color:"var(--warn)",vals:keys.map(()=>T),thin:true}],
+    tip:i=>[["Saved by then",f2(vals[i]),"var(--accent2)",""],["Target",f2(T),"var(--warn)",""],[vals[i]>=T?"Reached":"Still to go",vals[i]>=T?"✓":f2(r2(T-vals[i])),null,vals[i]>=T?"pos":"",true]]});
+  const rows=keys.slice(1).map((k,i)=>{const v=vals[i+1];return `<tr${v>=T?' class="tot"':""}><td style="white-space:nowrap">${esc(labShort(k))}</td><td class="n">${f2(r2(v-vals[i]))}</td><td class="n">${f2(v)}</td><td class="n ${v>=T?"pos":"muted"}">${v>=T?"Reached":f2(r2(T-v))}</td></tr>`}).join("");
+  return `<div class="hero calchero" style="margin-top:14px"><div><div class="lbl">Time needed</div><div class="big" style="font-size:26px">${dur}</div><div class="lbl">Target reached in <b>${esc(ymLabel(keys[months]))}</b></div></div>
+    <div style="min-width:200px;flex:1"><div class="kv"><span>You save each month</span><b class="num pos">${f2(save)}</b></div><div class="kv"><span>Share of income</span><b class="num">${inc>0?pct(save,inc):"—"}</b></div><div class="kv"><span>Still to save</span><b class="num">${f2(need)}</b></div>${over>0.004?`<div class="kv"><span>Saved by then</span><b class="num">${f2(last)}</b></div>`:""}</div></div>
+  <div style="margin-top:10px">${chart}</div>
+  <details class="calcm" style="margin-top:8px"${months<=12?" open":""}><summary class="link" style="cursor:pointer">Month by month (${months})</summary><div class="tw" style="max-height:260px;overflow:auto;margin-top:6px"><table class="led" style="min-width:0"><thead><tr><th>Month</th><th class="n">Added</th><th class="n">Total</th><th class="n">To go</th></tr></thead><tbody>${rows}</tbody></table></div></details>`}
+document.addEventListener("input",e=>{const t=e.target;if(!t.dataset||t.dataset.calc==null)return;CALC[t.dataset.calc]=t.value;
+  const html=calcOut();document.querySelectorAll(".calcOut").forEach(o=>{const d=o.querySelector("details.calcm");const open=d?d.open:null;o.innerHTML=html;const n=o.querySelector("details.calcm");if(n&&open!=null)n.open=open})});
+
 /* ---------- budget limit ---------- */
 function limitInfo(k){const ks=Object.keys(S.limits||{}).filter(x=>x<=k).sort();const key=ks[ks.length-1];return key?{v:r2(S.limits[key]),from:key,own:key===k}:{v:0,from:null,own:false}}
 const budFilter=k=>{const f=inMonth(k);return e=>f(e)&&!potFunded(e)};
 function allocInfo(k){const cats=r2(S.accounts.filter(a=>a.kind==="expense"&&!a.archived).reduce((t,a)=>t+(+a.budget||0),0));const sav=r2(pots().reduce((t,a)=>t+potAlloc(a,k),0));return {cats,sav,total:r2(cats+sav)}}
-function limitBox(k,full){const L=limitInfo(k),al=allocInfo(k);
-  if(!(L.v>0))return full?`<p class="lbl" style="margin:6px 0 0">No limit set. Allocated ${f2(al.total)} (categories ${f2(al.cats)} + savings ${f2(al.sav)}).</p>`:"";
-  const left=r2(L.v-al.total),p=al.total/L.v;
-  return `<div class="top2" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px"><span>Limit <span class="num">${f2(L.v)}</span></span>${left<0?`<span class="chip bad">Over by ${f2(-left)}</span>`:`<span class="chip ok">${f2(left)} left to allocate</span>`}</div><div class="lbl" style="margin-top:2px">Allocated <span class="num">${f2(al.total)}</span></div>${barHtml(p)}
-  <p class="lbl" style="margin:4px 0 0">Categories ${f2(al.cats)} + savings pots ${f2(al.sav)}.${L.from&&!L.own?" Limit carried forward from "+ymLabel(L.from)+".":""}</p>`}
+/* what has been used from the month's limit: expenses only (spending paid from a savings pot is left out, as in budgets) */
+function limitUse(k){const ex=sumKind(totals(budFilter(k)),"expense");return {ex,used:ex}}
+function limitBox(k,full){const L=limitInfo(k),al=allocInfo(k),u=limitUse(k);
+  if(!(L.v>0))return full?`<p class="lbl" style="margin:6px 0 0">No limit set. Spent so far <span class="num">${f2(u.ex)}</span>. Planned ${f2(al.total)} (categories ${f2(al.cats)} + savings ${f2(al.sav)}).</p>`:"";
+  const left=r2(L.v-u.ex),p=u.ex/L.v,pl=r2(L.v-al.total);
+  return `<div class="top2" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px"><span>Spent <span class="num">${f2(u.ex)}</span> <span class="muted">of ${f2(L.v)}</span></span>${left<0?`<span class="chip bad">Over by ${f2(-left)}</span>`:`<span class="chip ok">${f2(left)} left to spend</span>`}</div>${barHtml(p).replace('class="bar"',`class="bar limbar" role="img" aria-label="Spent ${f2(u.ex)} of ${f2(L.v)}"`)}
+  <p class="lbl" style="margin:4px 0 0">Planned ${f2(al.total)} (categories ${f2(al.cats)} + savings ${f2(al.sav)}) · ${pl<0?`<span class="neg">${f2(-pl)} more than the limit</span>`:`${f2(pl)} not planned yet`}.${L.from&&!L.own?" Limit carried forward from "+ymLabel(L.from)+".":""}</p>`}
 
 /* ---------- generic line chart (solid = actual, dashed = projected) ---------- */
 function niceStep(span){const p=Math.pow(10,Math.floor(Math.log10(span||1)));const m=span/p;return ([1,2,2.5,5,10].find(s=>s>=m)||10)*p}
@@ -2853,7 +3096,7 @@ function settingsCard(){const ms=mStart(),k=curCycle();
   <div class="field" style="margin-top:10px"><label for="setCountry">Country</label><select class="inp" id="setCountry" data-setcountry>${countryOpts(S.country)}</select></div>
   <p class="lbl">Only your country is shared with FinTrack's owner in the user list, never your city or location.</p></div>
   <div class="card"><h3>My month</h3><div class="field" style="max-width:220px"><label for="setMs">My month starts on day</label><input class="inp num" id="setMs" inputmode="numeric" data-setms value="${ms}"></div>
-  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div><div class="card"><h3>Help</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setTips" data-tips ${tipsOn()?"checked":""}><span>Show ⓘ tips on cards and fields</span></div><p class="lbl" style="margin-bottom:0">They show for your first 30 days, then hide. Turn them back on here any time.</p></div>${TOUCH?`<div class="card"><h3>Feedback</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setShake" data-shake ${shakeOn()?"checked":""}><span>Shake the phone to report a problem</span></div><p class="lbl" style="margin-bottom:0">Opens the feedback form with “Problem” picked and the screen you were on filled in.</p></div>`:""}</div>`}
+  <p class="lbl">Paid on the 5th? Set 5. Each month is then named after the month it starts in: <b>${esc(ymLabel(k))} runs ${esc(cycRangeText(k))}</b>. Budgets, spending, statements, the cheque target and projections all follow it. The calendar stays a normal calendar. Months shorter than your day start on their last day.</p></div>${lockCard()}<div class="card"><h3>Look</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setFx" data-fx ${FX.on()?"checked":""}><span>Moving background</span></div><p class="lbl" style="margin-bottom:0">Soft colours drift and faint strings float behind the cards, drawn to your ${TOUCH?"finger":"pointer"}. Turn it off to save battery.${FX.on()&&FX.still()?" Your device is set to reduce motion, so it stays still.":""}</p></div><div class="card"><h3>Help</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setTips" data-tips ${tipsOn()?"checked":""}><span>Show ⓘ tips on cards and fields</span></div><p class="lbl" style="margin-bottom:0">They show for your first 30 days, then hide. Turn them back on here any time.</p></div>${TOUCH?`<div class="card"><h3>Feedback</h3><div class="wl" style="border:0;padding:0"><input type="checkbox" class="sw" id="setShake" data-shake ${shakeOn()?"checked":""}><span>Shake the phone to report a problem</span></div><p class="lbl" style="margin-bottom:0">Opens the feedback form with “Problem” picked and the screen you were on filled in.</p></div>`:""}</div>`}
 
 /* ---------- "Say it": turn a spoken or typed sentence into a draft entry (on the phone, no AI) ---------- */
 const NUMW={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
@@ -3060,7 +3303,7 @@ let confirmArm=null;
 function armed(id){if(confirmArm===id){confirmArm=null;return true}confirmArm=id;const b=document.getElementById(id);if(b){b.textContent="Tap again to confirm"}setTimeout(()=>{if(confirmArm===id)confirmArm=null},4000);return false}
 const ACT={
   go(el){U.page=el.dataset.p;if(el.dataset.t){if(U.page==="settings")U.setTab=el.dataset.t;if(U.page==="ledgers"){U.ledTab=el.dataset.t;U.ledAcc=null}}if(U.page==="ledgers"&&!el.dataset.t&&el.closest(".nav"))U.ledAcc=null;render();scrollTo(0,0)},
-  theme(el){const n=el.dataset.t;if(n==="auto"){document.documentElement.removeAttribute("data-theme");try{localStorage.removeItem("tapledger.theme")}catch(e){}}else{document.documentElement.setAttribute("data-theme",n);ls.set("tapledger.theme",n)}paintTop();render()},
+  theme(el){const n=el.dataset.t;if(n==="auto"){document.documentElement.removeAttribute("data-theme");try{localStorage.removeItem("tapledger.theme")}catch(e){}}else{document.documentElement.setAttribute("data-theme",n);ls.set("tapledger.theme",n)}paintTop();render();FX.theme()},
   updLater(){closeSheet();toast("OK. We'll remind you next time you open FinTrack.")},
   updNow(el,ev){closeSheet();toast("Downloading the update…");setTimeout(()=>{location.href=el.getAttribute("href")},150)},
   updCheckNow(){updCheck(true)},
@@ -3096,6 +3339,7 @@ const ACT={
   ledTab(el){U.ledTab=el.dataset.t;render()},
   stmtMode(el){U.stmtMode=el.dataset.t;render()},
   plansTab(el){U.plansTab=el.dataset.t;render()},
+  lockUnlock(){LOCK.unlock()},lockHelp(){const h=$("#lockHelp");if(h)h.hidden=!h.hidden},lockGoogle(){LOCK.google()},
   setTab(el){U.setTab=el.dataset.t;render()},
   postSched(el){postSched(el.dataset.id)},
   editSched(el){editSched(el.dataset.id)},
@@ -3291,7 +3535,7 @@ addEventListener("scroll",()=>document.querySelectorAll(".ttwrap").forEach(hideT
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target&&ev.target.id==="sp-new"){ev.preventDefault();ACT.spAdd();return}if(ev.key==="Enter"&&ev.target&&ev.target.id==="f-say"){ev.preventDefault();ACT.sayGo();return}if(ev.key==="Escape"&&$("#sheetRoot").innerHTML&&!WF){closeSheet();SF=null;AF=null;GF=null;render()}});
 addEventListener("scroll",()=>$("#top").classList.toggle("scrolled",scrollY>4),{passive:true});
 addEventListener("beforeunload",()=>{if(dirty&&!S.demo){storeNow();dirty=false;if(signedIn())GA.patch({pending:true})}});
-if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render()});
+if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener&&matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{paintTop();render();FX.theme()});
 
 /* ---------- phone lifecycle ---------- */
 document.addEventListener("visibilitychange",()=>{
@@ -3302,6 +3546,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
 
 /* ---------- boot ---------- */
 gRedirect=NATIVE?null:gReadRedirect();
+LOCK.init();
 /* example data: kept for people already looking at it (welcomed before, nothing saved yet); new users choose in the welcome step */
 if(ls.get("tapledger.example")==null&&ls.get("tapledger.welcomed")==="1"&&!hasBook())ls.set("tapledger.example","1");
 S=ls.get("tapledger.example")==="1"?exampleBook():blankBook();fixDash();dirty=false;mode="loading";paintTop();render();
