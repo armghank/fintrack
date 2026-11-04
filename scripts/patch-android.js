@@ -2,6 +2,8 @@
 // - version number from the build (so every new APK installs as an update)
 // - signing with your private key from GitHub secrets (same key = updates keep your data)
 // - storage permission for older Android versions (to save Excel files into Documents/FinTrack)
+// - app lock: fingerprint/face permission; Android's own app-data backup is off, so the book can't be copied off the phone that way
+//   (your backups go to your Google Drive and Documents/FinTrack instead)
 const fs = require("fs");
 
 function patch(file, edits) {
@@ -103,14 +105,15 @@ task clean(type: Delete) {`,
 patch("android/app/src/main/AndroidManifest.xml", [
   [
     `    <application\n        android:allowBackup="true"`,
-    `    <application\n        android:requestLegacyExternalStorage="true"\n        android:allowBackup="true"`,
+    `    <application\n        android:requestLegacyExternalStorage="true"\n        android:allowBackup="false"`,
     "requestLegacyExternalStorage",
   ],
   [
     `    <uses-permission android:name="android.permission.INTERNET" />`,
     `    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />`,
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />`,
     "WRITE_EXTERNAL_STORAGE",
   ],
 ]);
