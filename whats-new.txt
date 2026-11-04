@@ -1,4 +1,1 @@
-• App lock: open FinTrack with your fingerprint, face or PIN. Turn it on in Manage → Settings → Security. Screenshots still work
-• Savings calculator on Home and in Plans: type your income, expenses and target, and see how many months it takes, with a graph and a month-by-month list
-• The budget bar now shows how much of your monthly limit you've spent and how much is left to spend
-• A livelier look: soft colours drift and faint strings float behind the cards and follow your finger or pointer. Turn it off in Manage → Settings → Look
+• App lock now asks for your fingerprint, face or PIN by itself as soon as you open FinTrack or come back to it. No need to tap Unlock first
