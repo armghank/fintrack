@@ -1,1 +1,3 @@
-• App lock now asks for your fingerprint, face or PIN by itself as soon as you open FinTrack or come back to it. No need to tap Unlock first
+• Budget card on Home is simpler: one bar for your monthly limit, with what's left to spend
+• Credit cards can now have a credit limit. See how much you've used and what's still available, with a bar that goes from green to red, on Home and on the card's page
+• When a card spend would take you over its limit, you get a warning before you save. You can still record it
