@@ -292,6 +292,10 @@ button{cursor:pointer}
 .row .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .t small{color:var(--muted);font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .r{text-align:right;white-space:nowrap}
+.row.limrow{flex-wrap:wrap;row-gap:6px}.row.limrow .t small{white-space:normal}.row .r small{display:block;font-size:12px;color:var(--muted);margin-top:1px}.row .r small.neg{color:var(--neg)}
+.row .cbar{flex:0 0 calc(100% - 19px);margin:0 0 0 19px;height:5px}
+.cardlim{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.cardhint{margin-top:8px}.cardhint:empty{display:none}.warnln{color:var(--warn);font-weight:600}
 .grp{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:16px 2px 6px;display:flex;justify-content:space-between}
 /* charts */
 .donut{display:grid;grid-template-columns:132px 1fr;gap:14px;align-items:center}
@@ -837,6 +841,14 @@ const iso=d=>d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
 const today=()=>iso(new Date());
 /* what you owe reads as owed: red "Payable", green "In credit" when overpaid, plain "Settled" at zero */
 const liabTag=b=>b>0.004?["neg","Payable"]:b<-0.004?["pos","In credit"]:["","Settled"];
+/* credit card limit: a note on the card, never an entry, so balances, trial balance and net worth don't change.
+   used = what you owe; available = limit − owed (paying in advance adds to it, as the bank does) */
+const cardLim=a=>{const L=a&&a.grp==="card"?+a.limit||0:0;if(!(L>0))return null;const b=bal(a.id),used=Math.max(0,b);return {lim:L,owed:b,used,avail:r2(L-b),p:used/L,over:b-L>0.004}};
+const limPct=cl=>{const v=cl.p*100;return (v>0&&v<1?"<1":Math.round(v))+"%"};
+const cardBar=cl=>`<span class="bar cbar" role="img" aria-label="Used ${limPct(cl)} of the ${f2(cl.lim)} limit"><i style="width:${(Math.min(cl.p,1)*100).toFixed(1)}%;background:${barCol(cl.p)}"></i></span>`;
+function cardLimBox(a){const cl=cardLim(a);if(!cl)return"";
+  return `<div class="cardlim"><div class="top2" style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;flex-wrap:wrap"><span>Used <span class="num">${f2(cl.used)}</span> <span class="muted">of ${f2(cl.lim)} limit · ${limPct(cl)}</span></span>${cl.over?`<span class="chip bad">Over limit by ${f2(-cl.avail)}</span>`:`<span class="chip ok">${f2(cl.avail)} available</span>`}</div>${barHtml(cl.p).replace('class="bar"',`class="bar limbar" role="img" aria-label="Used ${limPct(cl)} of the ${f2(cl.lim)} limit"`)}
+  <p class="lbl" style="margin:6px 0 0">${cl.owed<-0.004?`Includes ${f2(-cl.owed)} you paid in advance. `:""}Worked out from what's recorded here. Your bank's figure can differ by pending holds, fees or interest you haven't recorded yet.</p></div>`}
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* amounts follow the book currency's decimals (AED 2, KWD/BHD/OMR 3, JPY 0) */
 let DEC=2,FACT=100;
@@ -924,7 +936,7 @@ function exampleBook(){
   const nbd=add("Emirates NBD Current","bank",{color:PAL[0]}),sav=add("ADCB Savings","bank",{color:PAL[1]}),cash=add("Cash in hand","cash",{color:PAL[2]});
   const card=add("Credit card","card",{color:PAL[6]}),car=add("Car loan","loan",{color:PAL[4]});
   const potV=add("Visa renewal","pot",{color:PAL[8]}),potC=add("Car","pot",{color:PAL[3]});
-  A.find(a=>a.id===potV).goal={mode:"fixed",target:8000,date:"2028-03-15",rep:true,every:2,unit:"year",bank:nbd,start:"2026-08-01",monthly:0};
+  A.find(a=>a.id===card).limit=15000;A.find(a=>a.id===potV).goal={mode:"fixed",target:8000,date:"2028-03-15",rep:true,every:2,unit:"year",bank:nbd,start:"2026-08-01",monthly:0};
   A.find(a=>a.id===potC).goal={mode:"flex",target:40000,date:"",rep:false,every:1,unit:"month",bank:sav,start:"2026-08-01",monthly:1000};
   const bilal=add("Bilal","party",{color:PAL[5]}),hassan=add("Hassan","party",{color:PAL[9]});
   const sal=add("Salary","income",{color:PAL[1]}),fre=add("Freelance","income",{color:PAL[5]});add("Other income","income",{color:PAL[7]});
@@ -1345,7 +1357,7 @@ const HELP=[
   show:[{go:()=>hGo("settings","prefs"),el:()=>hLab("setCur"),t:"Currency",b:"Pick the currency your amounts are in. It only changes the label, never the numbers."},
         {el:()=>hLab("setCountry"),t:"Country",b:"Only your country is shared with FinTrack's owner, never your location."},
         {el:()=>hLab("setMs"),t:"Your month",b:"Paid on the 25th? Set 25 and every month in FinTrack runs payday to payday."}]},
- {id:"accounts",title:"Add your accounts",steps:["Go to <b>Manage → Accounts & categories</b>.","Under Bank accounts, Cash or Credit cards, tap <b>+ Add</b>.","Type a name. If it already has money in it (or you owe on the card), enter the <b>opening balance</b> and its date.","Tap <b>Save</b>. It now shows on Home and in every form."],
+ {id:"accounts",title:"Add your accounts",steps:["Go to <b>Manage → Accounts & categories</b>.","Under Bank accounts, Cash or Credit cards, tap <b>+ Add</b>.","Type a name. If it already has money in it (or you owe on the card), enter the <b>opening balance</b> and its date. For a credit card you can also add its <b>credit limit</b>.","Tap <b>Save</b>. It now shows on Home and in every form."],
   show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('[data-act="editAcc"][data-g="bank"]'),t:"Add a bank account",b:"Tap + Add under Bank accounts. Cash and Credit cards work the same way."},
         {go:hTap('[data-act="editAcc"][data-g="bank"]'),el:()=>hLab("a-name"),t:"Name it",b:"For example “Emirates NBD” or “Salary account”."},
         {el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"What the account holds today (or what you owe on a card), and the date of that figure."},
@@ -1394,7 +1406,7 @@ const HELP=[
   show:[S_ENTRY("journal","Journal","Full double entry for unusual cases."),{el:()=>hQ(".sheet .grid3")||hQ(".sheet select[data-jl]"),t:"Lines",b:"Each line: an account and its debit or credit. Totals must match."}]},
  {id:"opening",pro:true,title:"Opening balances",steps:["Open the account in <b>Manage → Accounts & categories</b>.","Set the <b>opening balance</b> and its <b>As of</b> date.","The date must be on or before the account's first entry, so it never falls between your entries. FinTrack shows how the balance will change before you confirm."],
   show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. The date can't fall between existing entries."}]},
- {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
+ {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Add a card's <b>credit limit</b> to see how much you've used and what's available, with a bar that goes from green to red as you use more.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
   show:[{go:()=>hGo("home"),el:()=>hCard("accounts"),t:"Accounts",b:"Cards and loans you owe on show in red as Payable."}]},
  {id:"lock",title:"Lock the app",steps:["Open <b>Manage → Settings</b>.","Under <b>Security</b>, switch on <b>Lock FinTrack</b> and confirm with your fingerprint, face or PIN.","Choose when it asks again: every time you open it, or after 1 or 5 minutes away. The fingerprint or face check pops up by itself when you open FinTrack.","Can't unlock? The same prompt accepts your device PIN. On iPhone or a computer you can also sign in with Google again, which turns the lock off."],
   show:[{go:()=>hGo("settings","prefs"),el:()=>{const i=hQ("#setLock")||hQ("#lockCard");return i?i.closest(".card"):hQ("#main .card")},t:"Security",b:"Turn the app lock on or off and choose when it asks again."}]},
@@ -1422,7 +1434,7 @@ const FAQ=[
 ];
 const TIPS={
  hold:["What I hold","Your bank and cash together. “Available to use” leaves out money set aside in savings pots. Tap Check balances to match it with your real bank.","check"],
- accounts:["Accounts","Every bank, cash, card and loan account with its balance. Red means money you owe.","accounts"],
+ accounts:["Accounts","Every bank, cash, card and loan account with its balance. Red means money you owe. Cards with a credit limit show how much of it is used, with a bar that goes from green to red.","accounts"],
  spend:["Spending","Where your money went this month, by category. Hover or tap a line for details.","expense"],
  budget:["Budget","How much of each monthly limit you've used. Green is fine, amber is close, red is over.","budget"],
  parties:["Receivables & payables","Who owes you, and who you owe. Record lending and paying back with + → Person.","people"],
@@ -1580,7 +1592,10 @@ const W={
   },
   accounts(){
     const t=totals();const nw=r2(sumKind(t,"asset")-sumKind(t,"liability"));
-    const rows=moneyAccs().concat(byGrp("loan")).map(a=>{const b=held(a.id),ps=potSum(a.id),hp=Math.abs(ps)>0.004;return `<button class="row" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b><small>${hp?"Available "+f2(bal(a.id))+" · in pots "+f2(ps):a.kind==="liability"?GL[a.grp].label+" · "+liabTag(b)[1]:GL[a.grp].label}</small></span><span class="r">${money(a.kind==="liability"?-b:b,a.kind==="liability"?liabTag(b)[0]:"")}</span></button>`}).join("");
+    const rows=moneyAccs().concat(byGrp("loan")).map(a=>{const b=held(a.id),ps=potSum(a.id),hp=Math.abs(ps)>0.004,cl=cardLim(a);
+      /* a card with a limit: what's available on the left, how much of the limit is used under what you owe, and a green-to-red bar like the budgets */
+      const sub=hp?"Available "+f2(bal(a.id))+" · in pots "+f2(ps):cl?(cl.over?`<span class="neg">${f2(-cl.avail)} over limit</span>`:(b<-0.004?"In credit · ":"")+f2(cl.avail)+" available"):a.kind==="liability"?GL[a.grp].label+" · "+liabTag(b)[1]:GL[a.grp].label;
+      return `<button class="row${cl?" limrow":""}" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b><small>${sub}</small></span><span class="r">${money(a.kind==="liability"?-b:b,a.kind==="liability"?liabTag(b)[0]:"")}${cl?`<small${cl.over?' class="neg"':""}>Used ${limPct(cl)} of ${f2(cl.lim)}</small>`:""}</span>${cl?cardBar(cl):""}</button>`}).join("");
     return `<section class="card"><h3>Accounts <span class="sp">Net worth ${money(nw)}</span></h3><div class="rows">${rows||'<p class="empty">Add your bank, cash and card accounts in Manage.</p>'}</div></section>`;
   },
   spend(){
@@ -1604,10 +1619,11 @@ const W={
     const rows=cats.map(a=>{const s=spent[a.id];tb+=a.budget;ts+=s;const p=s/a.budget;
       return `<div class="bud tt" tabindex="0" data-k="${a.id}"${budTip(a,s)}><div class="top2"><span>${esc(a.name)}</span><span class="num ${p>1?"neg":""}">${f2(s)} <span class="muted">/ ${f2(a.budget)}</span></span></div>${barHtml(p)}${p>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(s-a.budget)}</div>`:""}</div>`}).join("");
     tb=r2(tb);ts=r2(ts);const tp=tb?ts/tb:0;
-    const total=tb?`<div class="bud tt budtot" tabindex="0"${ttAttr("All budgets · "+ymLabel(k),[["Spent",f2(ts),null,""],["Budgets",f2(tb),null,""],["Used",pct(ts,tb),null,ts>tb?"neg":""],[ts>tb?"Over":"Left",f2(Math.abs(tb-ts)),null,ts>tb?"neg":"pos",true]])}><div class="top2"><span><b>${L.v>0?"Budgeted categories":"Total spent"}</b></span><span class="num ${tp>1?"neg":""}"><b>${f2(ts)}</b> <span class="muted">/ ${f2(tb)}</span></span></div>${barHtml(tp)}${tp>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(ts-tb)}</div>`:""}</div>`:"";
+    const total=tb&&!(L.v>0)?`<div class="bud tt budtot" tabindex="0"${ttAttr("All budgets · "+ymLabel(k),[["Spent",f2(ts),null,""],["Budgets",f2(tb),null,""],["Used",pct(ts,tb),null,ts>tb?"neg":""],[ts>tb?"Over":"Left",f2(Math.abs(tb-ts)),null,ts>tb?"neg":"pos",true]])}><div class="top2"><span><b>Total spent</b></span><span class="num ${tp>1?"neg":""}"><b>${f2(ts)}</b> <span class="muted">/ ${f2(tb)}</span></span></div>${barHtml(tp)}${tp>1?`<div class="lbl neg" style="margin-top:2px">Over by ${f2(ts-tb)}</div>`:""}</div>`:"";
     const lim=L.v>0?`<div class="limbox">${limitBox(k,false)}</div>`:"";
-    const hl=L.v>0?r2(L.v-limitUse(k).used):r2(tb-ts);
-    return `<section class="card ttg ttwrap"><h3>Budget · ${ymLabel(k)}<span class="sp">${money(hl,hl<0?"neg":"")} left</span></h3>${lim}${total}${rows}</section>`;
+    /* with a monthly limit, its bar and "left to spend" chip say it all; without one, the total bar and the heading show what's left */
+    const hl=r2(tb-ts),hd=L.v>0?"":`<span class="sp">${money(hl,hl<0?"neg":"")} left</span>`;
+    return `<section class="card ttg ttwrap"><h3>Budget · ${ymLabel(k)}${hd}</h3>${lim}${total}${rows}</section>`;
   },
   goals(){const ps=pots();const h=`<h3>Savings goals<span class="sp"><button class="link" data-act="goSavings">All goals</button></span></h3>`;
     if(!ps.length)return `<section class="card">${h}<p class="empty">Set money aside for a visa, a car or a trip. Make a pot in Plans → Savings.</p></section>`;
@@ -1680,7 +1696,7 @@ function pLedgers(){
 function lAccounts(){
   return GROUPS.map(g=>{const list=g.k==="income"||g.k==="expense"?catsOf(g.k):byGrp(g.k);if(!list.length)return"";
     const sum=r2(list.reduce((s,a)=>s+bal(a.id),0));
-    return `<div class="grp"><span>${g.label}</span><span class="num">${f2(sum)}</span></div><div class="card" style="padding-block:2px"><div class="rows">${list.map(a=>{const b=bal(a.id);return `<button class="row" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.grp==="party"&&Math.abs(b)>0.004?`<small>${b>0?"Owes you":"You owe"}</small>`:a.kind==="liability"?`<small class="${liabTag(b)[0]}">${liabTag(b)[1]}</small>`:""}</span><span class="r">${a.kind==="liability"?money(Math.abs(b),liabTag(b)[0]):money(b,b<0?"neg":"")}</span><span class="muted">›</span></button>`}).join("")}</div></div>`}).join("");
+    return `<div class="grp"><span>${g.label}</span><span class="num">${f2(sum)}</span></div><div class="card" style="padding-block:2px"><div class="rows">${list.map(a=>{const b=bal(a.id);return `<button class="row" data-act="openLed" data-id="${a.id}">${dot(a.color)}<span class="t"><b>${esc(a.name)}</b>${a.grp==="party"&&Math.abs(b)>0.004?`<small>${b>0?"Owes you":"You owe"}</small>`:a.kind==="liability"?`<small><span class="${liabTag(b)[0]}">${liabTag(b)[1]}</span>${(cl=>cl?(cl.over?` · <span class="neg">${f2(-cl.avail)} over limit</span>`:` · ${f2(cl.avail)} available`):"")(cardLim(a))}</small>`:""}</span><span class="r">${a.kind==="liability"?money(Math.abs(b),liabTag(b)[0]):money(b,b<0?"neg":"")}</span><span class="muted">›</span></button>`}).join("")}</div></div>`}).join("");
 }
 function monthOptions(sel){const set=new Set(S.entries.map(e=>cycleOf(e.date)));if(sel&&sel!=="all")set.add(sel);set.add(curCycle());const ks=[...set].sort().reverse();return `<option value="all"${sel==="all"?" selected":""}>All dates</option>`+ks.map(k=>`<option value="${k}"${sel===k?" selected":""}>${esc(cycLabel(k))}</option>`).join("")}
 function pAccountLedger(a){
@@ -1695,7 +1711,7 @@ function pAccountLedger(a){
   const LT=a.kind==="liability"?liabTag(b):null;const note=a.grp==="party"?(b>0?"Owes you":b<0?"You owe":"Settled"):LT?GL[a.grp].label+" · "+LT[1]:GL[a.grp].label;
   return `<div class="ph"><button class="btn sm" data-act="ledBack">‹ Back</button><h1 style="margin-left:4px">${esc(a.name)}</h1><button class="btn sm" data-act="dlStmt" data-id="${a.id}">Excel ↓</button></div>
   <div class="card"><div class="hero"><div><div class="lbl">Balance today · ${esc(note)}</div><div class="big ${LT?LT[0]:b<0?"neg":""}">${money(LT?Math.abs(b):b)}</div>${(a.grp==="bank"||a.grp==="cash")&&Math.abs(potSum(a.id))>0.004?`<div class="lbl">Available to use. Your bank shows ${f2(held(a.id))}, including ${f2(potSum(a.id))} in savings pots.</div>`:a.grp==="pot"?`<div class="lbl">Savings pot · kept in ${esc(accName((a.goal||{}).bank))}</div>`:""}</div>
-  <div class="field"><label for="ledMonth">Period</label><select class="inp" id="ledMonth" data-chg="ledMonth">${monthOptions(k)}</select></div></div></div>
+  <div class="field"><label for="ledMonth">Period</label><select class="inp" id="ledMonth" data-chg="ledMonth">${monthOptions(k)}</select></div></div>${cardLimBox(a)}</div>
   <div class="card" style="margin-top:12px"><div class="tw"><table class="led"><thead><tr><th>Date</th><th>Particulars</th><th class="n">Debit</th><th class="n">Credit</th><th class="n">Balance</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">No entries in this period.</td></tr>'}${bf}${rows?`<tr class="tot"><td></td><td>Totals</td><td class="n">${f2(tdr)}</td><td class="n">${f2(tcr)}</td><td class="n">${f2(run)}</td></tr>`:""}</tbody></table></div></div>
   <p class="lbl" style="margin:10px 2px">Newest first. Tap a row to edit or delete that entry. Excel statements download oldest first.</p>`;
 }
@@ -1914,7 +1930,7 @@ function renderForm(){
   openSheet(head(F.editId?"Edit entry":"New entry")+
   `<form id="eform" novalidate>${sayBox()}<div class="seg">${TYPES.filter(([k])=>isPro()||LITE_T.has(k)||F.type===k).map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
   ${F.type!=="journal"?`<label class="amt"><span>${esc(S.currency)}</span><input id="f-amt" data-f="amount" inputmode="decimal" placeholder="0.00" value="${esc(F.amount)}" autocomplete="off" aria-label="Amount"></label>`:""}
-  ${body}
+  ${body}<div class="lbl cardhint" id="fcard" aria-live="polite">${cardHint()}</div>
   <div class="grid2" style="margin-top:12px"><div class="field"><label for="f-date">Date</label><input class="inp" type="date" id="f-date" data-f="date" value="${esc(F.date)}"></div><div class="field"><label for="f-memo">Note</label><input class="inp" id="f-memo" data-f="memo" value="${esc(F.memo)}" placeholder="Optional"></div></div>
   ${F.type==="expense"||F.type==="income"||F.type==="journal"?`<div class="wl" style="margin-top:8px;border:0"><input type="checkbox" class="sw" id="f-oneoff" data-oneoff ${F.oneoff?"checked":""}><span>One-off <span class="lbl">· leave it out of projections (e.g. a one-time phone purchase)</span></span></div>`:""}
   <div class="preview" id="fprev">${pv||'<span class="muted">Pick the details to see the double entry.</span>'}</div>
@@ -1922,7 +1938,15 @@ function renderForm(){
   <div class="acts">${F.editId?`<button type="button" class="btn danger" data-act="delEntry" id="delBtn">Delete</button><span style="flex:1"></span>`:""}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn pri">${F.editId?"Update":"Record"}</button></div></form>`);
   if(F.type!=="journal"&&!F.editId&&!F.amount){const i=$("#f-amt");if(i)i.focus()}
 }
-function updatePreview(){const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
+/* card limit hint in the form: what's available on the card and after this entry; past the limit it warns but still lets you record */
+function cardHint(){if(!F||F.type==="savings")return"";const lines=formLines(),orig=F.editId?S.entries.find(x=>x.id===F.editId):null,out=[];
+  for(const id of new Set(lines.map(l=>l.a))){const a=acc(id),cl=cardLim(a);if(!cl)continue;
+    const now=r2(cl.lim-cl.owed-(orig?lineNet(orig,id):0)),d=r2(lines.reduce((t,l)=>l.a===id?t+(+l.cr||0)-(+l.dr||0):t,0)),after=r2(now-d);
+    out.push(d>0.004&&after<-0.004?`<span class="warnln">After this, ${esc(a.name)} is ${f2(-after)} over its ${f2(cl.lim)} limit. You can still record it.</span>`
+      :Math.abs(d)<0.005?(now<-0.004?`<span class="warnln">${esc(a.name)} is ${f2(-now)} over its ${f2(cl.lim)} limit.</span>`:`${esc(a.name)}: ${f2(now)} available of ${f2(cl.lim)}`)
+      :`${esc(a.name)}: ${f2(now)} available · ${f2(after)} after this`)}
+  return out.join("<br>")}
+function updatePreview(){const fc=$("#fcard");if(fc)fc.innerHTML=cardHint();const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
   if(F.type==="journal"){const d=r2(lines.reduce((s,l)=>s+l.dr,0)),c=r2(lines.reduce((s,l)=>s+l.cr,0));p.innerHTML+=`<br><span class="${Math.abs(d-c)<0.005?"pos":"e"}">Dr ${f2(d)} · Cr ${f2(c)}${Math.abs(d-c)<0.005?" · balanced":" · difference "+f2(d-c)}</span>`}}
 function submitForm(){
   let lines=formLines();const err=validate(lines);if(err){F.err=err;renderForm();return}
@@ -2185,6 +2209,7 @@ function renderAcc(){
   ${canOpen?`<div class="grid2" style="margin-top:12px"><div class="field"><label for="a-open">Opening balance${a.grp==="party"?" (they owe you; minus if you owe them)":a.kind==="liability"?" (amount owed)":""}</label><input class="inp num" id="a-open" inputmode="decimal" data-a="opening" value="${esc(a.opening)}" placeholder="0.00"></div>
     <div class="field"><label for="a-odate">As of</label><input class="inp" type="date" id="a-odate" data-a="openDate" value="${esc(a.openDate)}" max="${first||today()}"></div></div>
     <p class="lbl">${a.id?(first?`Must be on or before this account's first entry (${dLong(first)}). Set 0 to remove it.`:"Set 0 to remove it."):"Posted as an opening entry against Opening balance on this date."}</p>`:""}
+  ${a.grp==="card"?`<div class="field" style="margin-top:12px"><label for="a-lim">Credit limit (${esc(S.currency)})</label><input class="inp num" id="a-lim" inputmode="decimal" data-a="limit" value="${esc(a.limit==null?"":String(a.limit))}" placeholder="Optional"></div><p class="lbl">Shows how much of the limit you've used and what's still available. It's only a note, so your balances don't change.</p>`:""}
   ${a.id?`<div class="wl" style="margin-top:10px"><input type="checkbox" class="sw" id="a-arch" data-a="archived" ${a.archived?"checked":""}><span>Hide from forms and dashboard</span></div>`:""}
   ${AF.err?`<p class="err" role="alert">${esc(AF.err)}</p>`:""}
   <div class="acts" style="margin-top:14px">${a.id?`<button type="button" class="btn danger" data-act="delAcc" id="delAccBtn" ${used?"disabled title=\"Has entries. Hide it instead.\"":""}>Delete</button><span style="flex:1"></span>`:""}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn pri">Save</button></div>
@@ -2192,12 +2217,13 @@ function renderAcc(){
 }
 function submitAcc(force){
   const a=AF;if(!a.name.trim()){a.err="Type a name.";renderAcc();return}
+  const limS=a.grp==="card"?String(a.limit==null?"":a.limit).replace(/,/g,"").trim():"";if(limS!==""&&!(+limS>=0)){a.err="Type the credit limit as a number, or leave it blank.";renderAcc();return}
   const canOpen=["asset","liability"].includes(a.kind)&&a.grp!=="equity";const op=r2(a.opening);
   const old=a.id?acc(a.id):null;
   if(canOpen&&op){const e=openingCheck(old,op,a.openDate);if(e){a.err=e;renderAcc();return}}
   const changed=old&&canOpen&&(op!==r2(a.open0||0)||(op&&a.openDate!==(a.openD0||"")));
   if(changed&&!force){openingConfirm(old,op,a.openDate,()=>submitAcc(true),renderAcc);return}
-  const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;
+  const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;if(limS&&r2(limS)>0)rec.limit=r2(limS);
   if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec;if(changed){setOpening(rec,op,a.openDate);delete S.checks[rec.id]}}
   else{S.accounts.push(rec);if(canOpen&&op)setOpening(rec,op,a.openDate)}
   closeSheet();AF=null;markDirty();render();if(changed)toast("Opening balance updated.");
@@ -2321,8 +2347,8 @@ function backupSpec(){
   const out=[];const add=(aoa,opt,name,raw)=>out.push({aoa,opt:opt||{},name,raw:!!raw});
   add([["FinTrack backup"],["Created",dLong(today())],["Entries",S.entries.length],["Accounts",S.accounts.length],["Plans",S.schedules.length],[],
     ["Restore it from Manage → Data → Restore from Excel backup."],["You can read, filter and sort it, but keep sheet names and column headers unchanged."]],{widths:[26,40]},"About");
-  const A=[["ID","Name","Kind","Group","Colour","Monthly budget","Hidden","Balance","Order","Goal"]].concat(S.accounts.map(a=>[a.id,a.name,a.kind,a.grp,a.color,r2(a.budget),a.archived?"Yes":"No",bal(a.id),a.ord||0,a.goal?JSON.stringify(a.goal):""]));
-  add(A,{from:1,nums:[5,7],widths:[12,30,10,10,10,15,8,15,7,20]},"Accounts");
+  const A=[["ID","Name","Kind","Group","Colour","Monthly budget","Hidden","Balance","Order","Goal","Credit limit"]].concat(S.accounts.map(a=>[a.id,a.name,a.kind,a.grp,a.color,r2(a.budget),a.archived?"Yes":"No",bal(a.id),a.ord||0,a.goal?JSON.stringify(a.goal):"",a.limit>0?r2(a.limit):""]));
+  add(A,{from:1,nums:[5,7,10],widths:[12,30,10,10,10,15,8,15,7,20,14]},"Accounts");
   const J=[["Entry ID","Date","Note","Account ID","Account","Debit","Credit","Meta","Flags"]];
   S.entries.slice().sort(asc).forEach(e=>e.lines.forEach((l,i)=>J.push([e.id,e.date,e.memo||"",l.a,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",i===0&&e.t?JSON.stringify(e.t):"",i===0&&(e.oneoff||e.src)?JSON.stringify({oneoff:!!e.oneoff,src:e.src||""}):""])));
   add(J,{from:1,dates:[1],nums:[5,6],widths:[12,13,30,12,28,14,14,20,12]},"Journal");
@@ -2364,7 +2390,7 @@ function bookFromWorkbook(wb){
   const A=rows("Accounts"),J=rows("Journal"),P=rows("Plans")||[],St=rows("Settings")||[];
   if(!A||!J)throw new Error("not a backup");
   const B=blankBook();
-  B.accounts=A.filter(r=>r.ID!=="").map(r=>{const grp=GL[r.Group]?r.Group:"asset";const o={id:String(r.ID),name:String(r.Name),kind:GL[grp].kind,grp,color:String(r.Colour||PAL[0]),budget:r2(r["Monthly budget"]),archived:r.Hidden==="Yes"};if(r.Order!==""&&r.Order!=null)o.ord=+r.Order;if(r.Goal){try{o.goal=JSON.parse(r.Goal)}catch(x){}}return o});
+  B.accounts=A.filter(r=>r.ID!=="").map(r=>{const grp=GL[r.Group]?r.Group:"asset";const o={id:String(r.ID),name:String(r.Name),kind:GL[grp].kind,grp,color:String(r.Colour||PAL[0]),budget:r2(r["Monthly budget"]),archived:r.Hidden==="Yes"};if(r.Order!==""&&r.Order!=null)o.ord=+r.Order;if(r.Goal){try{o.goal=JSON.parse(r.Goal)}catch(x){}}if(grp==="card"&&r2(r["Credit limit"])>0)o.limit=r2(r["Credit limit"]);return o});
   const map=new Map();
   for(const r of J){if(r["Entry ID"]==="")continue;const id=String(r["Entry ID"]);let e=map.get(id);
     if(!e){e={id,date:xIso(r.Date),memo:String(r.Note||""),lines:[],t:null};map.set(id,e)}
