@@ -854,7 +854,10 @@ function cardLimBox(a){const cl=cardLim(a);if(!cl)return"";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 /* amounts follow the book currency's decimals (AED 2, KWD/BHD/OMR 3, JPY 0) */
 let DEC=2,FACT=100;
-const r2=n=>Math.round((+n||0)*FACT)/FACT;
+/* typed amounts: "1,500", "AED 1,500.00", "1 500" and "12,50" (decimal comma) all read as numbers, instead of 0 */
+function amtClean(v){let s=String(v).replace(/[−–]/g,"-").replace(/\s+/g,"").replace(/^[A-Za-z]{2,4}\.?/,"").replace(/[A-Za-z]{2,4}\.?$/,"");if(!s.includes(".")&&/^-?\d+,\d{1,2}$/.test(s))s=s.replace(",",".");return s.replace(/,/g,"")}
+const amtNum=v=>{const s=amtClean(v);return s===""||!isFinite(+s)?NaN:+s};
+const r2=n=>Math.round((+(typeof n==="string"?amtClean(n):n)||0)*FACT)/FACT;
 let NF=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const f2=n=>{const v=r2(n);return (v<0?"−":"")+NF.format(Math.abs(v))};
 function curDecimals(c){try{return new Intl.NumberFormat("en",{style:"currency",currency:c}).resolvedOptions().maximumFractionDigits}catch(e){return 2}}
@@ -1380,7 +1383,7 @@ const HELP=[
   show:[S_ENTRY("expense","Start with an expense","Enter the full bill and where you paid it from."),{el:()=>hQ('.sheet [data-act="spToggle"]'),t:"Split with others",b:"Add who shares it. Your share stays your spending; theirs goes to what they owe you."}]},
  {id:"edit",title:"Edit or delete an entry",steps:["Tap the entry on Home (<b>Recent entries</b>) or in <b>Ledgers → Day book</b>.","Change anything and tap <b>Save</b>.","To delete, tap <b>Delete</b>, then tap it again to confirm."],
   show:[{go:()=>hGo("home"),el:()=>hCard("recent"),t:"Recent entries",b:"Tap any entry to change or delete it."},{go:()=>hGo("ledgers","daybook"),el:()=>hQ("#main .card .led"),t:"Day book",b:"Every entry, newest first. Tap a line to edit it."}]},
- {id:"check",title:"Check balances",steps:["On Home, in <b>What I hold</b>, tap <b>Check balances</b>.","Type what your bank app and your wallet really show.","FinTrack shows the <b>difference</b>. Less than the app? A spend may be missing. More? An income or refund may be missing."],
+ {id:"check",title:"Check balances",steps:["On Home, in <b>What I hold</b>, tap <b>Check balances</b>.","Type what your bank app and your wallet really show.","FinTrack shows the <b>difference</b>. Less than the app? A spend may be missing. More? An income or refund may be missing.","For a credit card, type what you owe. Owe more than the app? A card spend, fee or interest may be missing. Owe less? A payment or refund may be missing. Each card you check gets its own line under <b>Difference</b> in What I hold."],
   show:[{go:()=>hGo("home"),el:()=>hCard("hold"),t:"What I hold",b:"Your bank and cash together, as FinTrack counts them."},{el:()=>hAct("recon"),t:"Check balances",b:"Enter what your bank and wallet really show, and FinTrack tells you what's missing."}]},
  {id:"budget",title:"Budgets",steps:["Open <b>Budgets</b> (in Pro: <b>Plans → Budgets</b>).","Type a monthly amount next to each category you want to watch, and an overall limit if you like.","The bars turn from green to amber to red as you spend. Home shows the summary."],
   show:[{go:()=>hGo("plans","budget"),el:()=>hQ("#main [data-limit]")||hQ("#main [data-budget]"),t:"Set a limit",b:"Type how much you want to spend this month."},{el:()=>hQ("#main [data-budget]"),t:"Per category",b:"Set limits only for the categories you want to watch."},{go:()=>hGo("home"),el:()=>hCard("budget"),t:"On Home",b:"The bars fill green → amber → red as the month goes on."}]},
@@ -1436,7 +1439,7 @@ const FAQ=[
  ["How do I report a problem or suggest something?","Menu → <b>Help & feedback</b> → Send feedback. On Android you can also shake your phone."]
 ];
 const TIPS={
- hold:["What I hold","Your bank and cash together. “Available to use” leaves out money set aside in savings pots. Tap Check balances to match it with your real bank.","check"],
+ hold:["What I hold","Your bank and cash together. “Available to use” leaves out money set aside in savings pots. Tap Check balances to match it with your real bank. Credit cards you check get their own line under Difference.","check"],
  accounts:["Accounts","Every bank, cash, card and loan account with its balance. Red means money you owe. Cards with a credit limit show how much of it is used, with a bar that goes from green to red.","accounts"],
  spend:["Spending","Where your money went this month, by category. Hover or tap a line for details.","expense"],
  budget:["Budget","How much of each monthly limit you've used. Green is fine, amber is close, red is over.","budget"],
@@ -1584,14 +1587,18 @@ const W={
     for(const a of liquidAccs()){const c=S.checks[a.id];if(c&&c.actual!==""&&c.actual!=null){actual=(actual||0)+ +c.actual;checked++}else{actual=(actual||0)+held(a.id)}}
     if(S.holdCheck&&S.holdCheck.actual!=null&&S.holdCheck.actual!==""){actual=+S.holdCheck.actual;checked=1}
     const diff=checked?r2(actual-liq):null;
+    /* credit cards you've checked: their own line, never added into the bank + cash figure (they're money you owe) */
+    const cardL=byGrp("card").filter(a=>{const c=S.checks[a.id];return c&&c.actual!==""&&c.actual!=null}).map(a=>{const d=r2(+S.checks[a.id].actual-held(a.id)),amt=HB?"":f2(Math.abs(d))+" ";
+      const ch=Math.abs(d)<0.005?`<span class="chip ok">Matches</span>`:`<span class="chip ${d>0?"bad":"w"}">Owe ${HB?"••••":f2(Math.abs(d))} ${d>0?"more":"less"}</span>`;
+      return `<div class="kv"><span class="muted">${esc(a.name)}</span>${ch}</div>${Math.abs(d)>=0.005?`<p class="lbl" style="margin:6px 0 0">${d>0?`Your card shows ${amt}more owed than the app. A card spend, fee or interest may not be recorded yet.`:`Your card shows ${amt}less owed than the app. A card payment or refund may not be recorded yet.`}</p>`:""}`}).join("");
     const chip=diff==null?`<span class="chip n">Not checked yet</span>`:Math.abs(diff)<0.005?`<span class="chip ok">Matches</span>`:`<span class="chip ${diff<0?"bad":"w"}">${diff<0?"Missing ":"Extra "}${HB?"••••":f2(Math.abs(diff))}</span>`;
     return `<section class="card"><h3>What I hold <button class="eyebtn" data-act="hideBal" aria-pressed="${HB}" aria-label="${HB?"Show":"Hide"} balances" title="${HB?"Show":"Hide"} balances">${HB?ICON_EYE_SHUT:ICON_EYE_OPEN}</button><span class="sp"><button class="link" data-act="recon">Check balances</button></span></h3>
     <div class="hero"><div><div class="lbl">App balance · bank + cash</div><div class="big">${hm(liq)}</div></div>
     <div><div class="lbl">Cash in hand</div><div class="big">${hm(cashBal)}</div></div></div>
     ${Math.abs(inPots)>0.004?`<div class="kv" style="margin-top:10px"><span class="muted">In savings pots</span><b>${hm(inPots)}</b></div><div class="kv"><span><b>Available to use</b></span><b>${hm(avail,avail<0?"neg":"")}</b></div>`:""}
     <div class="kv"${Math.abs(inPots)>0.004?"":' style="margin-top:10px"'}><span class="muted">My figure</span><b>${checked?hm(actual):'<span class="muted">—</span>'}</b></div>
-    <div class="kv"><span class="muted">Difference</span>${chip}</div>
-    ${diff&&Math.abs(diff)>=0.005?`<p class="lbl" style="margin:6px 0 0">${diff<0?"You hold less than the app shows. A spend may be unrecorded.":"You hold more than the app shows. An income or refund may be unrecorded."}</p>`:""}</section>`;
+    <div class="kv"><span class="muted">Difference${cardL?" · bank + cash":""}</span>${chip}</div>
+    ${diff&&Math.abs(diff)>=0.005?`<p class="lbl" style="margin:6px 0 0">${diff<0?"You hold less than the app shows. A spend may be unrecorded.":"You hold more than the app shows. An income or refund may be unrecorded."}</p>`:""}${cardL}</section>`;
   },
   accounts(){
     const t=totals();const nw=r2(sumKind(t,"asset")-sumKind(t,"liability"));
@@ -1848,7 +1855,7 @@ function chipList(list,field,sel){return `<div class="chips">${list.map(a=>`<but
 /* ---------- split an expense (Splitwise-style) ---------- */
 const splitOn=()=>F&&F.type==="expense"&&F.split&&F.split.on;
 function splitName(id){return id&&id.startsWith("__n:")?(F.split&&F.split.names[id])||"New person":accName(id)}
-function splitShares(){const sp=F.split,total=Math.round((+F.amount||0)*FACT),ppl=sp.people;
+function splitShares(){const sp=F.split,total=Math.round(r2(F.amount)*FACT),ppl=sp.people;
   if(sp.mode==="equal"){const n=ppl.length+(sp.me?1:0);const out={me:0,people:ppl.map(p=>({id:p.id,amt:0})),left:0};if(!n||total<=0)return out;
     const base=Math.floor(total/n);let extra=total-base*n;const parts=[];for(let i=0;i<n;i++){parts.push(base+(extra>0?1:0));if(extra>0)extra--}
     let k=0;if(sp.me)out.me=parts[k++]/FACT;out.people.forEach(p=>{p.amt=parts[k++]/FACT});return out}
@@ -2310,14 +2317,14 @@ function submitAcc(force){
 function openRecon(){
   const list=liquidAccs().concat(byGrp("card"));
   const rows=list.map(a=>{const b=held(a.id),ps=potSum(a.id);const c=S.checks[a.id];const v=c&&c.actual!=null&&c.actual!==""?c.actual:"";const d=v===""?null:r2(+v-(a.kind==="liability"?b:b));
-    return `<div class="rec">${`<span>${dot(a.color)} ${esc(a.name)}<div class="lbl">App ${f2(b)}${Math.abs(ps)>0.004?" (incl. pots "+f2(ps)+")":""}${c&&c.date?" · checked "+dShort(c.date):""}</div></span>`}<input class="inp" inputmode="decimal" id="rc_${a.id}" data-rc="${a.id}" value="${esc(v)}" placeholder="${f2(b)}" aria-label="Actual balance of ${esc(a.name)}"><span class="num" id="rd_${a.id}" style="min-width:70px;text-align:right">${diffChip(d)}</span></div>`}).join("");
+    return `<div class="rec">${`<span>${dot(a.color)} ${esc(a.name)}<div class="lbl">App ${f2(b)}${Math.abs(ps)>0.004?" (incl. pots "+f2(ps)+")":""}${c&&c.date?" · checked "+dShort(c.date):""}</div></span>`}<input class="inp" inputmode="decimal" id="rc_${a.id}" data-rc="${a.id}" value="${esc(v)}" placeholder="${f2(b)}" aria-label="Actual balance of ${esc(a.name)}"><span class="num" id="rd_${a.id}" style="min-width:70px;text-align:right">${diffChip(d,a.kind==="liability")}</span></div>`}).join("");
   const liq=r2(liquidAccs().reduce((s,a)=>s+held(a.id),0));const h=S.holdCheck&&S.holdCheck.actual!=null&&S.holdCheck.actual!==""?S.holdCheck.actual:"";
   openSheet(head("Check balances")+`<p class="lbl" style="margin-top:-6px">Type what your bank app or wallet actually shows. A difference means an entry is missing or wrong. Banks include the money set aside in your savings pots. Cards show what you owe.</p>
   <div>${rows||'<p class="empty">Add bank and cash accounts first.</p>'}</div>
   <div class="card" style="margin-top:12px;background:var(--surface2);border:0"><div class="rec" style="border:0;padding:0"><span><b>Total I hold</b><div class="lbl">Bank + cash · app ${f2(liq)}</div></span><input class="inp" inputmode="decimal" id="rc_total" data-rc="__total" value="${esc(h)}" placeholder="optional" aria-label="Total you hold"><span class="num" id="rd___total" style="min-width:70px;text-align:right">${diffChip(h===""?null:r2(+h-liq))}</span></div></div>
   <div class="acts" style="margin-top:12px"><button type="button" class="btn" data-act="reconClear">Clear figures</button><span style="flex:1"></span><button class="btn pri" data-act="close">Done</button></div>`);
 }
-function diffChip(d){if(d==null||isNaN(d))return'<span class="muted">—</span>';if(Math.abs(d)<0.005)return'<span class="chip ok">OK</span>';return `<span class="chip ${d<0?"bad":"w"}">${d>0?"+":""}${f2(d)}</span>`}
+function diffChip(d,card){if(d==null)return'<span class="muted">—</span>';if(isNaN(d))return'<span class="chip n">Type a number</span>';if(Math.abs(d)<0.005)return'<span class="chip ok">OK</span>';return `<span class="chip ${(card?d>0:d<0)?"bad":"w"}">${d>0?"+":""}${f2(d)}</span>`}
 
 /* ---------- Excel export / import ---------- */
 const asc=(x,y)=>x.date<y.date?-1:x.date>y.date?1:0;
@@ -3581,8 +3588,9 @@ document.addEventListener("input",ev=>{const t=ev.target;
   else if(t.dataset.limit){const k=t.dataset.limit;if(t.value.trim()==="")delete S.limits[k];else S.limits[k]=r2(t.value);markDirty();const lb=$("#limBox");if(lb)lb.innerHTML=limitBox(k,true)}
   else if(t.dataset.g!=null&&GF&&t.type!=="checkbox"&&t.tagName!=="SELECT"){GF[t.dataset.g]=t.value}
   else if(t.dataset.inp==="q"){U.q=t.value;const pos=t.selectionStart;render();const n=$("#dbQ");n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}
-  else if(t.dataset.rc){const id=t.dataset.rc;if(id==="__total"){S.holdCheck=t.value===""?null:{actual:r2(t.value),date:today()};const liq=r2(liquidAccs().reduce((s,a)=>s+held(a.id),0));$("#rd___total").innerHTML=diffChip(t.value===""?null:r2(+t.value-liq))}
-    else{if(t.value==="")delete S.checks[id];else S.checks[id]={actual:r2(t.value),date:today()};$("#rd_"+id).innerHTML=diffChip(t.value===""?null:r2(+t.value-held(id)))}markDirty()}
+  else if(t.dataset.rc){const id=t.dataset.rc,blank=t.value.trim()==="",n=amtNum(t.value);
+    if(id==="__total"){if(blank)S.holdCheck=null;else if(!isNaN(n))S.holdCheck={actual:r2(n),date:today()};const liq=r2(liquidAccs().reduce((s,a)=>s+held(a.id),0));$("#rd___total").innerHTML=diffChip(blank?null:isNaN(n)?NaN:r2(n-liq))}
+    else{if(blank)delete S.checks[id];else if(!isNaN(n))S.checks[id]={actual:r2(n),date:today()};const ca=acc(id);$("#rd_"+id).innerHTML=diffChip(blank?null:isNaN(n)?NaN:r2(n-held(id)),!!ca&&ca.kind==="liability")}markDirty()}
 });
 document.addEventListener("change",ev=>{const t=ev.target;
   if(t.id==="xlRestore"||t.id==="xlRestore2"){restoreExcel(t.files&&t.files[0]);t.value=""}
