@@ -1,3 +1,3 @@
-• Budget card on Home is simpler: one bar for your monthly limit, with what's left to spend
-• Credit cards can now have a credit limit. See how much you've used and what's still available, with a bar that goes from green to red, on Home and on the card's page
-• When a card spend would take you over its limit, you get a warning before you save. You can still record it
+• Opening balances are now locked on their date. If you add an entry dated before an account's opening balance, your balance today stays the same and the earlier balance is worked out backwards
+• You can set an opening balance on any past date, such as the date of your latest bank statement, even if you already have entries before it
+• If some of your accounts already have entries dated before their opening balance, FinTrack asks you once whether to correct today's balances or keep them as they are
