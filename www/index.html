@@ -361,6 +361,8 @@ table.led tr.click{cursor:pointer}
 table.led tr.click:hover td{background:var(--surface2)}
 table.led tr.tot td{font-weight:600;border-top:2px solid var(--line);border-bottom:3px double var(--line)}
 table.led tr.bf td{color:var(--muted);font-style:italic}
+table.led tr.lockrow td{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+.opmrow{margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}.opmrow .kv{padding-block:4px}.opmrow .lbl{margin:4px 0 0}
 .dt{white-space:nowrap;color:var(--muted);font-family:var(--f-num);font-size:12.5px}
 /* bottom nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -1014,7 +1016,7 @@ function sumKind(t,kind){let s=0;for(const a of S.accounts)if(a.kind===kind&&t[a
 
 /* ---------- persistence ---------- */
 let ASV=null,AUP=null;
-function markDirty(){dirty=true;paintTop();clearTimeout(ASV);if(S&&!S.demo)ASV=setTimeout(()=>save(true),900)}
+function markDirty(){syncOpens();dirty=true;paintTop();clearTimeout(ASV);if(S&&!S.demo)ASV=setTimeout(()=>save(true),900)}
 /* backup timing: never right after a change while you're using the app. It runs after 2 quiet minutes, when the app is
    minimised or closed, or at the latest an hour after the first unsaved-to-Drive change; only if something changed. */
 let PEND_AT=0,LAST_ACT=Date.now();const QUIET=120000,MAXWAIT=3600000;
@@ -1082,7 +1084,7 @@ function fixDash(){if(!Array.isArray(S.pdcs))S.pdcs=[];if(!Array.isArray(S.sched
   setCurrency(S.currency);
   const after={goals:"budget",savtrend:"goals",calc:"budget"};
   const have=new Set(S.dash.map(d=>d.id));for(const id of Object.keys(WIDGETS))if(!have.has(id)){const i=S.dash.findIndex(d=>d.id===after[id]);if(i>=0)S.dash.splice(i+1,0,{id,on:true});else S.dash.push({id,on:true});have.add(id)}
-  S.dash=S.dash.filter(d=>WIDGETS[d.id]);U.month=U.monthSet?U.month:curCycle()}
+  S.dash=S.dash.filter(d=>WIDGETS[d.id]);U.month=U.monthSet?U.month:curCycle();fixOpens()}
 
 /* ---------- theme ---------- */
 function isDark(){const t=document.documentElement.getAttribute("data-theme");if(t)return t==="dark";return window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches}
@@ -1404,8 +1406,8 @@ const HELP=[
   show:[{go:()=>hGo("plans","proj"),el:()=>hQ("#main .card"),t:"Look ahead",b:"Choose the period and the pattern to learn from."},{el:()=>hAct("wiAdd"),t:"What if…",b:"Try changes like a new salary or a big purchase. Your real data stays the same."}]},
  {id:"journal",pro:true,title:"Journal entries",steps:["Tap <b>+</b> and choose <b>Journal</b>.","Add a line for each account with its <b>debit</b> or <b>credit</b>.","Debits must equal credits before you can save. Use it for anything the other types don't cover."],
   show:[S_ENTRY("journal","Journal","Full double entry for unusual cases."),{el:()=>hQ(".sheet .grid3")||hQ(".sheet select[data-jl]"),t:"Lines",b:"Each line: an account and its debit or credit. Totals must match."}]},
- {id:"opening",pro:true,title:"Opening balances",steps:["Open the account in <b>Manage → Accounts & categories</b>.","Set the <b>opening balance</b> and its <b>As of</b> date.","The date must be on or before the account's first entry, so it never falls between your entries. FinTrack shows how the balance will change before you confirm."],
-  show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. The date can't fall between existing entries."}]},
+ {id:"opening",pro:true,title:"Opening balances",steps:["Open the account in <b>Manage → Accounts & categories</b>.","Set the <b>opening balance</b> and its <b>As of</b> date: what the account held at the start of that day.","It stays <b>locked</b> on that date. Anything you add dated earlier is worked out backwards, so the opening balance and your balance today don't change. Only you can change it, here.","FinTrack shows how the balance will change before you confirm."],
+  show:[{go:()=>hGo("settings","accounts"),el:()=>hQ('#main [data-act="editAcc"][data-id]'),t:"Open an account",b:"Tap any account to change its opening balance."},{go:hTap('#main [data-act="editAcc"][data-id]'),el:()=>hLab("a-open").concat(hLab("a-odate")),wide:true,t:"Opening balance",b:"Amount and date. It stays locked on that date; entries dated earlier are worked out backwards."}]},
  {id:"liab",pro:true,title:"Loans and credit cards",steps:["Add them under <b>Credit cards</b> or <b>Loans</b>, with what you owe as the opening balance.","What you owe shows in red as <b>Payable</b>; overpaid shows green as <b>In credit</b>; zero is <b>Settled</b>.","Add a card's <b>credit limit</b> to see how much you've used and what's available, with a bar that goes from green to red as you use more.","Pay a card with <b>Transfer</b> (bank → card). Pay a loan with an EMI plan."],
   show:[{go:()=>hGo("home"),el:()=>hCard("accounts"),t:"Accounts",b:"Cards and loans you owe on show in red as Payable."}]},
  {id:"lock",title:"Lock the app",steps:["Open <b>Manage → Settings</b>.","Under <b>Security</b>, switch on <b>Lock FinTrack</b> and confirm with your fingerprint, face or PIN.","Choose when it asks again: every time you open it, or after 1 or 5 minutes away. The fingerprint or face check pops up by itself when you open FinTrack.","Can't unlock? The same prompt accepts your device PIN. On iPhone or a computer you can also sign in with Google again, which turns the lock off."],
@@ -1423,6 +1425,7 @@ const FAQ=[
  ["Why is there no Save button?","Every change saves on your phone straight away, and a copy goes to Google Drive after 2 quiet minutes, when you leave the app, or at least hourly."],
  ["What do the signs at the top mean?","<b>✓ Saved / ✓ Backed up</b>: all good. <b>☁ Offline</b>: saved on the phone, it uploads when you're back online. <b>⚠ Tap to reconnect</b>: Google needs you to sign in again; tap it. <b>⚠ Not saved</b>: the phone couldn't save; tap it and download a backup."],
  ["Why is the app's balance different from my bank?","Usually an entry is missing or recorded twice. Use <b>Check balances</b> on Home: enter what the bank shows and FinTrack tells you the difference. Also check pending card transactions."],
+ ["I added an old entry. Why didn't my balance today change?","It's dated before the account's opening balance, and that figure is locked: it already included this money. FinTrack works the earlier balance out backwards instead, so the entry still shows in its own month. To change the opening balance, open the account in <b>Manage → Accounts & categories</b>."],
  ["What is “Available to use”?","Your bank and cash minus the money set aside in savings pots. <b>App balance</b> is everything together."],
  ["Simple or Pro: which should I use?","Start with Simple. Turn on Pro (bottom of the menu) when you need EMIs, cheques, savings pots, projections or accounting reports."],
  ["Will switching between Simple and Pro delete anything?","No. Simple only hides tools. Everything comes back when you switch Pro on."],
@@ -1444,7 +1447,7 @@ const TIPS={
  trend:["Financial position","How your money, savings and net worth changed over the last months.","proj"],
  savtrend:["Savings trend","How much you've put into savings pots each month.","pots"],
  upcoming:["Upcoming","EMIs, bills and cheques due in the next 45 days. Post them from Plans.","emi"],
- "a-open":["Opening balance","What the account held (or what you owed) on the “As of” date, before your first entry.","opening"],
+ "a-open":["Opening balance","What the account held (or what you owed) at the start of the “As of” date. It stays locked: entries dated earlier are worked out backwards.","opening"],
  setMs:["My month","The day your month starts. Paid on the 25th? Set 25 and every month runs payday to payday.","start"],
  "s-left":["Payments left","How many payments remain. FinTrack counts down and stops the plan at zero. Leave blank if it never ends.","emi"],
  "s-int":["Interest part","The interest inside each EMI, recorded as your expense; the rest reduces the loan. Leave empty if someone else pays the interest.","emiother"],
@@ -1703,8 +1706,11 @@ function pAccountLedger(a){
   const k=U.ledMonth||curCycle();const list=S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&(k==="all"||inMonth(k)(e))).sort((x,y)=>x.date<y.date?-1:x.date>y.date?1:0);
   let run=k==="all"?0:bal(a.id,before(cyc(k)[0]));const sg=SIGN[a.kind];let tdr=0,tcr=0;
   const items=list.map(e=>{let dr=0,cr=0;for(const l of e.lines)if(l.a===a.id){dr+=+l.dr||0;cr+=+l.cr||0}tdr+=dr;tcr+=cr;run=r2(run+(dr-cr)*sg);return {e,dr,cr,run}}).reverse();
-  const row=({e,dr,cr,run})=>{const other=e.lines.filter(l=>l.a!==a.id).map(l=>accName(l.a)).join(", ");
-    return `<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${dShort(e.date)}</td><td>${esc(other)}${e.memo?`<div class="muted" style="font-size:12px">${esc(e.memo)}</div>`:""}</td><td class="n">${dr?f2(dr):""}</td><td class="n">${cr?f2(cr):""}</td><td class="n ${run<0?"neg":""}">${f2(run)}</td></tr>`};
+  const lk=a.olock&&lockable(a)?a.olock:null,lkE=lk?S.entries.find(e=>e.open===a.id):null;
+  if(lk&&(!lkE||lkE.date<lk.d)&&(k==="all"||inMonth(k)({date:lk.d}))){let i=items.findIndex(x=>x.e.date<lk.d);if(i<0)i=items.length;items.splice(i,0,{lock:lk})}
+  const row=x=>{if(x.lock)return `<tr class="click lockrow" data-act="editAcc" data-id="${a.id}"><td class="dt">${dShort(x.lock.d)}</td><td>🔒 Opening balance locked at <span class="num">${f2(x.lock.v)}</span><div class="muted" style="font-size:12px">${potsOf(a.id).length?"Includes savings pots · ":""}Earlier balances worked out backwards</div></td><td class="n"></td><td class="n"></td><td class="n"></td></tr>`;
+    const {e,dr,cr,run}=x;const other=e.lines.filter(l=>l.a!==a.id).map(l=>accName(l.a)).join(", ");
+    return `<tr class="click" data-act="editEntry" data-id="${e.id}"><td class="dt">${dShort(e.date)}</td><td>${esc(other)}${e.memo?`<div class="muted" style="font-size:12px">${lk&&e===lkE&&e.date===lk.d?"🔒 ":""}${esc(e.memo)}</div>`:""}</td><td class="n">${dr?f2(dr):""}</td><td class="n">${cr?f2(cr):""}</td><td class="n ${run<0?"neg":""}">${f2(run)}</td></tr>`};
   const rows=pgStart(items,row,5);
   const bf=k==="all"?"":`<tr class="bf"><td class="dt">${dShort(cyc(k)[0])}</td><td>Balance brought forward</td><td class="n"></td><td class="n"></td><td class="n">${f2(bal(a.id,before(cyc(k)[0])))}</td></tr>`;
   const b=bal(a.id);
@@ -1930,7 +1936,7 @@ function renderForm(){
   openSheet(head(F.editId?"Edit entry":"New entry")+
   `<form id="eform" novalidate>${sayBox()}<div class="seg">${TYPES.filter(([k])=>isPro()||LITE_T.has(k)||F.type===k).map(([k,l])=>`<button type="button" class="${F.type===k?"on":""}" data-act="ftype" data-k="${k}">${l}</button>`).join("")}</div>
   ${F.type!=="journal"?`<label class="amt"><span>${esc(S.currency)}</span><input id="f-amt" data-f="amount" inputmode="decimal" placeholder="0.00" value="${esc(F.amount)}" autocomplete="off" aria-label="Amount"></label>`:""}
-  ${body}<div class="lbl cardhint" id="fcard" aria-live="polite">${cardHint()}</div>
+  ${body}<div class="lbl cardhint" id="fcard" aria-live="polite">${formHints()}</div>
   <div class="grid2" style="margin-top:12px"><div class="field"><label for="f-date">Date</label><input class="inp" type="date" id="f-date" data-f="date" value="${esc(F.date)}"></div><div class="field"><label for="f-memo">Note</label><input class="inp" id="f-memo" data-f="memo" value="${esc(F.memo)}" placeholder="Optional"></div></div>
   ${F.type==="expense"||F.type==="income"||F.type==="journal"?`<div class="wl" style="margin-top:8px;border:0"><input type="checkbox" class="sw" id="f-oneoff" data-oneoff ${F.oneoff?"checked":""}><span>One-off <span class="lbl">· leave it out of projections (e.g. a one-time phone purchase)</span></span></div>`:""}
   <div class="preview" id="fprev">${pv||'<span class="muted">Pick the details to see the double entry.</span>'}</div>
@@ -1941,12 +1947,17 @@ function renderForm(){
 /* card limit hint in the form: what's available on the card and after this entry; past the limit it warns but still lets you record */
 function cardHint(){if(!F||F.type==="savings")return"";const lines=formLines(),orig=F.editId?S.entries.find(x=>x.id===F.editId):null,out=[];
   for(const id of new Set(lines.map(l=>l.a))){const a=acc(id),cl=cardLim(a);if(!cl)continue;
-    const now=r2(cl.lim-cl.owed-(orig?lineNet(orig,id):0)),d=r2(lines.reduce((t,l)=>l.a===id?t+(+l.cr||0)-(+l.dr||0):t,0)),after=r2(now-d);
+    const cnt=dt=>!(a.olock&&dt<a.olock.d),now=r2(cl.lim-cl.owed-(orig&&cnt(orig.date)?lineNet(orig,id):0)),d=cnt(F.date)?r2(lines.reduce((t,l)=>l.a===id?t+(+l.cr||0)-(+l.dr||0):t,0)):0,after=r2(now-d);
     out.push(d>0.004&&after<-0.004?`<span class="warnln">After this, ${esc(a.name)} is ${f2(-after)} over its ${f2(cl.lim)} limit. You can still record it.</span>`
       :Math.abs(d)<0.005?(now<-0.004?`<span class="warnln">${esc(a.name)} is ${f2(-now)} over its ${f2(cl.lim)} limit.</span>`:`${esc(a.name)}: ${f2(now)} available of ${f2(cl.lim)}`)
       :`${esc(a.name)}: ${f2(now)} available · ${f2(after)} after this`)}
   return out.join("<br>")}
-function updatePreview(){const fc=$("#fcard");if(fc)fc.innerHTML=cardHint();const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
+function lockHint(){if(!F||!F.date)return"";const out=[];
+  for(const id of new Set(formLines().map(l=>l.a))){const a=acc(id);if(!a||!a.olock||!lockable(a)||!(F.date<a.olock.d))continue;
+    out.push(`🔒 Before ${esc(a.name)}'s opening balance on ${dShort(a.olock.d)}. That stays ${f2(a.olock.v)} and your balance today doesn't change; the earlier balance is worked out backwards.`)}
+  return out.join("<br>")}
+function formHints(){return [cardHint(),lockHint()].filter(Boolean).join("<br>")}
+function updatePreview(){const fc=$("#fcard");if(fc)fc.innerHTML=formHints();const p=$("#fprev");if(!p)return;const lines=formLines();p.innerHTML=lines.filter(l=>l.a&&(l.dr||l.cr)).map(l=>`${l.dr?"Dr":"&nbsp;&nbsp;&nbsp;Cr"} ${esc(l.a==="__new"?(F.newParty||"New person"):splitName(l.a))} <span style="float:right">${f2(l.dr||l.cr)}</span>`).join("<br>")||'<span class="muted">Pick the details to see the double entry.</span>';
   if(F.type==="journal"){const d=r2(lines.reduce((s,l)=>s+l.dr,0)),c=r2(lines.reduce((s,l)=>s+l.cr,0));p.innerHTML+=`<br><span class="${Math.abs(d-c)<0.005?"pos":"e"}">Dr ${f2(d)} · Cr ${f2(c)}${Math.abs(d-c)<0.005?" · balanced":" · difference "+f2(d-c)}</span>`}}
 function submitForm(){
   let lines=formLines();const err=validate(lines);if(err){F.err=err;renderForm();return}
@@ -1961,7 +1972,7 @@ function submitForm(){
   const wasEdit=!!F.editId;closeSheet();markDirty();render();toast((wasEdit?"Entry updated.":"Recorded.")+splitMsg+"");
 }
 function editEntry(id){
-  const e=S.entries.find(x=>x.id===id);if(!e)return;F=newForm();F.editId=id;F.date=e.date;F.memo=e.memo||"";F.oneoff=!!e.oneoff;
+  const e=S.entries.find(x=>x.id===id);if(!e)return;if(e.open&&!(e.t&&e.t.type)){const oa=acc(e.open);if(oa&&oa.olock&&lockable(oa)){editAcc(oa.id);return}}F=newForm();F.editId=id;F.date=e.date;F.memo=e.memo||"";F.oneoff=!!e.oneoff;
   if(e.t&&e.t.type){Object.assign(F,JSON.parse(JSON.stringify(e.t)));if(F.split)F.split.names=F.split.names||{};F.amount=String(r2(e.lines.reduce((s,l)=>s+(+l.dr||0),0)))}
   else{F.type="journal";F.lines=e.lines.map(l=>({a:l.a,dr:l.dr?String(l.dr):"",cr:l.cr?String(l.cr):""}))}
   renderForm();
@@ -2169,24 +2180,90 @@ const canOpening=a=>a&&["asset","liability"].includes(a.kind);
 const isEqLine=l=>{const x=acc(l.a);return !!x&&x.kind==="equity"};
 function openingEntry(a){if(!a)return null;
   if(a.grp==="pot"){return S.entries.filter(e=>(e.open===a.id||/^Already saved/.test(e.memo||""))&&e.lines.some(l=>l.a===a.id)).sort(asc)[0]||null}
-  const own=S.entries.find(e=>e.open===a.id);if(own)return own;
+  const own=S.entries.find(e=>e.open===a.id);if(own)return own;if(a.olock)return null;
   return S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&e.lines.some(isEqLine)).sort(asc)[0]||null}
-function openingInfo(a){const e=openingEntry(a);if(!e)return {e:null,amt:0,date:""};const v=lineNet(e,a.id)*SIGN[a.kind];return {e,amt:r2(v),date:e.date}}
+function openingInfo(a){const e=openingEntry(a);if(a&&a.olock&&lockable(a))return {e,amt:r2(a.olock.v),date:a.olock.d};if(!e)return {e:null,amt:0,date:""};const v=lineNet(e,a.id)*SIGN[a.kind];return {e,amt:r2(v),date:e.date}}
 function firstOtherDate(a,skip){let m=null;for(const e of S.entries){if(skip&&e===skip)continue;if(e.lines.some(l=>l.a===a.id)&&(!m||e.date<m))m=e.date}return m}
 /* remove this account's line from an opening entry, rebalancing its Opening balance line */
 function stripOpening(e,a){if(e.open===a.id||e.lines.length<=2||a.grp==="pot"){S.entries=S.entries.filter(x=>x!==e);return}
   const v=lineNet(e,a.id);e.lines=e.lines.filter(l=>l.a!==a.id);const q=e.lines.find(isEqLine);
   if(q){const n=r2(((+q.dr||0)-(+q.cr||0))+v);q.dr=n>0?n:0;q.cr=n<0?-n:0;if(Math.abs(n)<0.005)e.lines=e.lines.filter(l=>l!==q)}
   if(e.lines.length<2)S.entries=S.entries.filter(x=>x!==e)}
-function setOpening(a,amt,date){const cur=openingInfo(a);if(cur.e)stripOpening(cur.e,a);amt=r2(amt);if(!amt)return;
+function setOpening(a,amt,date){const cur=openingInfo(a);amt=r2(amt);
+  if(lockable(a)){if(cur.e&&(cur.e.open!==a.id||!amt))stripOpening(cur.e,a);if(!amt){delete a.olock;return}a.olock={d:date,v:amt};syncOpens();return}
+  if(cur.e)stripOpening(cur.e,a);if(!amt)return;
   if(a.grp==="pot"){const bank=(a.goal||{}).bank;if(!bank||!acc(bank))return;const v=Math.abs(amt);
     S.entries.push({id:uid(),date,memo:"Already saved · "+a.name,lines:amt>0?[{a:a.id,dr:v,cr:0},{a:bank,dr:0,cr:v}]:[{a:bank,dr:v,cr:0},{a:a.id,dr:0,cr:v}],t:{type:"savings",sact:amt>0?"put":"back",pot:a.id,from:bank},oneoff:true,open:a.id});return}
   const eq=equityId(),dr=amt*SIGN[a.kind],v=Math.abs(amt);
   S.entries.push({id:uid(),date,memo:"Opening balance · "+a.name,lines:dr>0?[{a:a.id,dr:v,cr:0},{a:eq,dr:0,cr:v}]:[{a:eq,dr:v,cr:0},{a:a.id,dr:0,cr:v}],t:null,open:a.id})}
 function openingCheck(a,amt,date){if(!date)return"Pick the opening balance date.";if(date>today())return"The opening balance date can't be in the future.";
-  if(!a)return"";const cur=openingInfo(a),f=firstOtherDate(a,cur.e);if(f&&date>f)return`${a.name} has entries from ${dLong(f)}. The opening balance must be dated on or before ${dLong(f)}, so it never falls between your entries.`;return""}
+  if(!a||lockable(a))return"";const cur=openingInfo(a),f=firstOtherDate(a,cur.e);if(f&&date>f)return`${a.name} has entries from ${dLong(f)}. The opening balance must be dated on or before ${dLong(f)}, so it never falls between your entries.`;return""}
+/* ---------- locked opening balances ----------
+   a.olock={d,v}: what the account held (or owed) at the start of day d. It stays fixed until you change it in Manage.
+   The account's own opening entry (open:a.id, against Opening balance) is worked out so the balance on d is always v:
+   v minus everything dated before d, dated on the account's first entry. So an entry dated before d never moves the
+   balance on d or today; the earlier balance is worked out backwards. Bank and cash count their savings pots too,
+   because moving money into a pot doesn't change what the bank shows. Debits still equal credits. */
+function lockable(a){return !!a&&(a.kind==="asset"||a.kind==="liability")&&a.grp!=="pot"}
+function lockSet(a){const s=new Set([a.id]);if(a.grp==="bank"||a.grp==="cash")for(const p of potsOf(a.id))s.add(p.id);return s}
+/* before d / from d onwards, in the account's own sign, leaving out one entry (its opening) */
+function obScan(a,d,skip){const s=lockSet(a);let early=0,late=0,first=null;
+  for(const e of S.entries){if(e===skip)continue;let n=0,hit=false;for(const l of e.lines)if(s.has(l.a)){n+=(+l.dr||0)-(+l.cr||0);hit=true}
+    if(!hit)continue;if(e.date<d)early+=n;else late+=n;if(!first||e.date<first)first=e.date}
+  const sg=SIGN[a.kind];return {early:r2(early*sg),late:r2(late*sg),first}}
+/* one pass over the book; rewrites an opening entry only when it's out of step */
+function syncOpens(){if(!S||!Array.isArray(S.accounts)||!Array.isArray(S.entries))return false;const L=S.accounts.filter(a=>a.olock&&lockable(a));if(!L.length)return false;
+  const st=new Map(),who=new Map();
+  for(const a of L){st.set(a.id,{a,pe:null,pi:-1,early:0,first:null,fi:-1,di:-1});for(const id of lockSet(a)){if(!who.has(id))who.set(id,[]);who.get(id).push(a.id)}}
+  for(const e of S.entries)if(e.open&&st.has(e.open)&&!st.get(e.open).pe)st.get(e.open).pe=e;
+  const E=S.entries;
+  for(let i=0;i<E.length;i++){const e=E[i];
+    for(const l of e.lines){const w=who.get(l.a);if(!w)continue;const v=(+l.dr||0)-(+l.cr||0);
+      for(const id of w){const x=st.get(id);if(e===x.pe){x.pi=i;continue}
+        if(e.date<x.a.olock.d)x.early+=v;
+        if(!x.first||e.date<x.first){x.first=e.date;x.fi=i}
+        if(e.date===x.a.olock.d&&x.di<0)x.di=i}}}
+  const eq=equityId(),front=[],drop=new Set();let changed=false;
+  for(const x of st.values()){const a=x.a,sg=SIGN[a.kind],d=a.olock.d,P=r2(a.olock.v-x.early*sg),T=x.first&&x.first<d?x.first:d,pe=x.pe;
+    if(Math.abs(P)<0.005){if(pe){drop.add(pe);changed=true}continue}
+    const memo="Opening balance · "+a.name+(T<d?" (worked out)":""),dr=P*sg,v=r2(Math.abs(P));
+    const need=T===x.first?x.fi:x.di; /* the first other entry that day: the opening comes before it */
+    if(pe&&pe.date===T&&pe.memo===memo&&pe.lines.length===2&&pe.lines.some(l=>l.a===eq)&&Math.abs(lineNet(pe,a.id)-dr)<0.005&&(need<0||x.pi<need))continue;
+    const lines=dr>0?[{a:a.id,dr:v,cr:0},{a:eq,dr:0,cr:v}]:[{a:eq,dr:v,cr:0},{a:a.id,dr:0,cr:v}];
+    if(pe){pe.date=T;pe.memo=memo;pe.lines=lines;pe.t=null;if(need>=0&&x.pi>need){drop.add(pe);front.push(pe)}}
+    else front.push({id:uid(),date:T,memo,lines,t:null,open:a.id});
+    changed=true}
+  if(front.length||drop.size)S.entries=front.concat(S.entries.filter(e=>!drop.has(e)));
+  return changed}
+/* books from before this update: an opening with nothing dated before it is locked quietly; the rest are asked about once */
+function legacyOpen(a){const own=S.entries.find(e=>e.open===a.id);if(own)return own;return S.entries.filter(e=>e.lines.some(l=>l.a===a.id)&&e.lines.some(isEqLine)).sort(asc)[0]||null}
+function adoptOpen(a,e){if(e.open===a.id)return;if(e.lines.length===2&&!e.open)e.open=a.id;else stripOpening(e,a)}
+let OPM=null,opmTries=0;
+function fixOpens(){if(!S||!Array.isArray(S.accounts)||!Array.isArray(S.entries))return;const pend=[];
+  for(const a of S.accounts){if(!lockable(a)||a.olock)continue;const e=legacyOpen(a);if(!e)continue;
+    const v=r2(lineNet(e,a.id)*SIGN[a.kind]);if(Math.abs(v)<0.005)continue;
+    if(Math.abs(obScan(a,e.date,e).early)>=0.005){pend.push(a.id);continue}
+    a.olock={d:e.date,v};adoptOpen(a,e)}
+  syncOpens();OPM=pend.length&&!S.demo?pend:null;opmTries=0;if(OPM)setTimeout(opmCheck,1500)}
+function opmList(){return (OPM||[]).map(acc).filter(a=>a&&lockable(a)&&!a.olock).map(a=>{const e=legacyOpen(a);if(!e)return null;
+  const amt=r2(lineNet(e,a.id)*SIGN[a.kind]),sc=obScan(a,e.date,e);return Math.abs(sc.early)<0.005?null:{a,e,amt,early:sc.early,now:held(a.id)}}).filter(Boolean)}
+function opmCheck(){if(!OPM)return;const L=opmList();if(!L.length){OPM=null;return}
+  if($("#sheetRoot").innerHTML||!$("#login").hidden||document.documentElement.classList.contains("locked")){if(++opmTries<240)setTimeout(opmCheck,2500);return}
+  const one=L.length===1;
+  openSheet(head("Opening balances are now locked")+`<div id="opmBox"><p style="margin-top:0">An opening balance now stays fixed on its date. Entries dated before it are worked out backwards, so they don't change your balance today.</p>
+  <p>${one?"This account has":"These accounts have"} entries dated before ${one?"its":"their"} opening balance. Until now they also came off your balance today, so that money may have been counted twice.</p>
+  ${L.map(x=>`<div class="opmrow"><b>${dot(x.a.color)} ${esc(x.a.name)}</b>
+    <div class="kv"><span class="muted">Opening balance · ${dShort(x.e.date)}</span><span class="num">${f2(x.amt)}</span></div>
+    <div class="kv"><span class="muted">Entries dated before it</span><span class="num">${f2(x.early)}</span></div>
+    <div class="kv"><span class="muted">${x.a.kind==="liability"?"Owed today":"Balance today"}</span><span class="num">${f2(x.now)} → <b>${f2(r2(x.now-x.early))}</b></span></div>
+    <p class="lbl">Keep today's balances locks it at ${f2(r2(x.amt+x.early))} on ${dShort(x.e.date)} instead.</p></div>`).join("")}
+  <p class="lbl" style="margin-top:12px"><b>Correct my balances</b> keeps the opening balances you entered and corrects today's balance as shown. <b>Keep today's balances</b> changes nothing now. Either way you can change an opening balance later in Manage → Accounts & categories.</p>
+  <div class="acts"><button class="btn" data-act="opmKeep">Keep today's balances</button><button class="btn pri" data-act="opmFix">Correct my balances</button></div></div>`)}
+function opmAnswer(fix){const L=opmList();for(const x of L){x.a.olock={d:x.e.date,v:fix?x.amt:r2(x.amt+x.early)};adoptOpen(x.a,x.e)}
+  OPM=null;closeSheet();markDirty();render();if(L.length)toast(fix?"Balances corrected. Opening balances are now locked.":"Opening balances are now locked.")}
 let OPC=null;
-function openingConfirm(a,amt,date,then,back){const cur=openingInfo(a),now=held(a.id),after=r2(now+(r2(amt)-cur.amt));const from=cur.date&&cur.date<date?cur.date:date;
+function openingConfirm(a,amt,date,then,back){const cur=openingInfo(a),now=held(a.id);let after=r2(now+(r2(amt)-cur.amt)),from=cur.date&&cur.date<date?cur.date:date;
+  if(lockable(a)){const sc=obScan(a,date,cur.e),T=sc.first&&sc.first<date?sc.first:date;after=r2(r2(amt)?r2(amt)+sc.late:sc.early+sc.late);from=cur.e&&cur.e.date<T?cur.e.date:T}
   OPC={then,back};const lab=a.kind==="liability"?"Owed today":a.grp==="party"?"Balance today":"Balance today";
   openSheet(head("Change opening balance?")+`<p style="margin-top:0">This changes <b>${esc(a.name)}</b> from <b>${dLong(from)}</b> onwards.</p>
   <div class="kv"><span class="muted">Opening balance</span><span class="num">${cur.e?f2(cur.amt)+" ("+dShort(cur.date)+")":"none"} → <b>${f2(amt)}</b>${r2(amt)?" ("+dShort(date)+")":""}</span></div>
@@ -2207,8 +2284,8 @@ function renderAcc(){
   <div class="fl">Colour</div><div class="swatches">${PAL.map(c=>`<button type="button" class="${a.color===c?"on":""}" style="background:${c}" data-act="acol" data-c="${c}" aria-label="Colour ${c}"></button>`).join("")}</div>
   ${a.kind==="expense"?`<div class="field" style="margin-top:12px"><label for="a-bud">Monthly budget (${esc(S.currency)})</label><input class="inp num" id="a-bud" inputmode="decimal" data-a="budget" value="${a.budget||""}" placeholder="0"></div>`:""}
   ${canOpen?`<div class="grid2" style="margin-top:12px"><div class="field"><label for="a-open">Opening balance${a.grp==="party"?" (they owe you; minus if you owe them)":a.kind==="liability"?" (amount owed)":""}</label><input class="inp num" id="a-open" inputmode="decimal" data-a="opening" value="${esc(a.opening)}" placeholder="0.00"></div>
-    <div class="field"><label for="a-odate">As of</label><input class="inp" type="date" id="a-odate" data-a="openDate" value="${esc(a.openDate)}" max="${first||today()}"></div></div>
-    <p class="lbl">${a.id?(first?`Must be on or before this account's first entry (${dLong(first)}). Set 0 to remove it.`:"Set 0 to remove it."):"Posted as an opening entry against Opening balance on this date."}</p>`:""}
+    <div class="field"><label for="a-odate">As of</label><input class="inp" type="date" id="a-odate" data-a="openDate" value="${esc(a.openDate)}" max="${today()}"></div></div>
+    <p class="lbl">${a.id&&r2(a.open0)?"🔒 Locked on this date. Entries dated before it are worked out backwards, so this figure and your balance today don't change. Set 0 to remove it.":"What it held at the start of this day. It stays locked on this date: anything you add dated earlier is worked out backwards."}</p>`:""}
   ${a.grp==="card"?`<div class="field" style="margin-top:12px"><label for="a-lim">Credit limit (${esc(S.currency)})</label><input class="inp num" id="a-lim" inputmode="decimal" data-a="limit" value="${esc(a.limit==null?"":String(a.limit))}" placeholder="Optional"></div><p class="lbl">Shows how much of the limit you've used and what's still available. It's only a note, so your balances don't change.</p>`:""}
   ${a.id?`<div class="wl" style="margin-top:10px"><input type="checkbox" class="sw" id="a-arch" data-a="archived" ${a.archived?"checked":""}><span>Hide from forms and dashboard</span></div>`:""}
   ${AF.err?`<p class="err" role="alert">${esc(AF.err)}</p>`:""}
@@ -2223,7 +2300,7 @@ function submitAcc(force){
   if(canOpen&&op){const e=openingCheck(old,op,a.openDate);if(e){a.err=e;renderAcc();return}}
   const changed=old&&canOpen&&(op!==r2(a.open0||0)||(op&&a.openDate!==(a.openD0||"")));
   if(changed&&!force){openingConfirm(old,op,a.openDate,()=>submitAcc(true),renderAcc);return}
-  const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;if(limS&&r2(limS)>0)rec.limit=r2(limS);
+  const rec={id:a.id||uid(),name:a.name.trim(),kind:a.kind,grp:a.grp,color:a.color,budget:r2(a.budget),archived:!!a.archived,ord:a.id&&typeof a.ord==="number"?a.ord:S.accounts.filter(x=>x.grp===a.grp).reduce((m,x)=>Math.max(m,ordOf(x)<1e6?x.ord:0),-1)+1};if(a.goal)rec.goal=a.goal;if(limS&&r2(limS)>0)rec.limit=r2(limS);if(old&&old.olock)rec.olock=old.olock;
   if(a.id){const i=S.accounts.findIndex(x=>x.id===a.id);S.accounts[i]=rec;if(changed){setOpening(rec,op,a.openDate);delete S.checks[rec.id]}}
   else{S.accounts.push(rec);if(canOpen&&op)setOpening(rec,op,a.openDate)}
   closeSheet();AF=null;markDirty();render();if(changed)toast("Opening balance updated.");
@@ -2347,10 +2424,10 @@ function backupSpec(){
   const out=[];const add=(aoa,opt,name,raw)=>out.push({aoa,opt:opt||{},name,raw:!!raw});
   add([["FinTrack backup"],["Created",dLong(today())],["Entries",S.entries.length],["Accounts",S.accounts.length],["Plans",S.schedules.length],[],
     ["Restore it from Manage → Data → Restore from Excel backup."],["You can read, filter and sort it, but keep sheet names and column headers unchanged."]],{widths:[26,40]},"About");
-  const A=[["ID","Name","Kind","Group","Colour","Monthly budget","Hidden","Balance","Order","Goal","Credit limit"]].concat(S.accounts.map(a=>[a.id,a.name,a.kind,a.grp,a.color,r2(a.budget),a.archived?"Yes":"No",bal(a.id),a.ord||0,a.goal?JSON.stringify(a.goal):"",a.limit>0?r2(a.limit):""]));
-  add(A,{from:1,nums:[5,7,10],widths:[12,30,10,10,10,15,8,15,7,20,14]},"Accounts");
+  const A=[["ID","Name","Kind","Group","Colour","Monthly budget","Hidden","Balance","Order","Goal","Credit limit","Opening balance","Opening date"]].concat(S.accounts.map(a=>[a.id,a.name,a.kind,a.grp,a.color,r2(a.budget),a.archived?"Yes":"No",bal(a.id),a.ord||0,a.goal?JSON.stringify(a.goal):"",a.limit>0?r2(a.limit):"",a.olock?r2(a.olock.v):"",a.olock?a.olock.d:""]));
+  add(A,{from:1,nums:[5,7,10,11],dates:[12],widths:[12,30,10,10,10,15,8,15,7,20,14,15,13]},"Accounts");
   const J=[["Entry ID","Date","Note","Account ID","Account","Debit","Credit","Meta","Flags"]];
-  S.entries.slice().sort(asc).forEach(e=>e.lines.forEach((l,i)=>J.push([e.id,e.date,e.memo||"",l.a,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",i===0&&e.t?JSON.stringify(e.t):"",i===0&&(e.oneoff||e.src)?JSON.stringify({oneoff:!!e.oneoff,src:e.src||""}):""])));
+  S.entries.slice().sort(asc).forEach(e=>e.lines.forEach((l,i)=>J.push([e.id,e.date,e.memo||"",l.a,accName(l.a),l.dr?r2(l.dr):"",l.cr?r2(l.cr):"",i===0&&e.t?JSON.stringify(e.t):"",i===0&&(e.oneoff||e.src||e.open)?JSON.stringify(Object.assign({oneoff:!!e.oneoff,src:e.src||""},e.open?{open:e.open}:{})):""])));
   add(J,{from:1,dates:[1],nums:[5,6],widths:[12,13,30,12,28,14,14,20,12]},"Journal");
   const P=[["ID","Name","Type","Amount","Repeats","Next due","Left","Cheque no","Active","Data"]].concat(S.schedules.map(s=>[s.id,s.name,KIND[s.kind],r2(s.amount),freqLabel(s),s.next,s.left==null?"":s.left,s.chq||"",s.active?"Yes":"No",JSON.stringify(s)]));
   add(P,{from:1,dates:[5],nums:[3],widths:[12,26,12,14,14,13,6,11,7,20]},"Plans");
@@ -2390,12 +2467,12 @@ function bookFromWorkbook(wb){
   const A=rows("Accounts"),J=rows("Journal"),P=rows("Plans")||[],St=rows("Settings")||[];
   if(!A||!J)throw new Error("not a backup");
   const B=blankBook();
-  B.accounts=A.filter(r=>r.ID!=="").map(r=>{const grp=GL[r.Group]?r.Group:"asset";const o={id:String(r.ID),name:String(r.Name),kind:GL[grp].kind,grp,color:String(r.Colour||PAL[0]),budget:r2(r["Monthly budget"]),archived:r.Hidden==="Yes"};if(r.Order!==""&&r.Order!=null)o.ord=+r.Order;if(r.Goal){try{o.goal=JSON.parse(r.Goal)}catch(x){}}if(grp==="card"&&r2(r["Credit limit"])>0)o.limit=r2(r["Credit limit"]);return o});
+  B.accounts=A.filter(r=>r.ID!=="").map(r=>{const grp=GL[r.Group]?r.Group:"asset";const o={id:String(r.ID),name:String(r.Name),kind:GL[grp].kind,grp,color:String(r.Colour||PAL[0]),budget:r2(r["Monthly budget"]),archived:r.Hidden==="Yes"};if(r.Order!==""&&r.Order!=null)o.ord=+r.Order;if(r.Goal){try{o.goal=JSON.parse(r.Goal)}catch(x){}}if(grp==="card"&&r2(r["Credit limit"])>0)o.limit=r2(r["Credit limit"]);const od=r["Opening date"]?xIso(r["Opening date"]):"";if(lockable(o)&&ISO_RE.test(od)&&Math.abs(r2(r["Opening balance"]))>=0.005)o.olock={d:od,v:r2(r["Opening balance"])};return o});
   const map=new Map();
   for(const r of J){if(r["Entry ID"]==="")continue;const id=String(r["Entry ID"]);let e=map.get(id);
     if(!e){e={id,date:xIso(r.Date),memo:String(r.Note||""),lines:[],t:null};map.set(id,e)}
     if(r.Meta&&!e.t){try{e.t=JSON.parse(r.Meta)}catch(x){}}
-    if(r.Flags){try{const f=JSON.parse(r.Flags);if(f.oneoff)e.oneoff=true;if(f.src)e.src=f.src}catch(x){}}
+    if(r.Flags){try{const f=JSON.parse(r.Flags);if(f.oneoff)e.oneoff=true;if(f.src)e.src=f.src;if(f.open)e.open=String(f.open)}catch(x){}}
     e.lines.push({a:String(r["Account ID"]),dr:r2(r.Debit),cr:r2(r.Credit)})}
   B.entries=[...map.values()].filter(e=>ISO_RE.test(e.date)&&e.lines.length>=2);
   B.schedules=P.map(r=>{try{return JSON.parse(r.Data)}catch(x){return null}}).filter(Boolean);
@@ -3354,8 +3431,8 @@ const ACT={
   exLater(){closeSheet()},
   mon(el){U.month=addMonths(U.month,+el.dataset.d);U.monthSet=true;render()},
   newEntry(){F=newForm();renderForm()},
-  close(){FBF=null;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");ls.set("tapledger.example","0");applyLocale(WF.cc,WF.cur);WF=null;markDirty();setTimeout(tourMaybe,0)}render()},
-  scrim(el,ev){if(ev.target===el){if(WF)return;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;render()}},
+  close(){if($("#opmBox")){opmAnswer(false);return}FBF=null;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;if(WF){ls.set("tapledger.welcomed","1");ls.set("tapledger.example","0");applyLocale(WF.cc,WF.cur);WF=null;markDirty();setTimeout(tourMaybe,0)}render()},
+  scrim(el,ev){if(ev.target===el){if(WF||$("#opmBox"))return;closeSheet();SF=null;AF=null;PF=null;GF=null;U.potFromForm=false;render()}},
   ftype(el){F.type=el.dataset.k;F.cat=null;F.err="";if(F.type==="savings"){const ps=pots();if(!F.pot&&ps.length)F.pot=(U.lastPot&&ps.find(a=>a.id===U.lastPot)||ps[0]).id;const g=F.pot&&acc(F.pot).goal;if(g&&g.bank&&acc(g.bank))F.from=g.bank}renderForm()},
   sayGo(){const i=$("#f-say");const v=(i?i.value:F.sayDraft||"").trim();if(!v){toast("Say or type what happened first.");if(i)i.focus();return}sayApply(v)},
   fsact(el){F.sact=el.dataset.k;F.cat=null;F.err="";renderForm()},
@@ -3377,7 +3454,7 @@ const ACT={
   ledTab(el){U.ledTab=el.dataset.t;render()},
   stmtMode(el){U.stmtMode=el.dataset.t;render()},
   plansTab(el){U.plansTab=el.dataset.t;render()},
-  lockUnlock(){LOCK.unlock()},lockHelp(){const h=$("#lockHelp");if(h)h.hidden=!h.hidden},lockGoogle(){LOCK.google()},
+  lockUnlock(){LOCK.unlock()},opmFix(){opmAnswer(true)},opmKeep(){opmAnswer(false)},lockHelp(){const h=$("#lockHelp");if(h)h.hidden=!h.hidden},lockGoogle(){LOCK.google()},
   setTab(el){U.setTab=el.dataset.t;render()},
   postSched(el){postSched(el.dataset.id)},
   editSched(el){editSched(el.dataset.id)},
