@@ -1,3 +1,2 @@
-• Opening balances are now locked on their date. If you add an entry dated before an account's opening balance, your balance today stays the same and the earlier balance is worked out backwards
-• You can set an opening balance on any past date, such as the date of your latest bank statement, even if you already have entries before it
-• If some of your accounts already have entries dated before their opening balance, FinTrack asks you once whether to correct today's balances or keep them as they are
+• Check balances now covers credit cards on Home: each card you check gets its own line in What I hold, showing if you owe more or less than the app, or that it matches
+• Amounts typed with commas, like 1,500 or AED 1,500.00, are now read correctly everywhere instead of as 0
